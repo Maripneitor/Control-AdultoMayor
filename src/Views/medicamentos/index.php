@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VitalSenior - Mis Medicamentos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 text-slate-900 font-sans min-h-screen">
+    <!-- Header reutilizado del Dashboard -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 px-6 py-4 flex justify-between items-center shadow-sm">
+        <div class="flex items-center space-x-3">
+            <a href="<?= APP_URL ?>/dashboard" class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-xl hover:bg-blue-700 transition">←</a>
+            <div>
+                <h1 class="text-lg font-bold text-slate-800 leading-tight">Inventario de Medicamentos</h1>
+                <p class="text-xs text-slate-500">Paciente: <span class="font-semibold text-blue-700"><?= e($paciente['nombre'] . ' ' . $paciente['apellidos']) ?></span></p>
+            </div>
+        </div>
+        <div class="flex items-center space-x-4">
+            <a href="<?= APP_URL ?>/logout" class="px-3 py-1.5 bg-red-50 text-red-600 text-xs font-semibold rounded-lg border border-red-200 hover:bg-red-100 transition">Cerrar Sesión</a>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Columna 1 y 2: Lista de Medicamentos -->
+        <section class="lg:col-span-2 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+            <h2 class="text-lg font-bold text-slate-800 mb-4">Medicamentos Activos</h2>
+            
+            <div class="space-y-4">
+                <?php if (empty($medicamentos)): ?>
+                    <p class="text-sm text-slate-500 text-center py-8">No tienes medicamentos registrados.</p>
+                <?php else: ?>
+                    <?php foreach ($medicamentos as $med): ?>
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-200 hover:border-blue-300 transition-colors">
+                            <div class="flex items-start gap-4">
+                                <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 text-xl font-bold shrink-0">
+                                    💊
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-slate-800"><?= e($med['nombre_comercial']) ?></h3>
+                                    <p class="text-sm text-slate-600">Dosis: <?= e($med['dosis']) ?> (Cada <?= e((string)$med['frecuencia_horas']) ?> hrs)</p>
+                                    <?php if (!empty($med['instrucciones'])): ?>
+                                        <p class="text-xs text-slate-500 mt-1 italic">"<?= e($med['instrucciones']) ?>"</p>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </div>
+        </section>
+
+        <!-- Columna 3: Formulario para añadir medicamento -->
+        <section class="bg-blue-50 p-6 rounded-2xl border border-blue-100 shadow-sm h-fit sticky top-24">
+            <h2 class="text-md font-bold text-blue-900 mb-4">Añadir Nuevo Fármaco</h2>
+            
+            <form action="<?= APP_URL ?>/medicamentos/crear" method="POST" class="space-y-4">
+                <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
+                
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Nombre Comercial</label>
+                    <input type="text" name="nombre_comercial" required class="w-full rounded-lg border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500" placeholder="Ej. Paracetamol">
+                </div>
+                
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Dosis (Cantidad)</label>
+                    <input type="text" name="dosis" required class="w-full rounded-lg border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500" placeholder="Ej. 1 Tableta (500mg)">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Frecuencia (Horas)</label>
+                    <input type="number" name="frecuencia_horas" min="1" max="72" value="8" required class="w-full rounded-lg border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Instrucciones Especiales</label>
+                    <textarea name="instrucciones" rows="2" class="w-full rounded-lg border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500" placeholder="Ej. Tomar en ayunas"></textarea>
+                </div>
+
+                <button type="submit" class="w-full py-2.5 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition">
+                    Guardar Medicamento
+                </button>
+            </form>
+        </section>
+    </main>
+</body>
+</html>
