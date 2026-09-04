@@ -18,9 +18,7 @@ class AuthController extends Controller {
     }
 
     public function showLoginForm(): void {
-        $error = $_SESSION['error'] ?? null;
-        unset($_SESSION['error']);
-        $this->render('auth/login', ['error' => $error], false);
+        $this->render('auth/login', [], false);
     }
 
     public function register(): void {
@@ -39,13 +37,13 @@ class AuthController extends Controller {
         $password = $_POST['password'] ?? '';
 
         if (!$email || strlen($password) < 8 || empty($nombre)) {
-            $_SESSION['error'] = "Datos inválidos o contraseña menor a 8 caracteres.";
+            $this->setFlash('danger', "Datos inválidos o contraseña menor a 8 caracteres.");
             header('Location: ' . APP_URL . '/login');
             exit;
         }
 
         if ($this->usuarioModel->findByEmail($email)) {
-            $_SESSION['error'] = "El correo ingresado ya está registrado.";
+            $this->setFlash('danger', "El correo ingresado ya está registrado.");
             header('Location: ' . APP_URL . '/login');
             exit;
         }
@@ -68,7 +66,7 @@ class AuthController extends Controller {
             exit;
         } catch (\Exception $e) {
             $db->rollBack();
-            $_SESSION['error'] = "Error interno al procesar el registro.";
+            $this->setFlash('danger', "Error interno al procesar el registro.");
             header('Location: ' . APP_URL . '/login');
             exit;
         }
@@ -93,7 +91,7 @@ class AuthController extends Controller {
         }
 
         if ($_SESSION['login_attempts'] >= 5) {
-            $_SESSION['error'] = "Demasiados intentos fallidos. Bloqueo temporal de 15 minutos.";
+            $this->setFlash('danger', "Demasiados intentos fallidos. Bloqueo temporal de 15 minutos.");
             header('Location: ' . APP_URL . '/login');
             exit;
         }
@@ -115,7 +113,7 @@ class AuthController extends Controller {
         }
 
         $_SESSION['login_attempts']++;
-        $_SESSION['error'] = "Credenciales incorrectas.";
+        $this->setFlash('danger', "Credenciales incorrectas.");
         header('Location: ' . APP_URL . '/login');
         exit;
     }

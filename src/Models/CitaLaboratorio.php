@@ -46,4 +46,24 @@ class CitaLaboratorio extends Model {
         $stmt->execute($data);
         return (int)$stmt->fetchColumn();
     }
+
+    public function checkOverlap(int $pacienteId, string $fechaHora, int $intervalMinutes = 60): bool {
+        $timestamp = strtotime($fechaHora);
+        $inicio = date('Y-m-d H:i:s', $timestamp - ($intervalMinutes * 60));
+        $fin = date('Y-m-d H:i:s', $timestamp + ($intervalMinutes * 60));
+
+        $stmt = $this->db->prepare("
+            SELECT COUNT(*) 
+            FROM citas_laboratorios 
+            WHERE paciente_id = :pid 
+            AND fecha_hora BETWEEN :inicio AND :fin
+        ");
+        $stmt->execute([
+            'pid' => $pacienteId,
+            'inicio' => $inicio,
+            'fin' => $fin
+        ]);
+        
+        return ((int)$stmt->fetchColumn()) > 0;
+    }
 }

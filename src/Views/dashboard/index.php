@@ -5,6 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VitalSenior - Expediente de <?= e($paciente['nombre']) ?></title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @media print {
+            body { background: white !important; }
+            header, .no-print { display: none !important; }
+            main { padding: 0 !important; grid-template-columns: 1fr !important; }
+            .border-slate-200 { border: 1px solid #ccc !important; }
+            .shadow-sm { box-shadow: none !important; }
+        }
+    </style>
 </head>
 <body id="dashboard-body" class="bg-slate-50 text-slate-900 font-sans min-h-screen transition-opacity duration-700 opacity-0">
     <!-- Barra Superior -->
@@ -13,18 +22,59 @@
             <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-md shadow-blue-500/20">+</div>
             <div>
                 <h1 class="text-lg font-bold text-slate-800 leading-tight">Expediente Clínico</h1>
-                <p class="text-xs text-slate-500">Paciente: <span class="font-semibold text-blue-700"><?= e($paciente['nombre'] . ' ' . $paciente['apellidos']) ?></span></p>
+                <?php if (count($todosLosPacientes) > 1): ?>
+                    <form action="<?= APP_URL ?>/dashboard" method="GET" class="inline-block mt-1">
+                        <select name="seleccionar_paciente" onchange="this.form.submit()" class="text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200 rounded-md py-1 pl-2 pr-6 focus:ring-blue-500 focus:border-blue-500 cursor-pointer">
+                            <?php foreach ($todosLosPacientes as $p): ?>
+                                <option value="<?= e((string)$p['id']) ?>" <?= $p['id'] == $pacienteActivoId ? 'selected' : '' ?>>
+                                    Paciente: <?= e($p['nombre'] . ' ' . $p['apellidos']) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </form>
+                <?php else: ?>
+                    <p class="text-xs text-slate-500">Paciente: <span class="font-semibold text-blue-700"><?= e($paciente['nombre'] . ' ' . $paciente['apellidos']) ?></span></p>
+                <?php endif; ?>
             </div>
         </div>
-        <div class="flex items-center space-x-4">
+        <div class="flex items-center space-x-4 no-print">
+            <button onclick="window.print()" class="px-3 py-1.5 bg-slate-100 text-slate-700 text-xs font-semibold rounded-lg border border-slate-300 hover:bg-slate-200 transition">🖨️ Imprimir</button>
             <a href="<?= APP_URL ?>/emergencia?token=<?= e((string)($paciente['qr_token'] ?? '')) ?>" target="_blank" class="px-3 py-1.5 bg-blue-50 text-blue-700 text-xs font-semibold rounded-lg border border-blue-200 hover:bg-blue-100 transition">Ver Ficha QR</a>
             <a href="<?= APP_URL ?>/logout" class="px-3 py-1.5 bg-red-50 text-red-600 text-xs font-semibold rounded-lg border border-red-200 hover:bg-red-100 transition">Cerrar Sesión</a>
         </div>
     </header>
 
-    <main class="max-w-7xl mx-auto p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- Columna 1: Información Vital y Contactos -->
+    <main id="accessible-content" class="max-w-7xl mx-auto p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <?php if (!empty($flash)): ?>
+            <?php 
+                $colors = [
+                    'success' => 'bg-emerald-100 border-emerald-500 text-emerald-800',
+                    'warning' => 'bg-amber-100 border-amber-500 text-amber-800',
+                    'danger'  => 'bg-rose-100 border-rose-500 text-rose-800',
+                    'info'    => 'bg-blue-100 border-blue-500 text-blue-800'
+                ];
+                $alertStyle = $colors[$flash['type']] ?? $colors['info'];
+            ?>
+            <div class="lg:col-span-3 mb-4 no-print">
+                <div class="border-l-4 p-4 rounded-r-lg shadow-sm flex items-center justify-between <?= $alertStyle; ?>" role="alert">
+                    <span class="text-base font-medium"><?= htmlspecialchars($flash['message']); ?></span>
+                    <button onclick="this.parentElement.remove()" class="text-lg font-bold ml-4 p-1 hover:opacity-75 focus:outline-none">&times;</button>
+                </div>
+            </div>
+        <?php endif; ?>
+
+        <!-- Columna 1: Información Vital, Contactos y Salud Diaria -->
         <section class="space-y-6">
+            <!-- Registro de Salud Diario -->
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                <h2 class="text-sm font-bold text-slate-700 uppercase tracking-wide">Registro de Salud Diario</h2>
+                <p class="text-xs text-slate-500 mb-2">Presión arterial, glucosa, sueño y dolor.</p>
+                <a href="<?= APP_URL ?>/salud/stepper" class="block w-full py-3 bg-blue-600 text-white rounded-xl text-center font-bold text-lg hover:bg-blue-700 shadow-md transition-all">
+                    + Registrar Signos de Hoy
+                </a>
+            </div>
+
             <!-- Tarjeta Datos Vitales -->
             <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
                 <h2 class="text-sm font-bold text-slate-700 uppercase tracking-wide">Datos Vitales</h2>
@@ -86,30 +136,14 @@
                         <p class="text-sm text-slate-400 text-center py-8">No hay tomas programadas para hoy.</p>
                     <?php else: ?>
                         <?php foreach ($tomasDelDia as $toma): ?>
-                            <div class="flex items-center justify-between p-3.5 rounded-xl border <?= $toma['estado'] === 'tomada' ? 'bg-emerald-50/50 border-emerald-200' : 'bg-white border-slate-200' ?>">
-                                <div class="flex items-center space-x-3">
-                                    <div class="w-2.5 h-2.5 rounded-full <?= $toma['estado'] === 'tomada' ? 'bg-emerald-500' : 'bg-amber-400 animate-pulse' ?>"></div>
-                                    <div>
-                                        <p class="text-sm font-bold text-slate-800"><?= e($toma['nombre_comercial']) ?></p>
-                                        <p class="text-xs text-slate-500">Dosis: <?= e($toma['dosis']) ?> • <?= date('H:i', strtotime($toma['fecha_hora_programada'])) ?> hrs</p>
-                                    </div>
-                                </div>
-                                <?php if ($toma['estado'] !== 'tomada'): ?>
-                                    <form action="<?= APP_URL ?>/medicamentos/toma" method="POST">
-                                        <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
-                                        <input type="hidden" name="registro_id" value="<?= e((string)$toma['registro_id']) ?>">
-                                        <button type="submit" class="text-xs px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition shadow-sm">Confirmar</button>
-                                    </form>
-                                <?php else: ?>
-                                    <span class="text-xs text-emerald-700 font-bold bg-emerald-100 px-2 py-0.5 rounded">Tomada</span>
-                                <?php endif; ?>
-                            </div>
+                            <?php include __DIR__ . '/../medicamentos/partials/card_toma.php'; ?>
                         <?php endforeach; ?>
                     <?php endif; ?>
                 </div>
             </div>
 
-            <div class="pt-4 border-t border-slate-100 mt-4">
+            <div class="pt-4 border-t border-slate-100 mt-4 flex flex-col gap-2">
+                <a href="<?= APP_URL ?>/medicamentos/control" class="block text-center py-2 bg-slate-100 text-sm font-semibold text-slate-700 rounded-lg hover:bg-slate-200">Ver Control por Horarios</a>
                 <a href="<?= APP_URL ?>/medicamentos" class="block text-center text-xs font-semibold text-blue-600 hover:underline">Gestionar Catálogo de Medicamentos →</a>
             </div>
         </section>
@@ -160,5 +194,6 @@
             });
         });
     </script>
+
 </body>
 </html>

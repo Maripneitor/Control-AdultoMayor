@@ -6,7 +6,7 @@
                 <span class="material-symbols-outlined text-base">verified</span>
                 Tranquilidad para tu familia • Respaldado médicamente
             </span>
-            <h1 class="font-display-lg text-display-lg text-on-surface mt-4">
+            <h1 class="font-display-lg text-display-lg text-white drop-shadow-md mt-4 font-bold text-5xl">
                 El cuidado y la salud de quienes más quieres, en un solo lugar y al instante.
             </h1>
             <p class="font-body-lg text-body-lg text-on-surface-variant mt-4 max-w-xl">
@@ -24,9 +24,18 @@
             </div>
         </div>
         <div class="relative w-full h-[500px] flex justify-center items-center animate-on-scroll" style="transition-delay: 200ms;">
-            <div class="absolute inset-0 bg-primary-fixed-dim/20 rounded-full blur-3xl w-3/4 h-3/4 m-auto"></div>
+            <div class="absolute inset-0 bg-primary rounded-full blur-3xl w-3/4 h-3/4 m-auto opacity-40"></div>
             <!-- Usando la imagen local descargada -->
-            <img class="relative z-10 max-h-[500px] object-contain drop-shadow-2xl rounded-2xl" src="<?php echo APP_URL; ?>/assets/img/hero.png" alt="App Preview"/>
+            <img class="relative z-10 max-h-[500px] object-contain drop-shadow-2xl rounded-2xl border-4 border-white" src="<?php echo APP_URL; ?>/assets/img/hero.png" alt="App Preview"/>
+            
+            <!-- Floating cards -->
+            <div class="absolute bottom-10 -left-10 bg-white p-4 rounded-xl shadow-xl flex items-center gap-3 animate-bounce">
+                <span class="material-symbols-outlined text-green-500 text-3xl">check_circle</span>
+                <div>
+                    <p class="font-bold text-slate-800 text-sm">Dosis tomada</p>
+                    <p class="text-xs text-slate-500">Hace 10 min</p>
+                </div>
+            </div>
         </div>
     </div>
 </section>
@@ -183,3 +192,26 @@
         </a>
     </div>
 </section>
+
+<!-- Footer -->
+<footer class="bg-slate-900 text-slate-300 py-12">
+    <div class="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div>
+            <h4 class="text-white font-bold text-lg mb-4">VitalSenior</h4>
+            <p class="text-sm">El cuidado y la salud de quienes más quieres, en un solo lugar y al instante.</p>
+        </div>
+        <div>
+            <h4 class="text-white font-bold text-lg mb-4">Contacto</h4>
+            <p class="text-sm mb-2"><span class="material-symbols-outlined text-sm align-middle mr-2">mail</span> contacto@vitalsenior.com</p>
+            <p class="text-sm"><span class="material-symbols-outlined text-sm align-middle mr-2">phone</span> +52 555 123 4567</p>
+        </div>
+        <div>
+            <h4 class="text-white font-bold text-lg mb-4">Legal</h4>
+            <a href="#" class="block text-sm hover:text-white mb-2">Aviso de Privacidad</a>
+            <a href="#" class="block text-sm hover:text-white">Términos y Condiciones</a>
+        </div>
+    </div>
+    <div class="text-center text-sm mt-12 border-t border-slate-800 pt-6">
+        &copy; <?= date('Y') ?> VitalSenior. Todos los derechos reservados.
+    </div>
+</footer>

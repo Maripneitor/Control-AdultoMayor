@@ -12,6 +12,11 @@ require_once __DIR__ . '/../config/security.php';
 // Forzar la conexión a la base de datos para mostrar la pantalla de error global si está caída
 \Config\Database::getInstance();
 
+// Cargar autoloader de Composer para librerías de terceros (ej. Dompdf)
+if (file_exists(__DIR__ . '/../vendor/autoload.php')) {
+    require_once __DIR__ . '/../vendor/autoload.php';
+}
+
 // Autoloader PSR-4 custom en lugar de Composer para simplificar la compatibilidad local
 spl_autoload_register(function ($class) {
     $prefix = 'App\\';
@@ -49,11 +54,20 @@ $router->get('/emergencia', 'EmergenciaController@showPublicCard');
 
 // Medicamentos
 $router->get('/medicamentos', 'MedicamentoController@index', [AuthMiddleware::class]);
+$router->get('/medicamentos/control', 'MedicamentoController@controlTomas', [AuthMiddleware::class]);
 $router->post('/medicamentos/crear', 'MedicamentoController@store', [AuthMiddleware::class]);
 $router->post('/medicamentos/toma', 'MedicamentoController@registrarToma', [AuthMiddleware::class]);
 
 // Citas y Laboratorios
 $router->get('/citas', 'CitaController@index', [AuthMiddleware::class]);
 $router->post('/citas/crear', 'CitaController@store', [AuthMiddleware::class]);
+
+// Salud y Signos Vitales
+$router->get('/salud/stepper', 'SaludController@stepper', [AuthMiddleware::class]);
+$router->post('/salud/registrar', 'SaludController@registrar', [AuthMiddleware::class]);
+$router->get('/salud/confirmar', 'SaludController@mostrarConfirmacion', [AuthMiddleware::class]);
+
+// PDF
+$router->get('/paciente/pdf', 'PacienteController@descargarExpediente', [AuthMiddleware::class]);
 
 $router->dispatch();

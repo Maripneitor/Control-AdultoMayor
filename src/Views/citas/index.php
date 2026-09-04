@@ -21,6 +21,24 @@
     </header>
 
     <main class="max-w-7xl mx-auto p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <?php if (!empty($flash)): ?>
+            <?php 
+                $colors = [
+                    'success' => 'bg-emerald-100 border-emerald-500 text-emerald-800',
+                    'warning' => 'bg-amber-100 border-amber-500 text-amber-800',
+                    'danger'  => 'bg-rose-100 border-rose-500 text-rose-800',
+                    'info'    => 'bg-blue-100 border-blue-500 text-blue-800'
+                ];
+                $alertStyle = $colors[$flash['type']] ?? $colors['info'];
+            ?>
+            <div class="lg:col-span-3 mb-4">
+                <div class="border-l-4 p-4 rounded-r-lg shadow-sm flex items-center justify-between <?= $alertStyle; ?>" role="alert">
+                    <span class="text-base font-medium"><?= htmlspecialchars($flash['message']); ?></span>
+                    <button onclick="this.parentElement.remove()" class="text-lg font-bold ml-4 p-1 hover:opacity-75 focus:outline-none">&times;</button>
+                </div>
+            </div>
+        <?php endif; ?>
+
         <section class="lg:col-span-2 space-y-6">
             <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
                 <h2 class="text-lg font-bold text-slate-800 mb-4">Próximos Eventos Médicos</h2>
@@ -40,6 +58,9 @@
                                         <?= e($cita['tipo_evento']) ?>
                                     </span>
                                     <h3 class="font-bold text-slate-800 text-lg"><?= e($cita['titulo']) ?></h3>
+                                    <?php if ($cita['tipo_evento'] === 'laboratorio'): ?>
+                                        <p class="text-xs font-semibold text-amber-600 mt-1 mb-1">⚠️ Requiere ayuno previo (8-12 horas)</p>
+                                    <?php endif; ?>
                                     <p class="text-sm text-slate-600 mt-1">Lugar: <?= e($cita['lugar']) ?></p>
                                     <?php if (!empty($cita['doctor_nombre'])): ?>
                                         <p class="text-xs text-slate-500 mt-1">Con: Dr(a). <?= e($cita['doctor_nombre']) ?></p>

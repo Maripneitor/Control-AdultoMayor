@@ -1,40 +1,47 @@
-# Estado y Fases del Proyecto: VitalSenior
+# Auditoría de Proyecto - Control Adulto Mayor
 
-Este documento es el registro maestro del estado actual del proyecto **VitalSenior (Control Adulto Mayor)**. Aquí desglosamos con precisión técnica qué está construido y probado, y qué áreas están pendientes de refinamiento (Fase 4) para alcanzar el nivel de producción.
+## 1. Exposición de Credenciales y Archivos Sensibles
+- **Severidad:** Crítica
+- **Archivo:** `.env` (Líneas 1-8)
+- **Descripción:** El archivo `.env` se encuentra presente en el directorio de trabajo con credenciales reales (contraseña de base de datos `DB_PASS=110905`) expuestas.
+- **Sugerencia técnica:** Eliminar el archivo `.env` del control de versiones (usar `git rm --cached .env`), mantener solo `.env.example` y rotar las contraseñas de la base de datos inmediatamente.
 
-## 🏗️ 1. Arquitectura Base y Core (100% Implementado)
-La plataforma no usa frameworks, está construida en **PHP Puro (MVC) + PostgreSQL**:
-*   **Enrutamiento Inteligente (`src/Core/Router.php`)**: Administra peticiones GET/POST. Soporta Middlewares interceptores.
-*   **Autoloader PSR-4 (`public/index.php`)**: Todas las clases del namespace `App\` se autocargan desde `/src`, evitando `require` manuales constantes.
-*   **Conexión Database (`src/Config/Database.php`)**: Conexión Singleton por PDO.
-*   **Clase Abstracta Model (`src/Core/Model.php`)**: Contiene utilidades genéricas (`all()`, `find()`, `where()`) para agilizar las consultas por PDO e impedir Inyección SQL.
-*   **Controlador Base (`src/Core/Controller.php`)**: Posee el motor ligero de renderizado (`$this->render()`) que inyecta variables hacia las plantillas y empaqueta las utilidades.
+## 2. Exposición de Información por Modo Debug (Display Errors)
+- **Severidad:** Crítica
+- **Archivo:** `public/index.php` (Líneas 4-6)
+- **Descripción:** Las directivas `display_errors` y `display_startup_errors` están activadas forzosamente en el código (`ini_set('display_errors', '1');`), lo cual expone rutas internas y configuraciones del servidor a los usuarios finales en caso de fallos.
+- **Sugerencia técnica:** Cambiar a `ini_set('display_errors', '0');` en entornos de producción y usar `error_log()` para registrar los errores internamente.
 
-## 🔒 2. Seguridad y Sesiones (100% Implementado)
-La app implementa estrictos controles Anti-OWASP Top 10:
-*   **AuthMiddleware**: Las rutas `/dashboard`, `/citas` y `/medicamentos` redirigen a invitados hacia `/login`.
-*   **CSRF Protection**: Función global `csrf_token()` e `<input type="hidden">` implementada y validada obligatoriamente en todo formulario POST.
-*   **Mitigación XSS / Hijacking**: Función de escape `e()` (htmlspecialchars) para variables. Cookies de sesión forzadas a `HttpOnly` y `SameSite=Strict`.
-*   **Validación IDOR**: Los CRUDs (como `marcarTomaComoRealizada` de Medicamentos) validan que el elemento modificado pertenezca legítimamente al `$paciente['id']` extraído desde la sesión, ignorando el input del cliente.
+## 3. Rate Limiting Basado en Sesiones (Bypass Fácil)
+- **Severidad:** Media
+- **Archivo:** `src/Controllers/AuthController.php` (Líneas 87-101) y `src/Controllers/RecoveryController.php` (Líneas 28-40)
+- **Descripción:** El control de límite de intentos (rate limiting) para el login y recuperación de contraseña se basa únicamente en variables de sesión (`$_SESSION`). Un atacante puede evadir esta protección (fuerza bruta) simplemente eliminando su cookie de sesión en cada intento.
+- **Sugerencia técnica:** Implementar el rate limiting basado en la dirección IP (`$_SERVER['REMOTE_ADDR']`) y/o el correo electrónico objetivo, almacenando los intentos en la base de datos o en caché (Redis/Memcached).
 
-## 👥 3. Módulos de Usuario y Autenticación (100% Implementado)
-*   **`AuthController`**: Permite Registro (Hashea con Bcrypt, crea el `Usuario` e inmediatamente el `Paciente` de forma transaccional) y Login. 
-*   **`RecoveryController`**: Genera tokens temporales (`bin2hex`) de 15 minutos que se insertan en `tokens_recuperacion` para forzar restablecimiento de clave.
+## 4. Exposición de Detalles Internos en Errores de Base de Datos
+- **Severidad:** Media
+- **Archivo:** `config/Database.php` (Líneas 31-47)
+- **Descripción:** En la captura de excepciones PDO (`catch(\Throwable $e)`), se inyecta y muestra el mensaje técnico del error directamente en la vista HTML (`$e->getMessage()`). Esto revela detalles de la infraestructura, usuarios o posibles esquemas de BD.
+- **Sugerencia técnica:** Registrar el detalle del error en un archivo de logs y mostrar al usuario únicamente un mensaje genérico ("Ocurrió un problema de conexión").
 
-## 🏥 4. Módulos Clínicos (Vistas Integradas y Funcionales)
-Toda la **Fase 3 está completada**. Las interfaces HTML (Tailwind CSS) reaccionan a los datos:
-*   **Dashboard (`/dashboard`)**: Lee de 5 modelos en tiempo real. Cruza los datos de `registro_tomas` con `medicamentos` y despliega la agenda del día. Muestra datos vitales y botones móviles para familiares (`ContactoEmergencia`).
-*   **Módulo Medicamentos (`/medicamentos`)**: Listado general y Formulario de altas. La lógica `marcarTomaComoRealizada` en el dashboard está programada.
-*   **Módulo Citas (`/citas`)**: Formulario para agendar visitas categorizando por especialidad (`cita_medica`) o `laboratorio`. 
-*   **Ficha de Emergencia (`/emergencia?token=xxx`)**: Vista móvil, pública, libre de navegación, que se alimenta con un identificador (UUID) único del paciente, mostrando alergias, sangre y botones directos de llamada a sus tutores.
+## 5. Problema de Rendimiento: Consultas N+1 (N+1 Query Problem)
+- **Severidad:** Media
+- **Archivo:** `src/Models/Medicamento.php` (Líneas 57-100)
+- **Descripción:** En el método `generarTomasDiarias`,## Fase 6: Arquitectura Integral, Concurrencia y Steppers Médicos (COMPLETADA)
+* **Objetivo:** Refactorizar módulos faltantes, implementar control de concurrencia (transacciones), mejorar el registro clínico para UX Senior y endurecer seguridad (SOS persistente, Cron jobs).
+* **Estado:** Integración arquitectónica finalizada.
+* **Componentes:**
+  * **Servicios (SRP):** `SaludEvaluatorService` creado para verificar límites fisiológicos (Two-Step Verification).
+  * **Concurrencia DB:** Las tomas en `MedicamentoController` ahora emplean transacciones transaccionales, evitando descuentos dobles en el inventario de medicamentos.
+  * **UX Senior (Steppers):** Formulario escalonado para glucosa, presión y dolor con botones gigantes en `stepper.php`. Control de tomas dividido en Mañana, Tarde, Noche (`control_tomas.php`).
+  * **Emergencias:** Botón global flotante añadido al layout (`header.php`) con modal seguro (contador de 3 segundos) y retención del token SOS.
+  * **Jobs Automáticos:** Cron job (`bin/cron_inactividad.php`) habilitado para buscar tomas no realizadas y constantes omitidas durante 24h, enviando alertas por email a cuidadores.
+  * **Reportes (PDF):** Se migró a la API de QuickChart para generar resúmenes con gráficos 100% compatibles con Dompdf usando únicamente CSS 2.1 estándar y tablas HTML.
+* **Estado Base de Datos:** Base de datos Postgres refactorizada con éxito mediante `refactor_db_fase6.php` (ampliando `registro_salud_diario` y `medicamentos`, creando `tomas_historial` y `codigos_vinculacion`). múltiple (`INSERT INTO ... VALUES (...), (...), ...`).
 
----
+## 6. Archivo Composer Vacío
+- **Severidad:** Baja
+- **Archivo:** `composer.json` (Línea 1)
+- **Descripción:** El manifiesto `composer.json` existe en la raíz del proyecto pero está completamente vacío (0 bytes), lo que romperá cualquier intento de ejecución de herramientas de PHP o integraciones.
 
-## 🔎 Áreas de Mejora para la Fase 4 (Refinamiento y Producción)
-Con las Fases 1, 2 y 3 finalizadas, el aplicativo funciona lógicamente. Sin embargo, para escalar a un despliegue serio (Producción), se deben aplicar estas mejoras:
 
-- [ ] **Dockerización**: Configurar `Dockerfile` y `docker-compose.yml` para orquestar los contenedores (PHP-FPM, Nginx/Apache, y PostgreSQL). Indispensable para no depender de XAMPP/WAMP local.
-- [ ] **Validación de Formularios Avanzada**: Reforzar el backend para manejar errores de input (ej. fechas pasadas en citas, campos vacíos) devolviendo los errores amigablemente a la UI.
-- [ ] **UX / Interacciones JS**: Agregar *SweetAlert* o *Toasters* (Notificaciones) usando JavaScript para confirmar acciones (ej. "¡Cita guardada!") sin que el usuario sufra recargas bruscas o se desoriente.
-- [ ] **Paginación**: Si el paciente lleva un año usando la app, cargar todas sus citas pasadas volverá lenta la consulta. Hay que paginar el listado de Citas o limitarlo.
-- [ ] **Scripts Seeders (Migraciones)**: Automatizar la creación de tablas y datos semilla de doctores y contactos de prueba para que cualquier programador pueda desplegar en segundos.

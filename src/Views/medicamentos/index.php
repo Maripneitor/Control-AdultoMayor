@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VitalSenior - Mis Medicamentos</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body class="bg-slate-50 text-slate-900 font-sans min-h-screen">
     <!-- Header reutilizado del Dashboard -->
@@ -22,6 +23,24 @@
     </header>
 
     <main class="max-w-7xl mx-auto p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <?php if (!empty($flash)): ?>
+            <?php 
+                $colors = [
+                    'success' => 'bg-emerald-100 border-emerald-500 text-emerald-800',
+                    'warning' => 'bg-amber-100 border-amber-500 text-amber-800',
+                    'danger'  => 'bg-rose-100 border-rose-500 text-rose-800',
+                    'info'    => 'bg-blue-100 border-blue-500 text-blue-800'
+                ];
+                $alertStyle = $colors[$flash['type']] ?? $colors['info'];
+            ?>
+            <div class="lg:col-span-3 mb-4">
+                <div class="border-l-4 p-4 rounded-r-lg shadow-sm flex items-center justify-between <?= $alertStyle; ?>" role="alert">
+                    <span class="text-base font-medium"><?= htmlspecialchars($flash['message']); ?></span>
+                    <button onclick="this.parentElement.remove()" class="text-lg font-bold ml-4 p-1 hover:opacity-75 focus:outline-none">&times;</button>
+                </div>
+            </div>
+        <?php endif; ?>
+
         <!-- Columna 1 y 2: Lista de Medicamentos -->
         <section class="lg:col-span-2 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
             <h2 class="text-lg font-bold text-slate-800 mb-4">Medicamentos Activos</h2>
@@ -43,6 +62,10 @@
                                         <p class="text-xs text-slate-500 mt-1 italic">"<?= e($med['instrucciones']) ?>"</p>
                                     <?php endif; ?>
                                 </div>
+                            </div>
+                            <div class="mt-4 sm:mt-0 flex gap-2">
+                                <button onclick="confirmarAccion('pausar', <?= e((string)$med['id']) ?>)" class="px-3 py-1.5 bg-amber-50 text-amber-600 text-xs font-semibold rounded-lg border border-amber-200 hover:bg-amber-100 transition">Pausar</button>
+                                <button onclick="confirmarAccion('eliminar', <?= e((string)$med['id']) ?>)" class="px-3 py-1.5 bg-red-50 text-red-600 text-xs font-semibold rounded-lg border border-red-200 hover:bg-red-100 transition">Eliminar</button>
                             </div>
                         </div>
                     <?php endforeach; ?>
@@ -83,5 +106,30 @@
             </form>
         </section>
     </main>
+
+    <script>
+        function confirmarAccion(accion, id) {
+            const mensajes = {
+                pausar: { title: '¿Pausar tratamiento?', text: 'El medicamento dejará de generar recordatorios diarios.' },
+                eliminar: { title: '¿Eliminar medicamento?', text: 'Esta acción no se puede deshacer y borrará el historial.' }
+            };
+
+            Swal.fire({
+                title: mensajes[accion].title,
+                text: mensajes[accion].text,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: accion === 'eliminar' ? '#ef4444' : '#f59e0b',
+                cancelButtonColor: '#94a3b8',
+                confirmButtonText: 'Sí, proceder',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Aquí iría el submit de un form oculto o fetch request
+                    Swal.fire('Completado', 'La acción se realizó con éxito.', 'success');
+                }
+            });
+        }
+    </script>
 </body>
 </html>

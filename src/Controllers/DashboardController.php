@@ -8,6 +8,7 @@ use App\Models\Medicamento;
 use App\Models\CitaLaboratorio;
 use App\Models\Doctor;
 use App\Models\ContactoEmergencia;
+use App\Models\Cuidador;
 
 class DashboardController {
     private Paciente $pacienteModel;
@@ -15,6 +16,7 @@ class DashboardController {
     private CitaLaboratorio $citaModel;
     private Doctor $doctorModel;
     private ContactoEmergencia $contactoModel;
+    private Cuidador $cuidadorModel;
 
     public function __construct() {
         $this->pacienteModel = new Paciente();
@@ -22,21 +24,63 @@ class DashboardController {
         $this->citaModel = new CitaLaboratorio();
         $this->doctorModel = new Doctor();
         $this->contactoModel = new ContactoEmergencia();
+        $this->cuidadorModel = new Cuidador();
     }
 
     public function index(): void {
         $userId = (int)($_SESSION['user_id'] ?? 0);
 
-        // 1. Obtener datos del paciente vinculado al usuario
-        $paciente = $this->pacienteModel->findByUserId($userId);
+        // Si se solicita cambio de paciente
+        if (isset($_GET['seleccionar_paciente'])) {
+            $nuevoId = (int)$_GET['seleccionar_paciente'];
+            if (\App\Middlewares\AuthMiddleware::autorizarAccesoPaciente($nuevoId, $userId)) {
+                $_SESSION['paciente_activo_id'] = $nuevoId;
+                header('Location: ' . APP_URL . '/dashboard');
+                exit;
+            }
+        }
 
-        if (!$paciente) {
-            $_SESSION['error'] = 'No se encontró un expediente asociado a esta cuenta.';
+        // Obtener todos los pacientes vinculados (propios y asignados como cuidador)
+        $pacientePropio = $this->pacienteModel->findByUserId($userId);
+        $pacientesComoCuidador = $this->cuidadorModel->obtenerPacientesPorCuidador($userId);
+        
+        $todosLosPacientes = [];
+        if ($pacientePropio) {
+            $todosLosPacientes[] = $pacientePropio;
+        }
+        foreach ($pacientesComoCuidador as $pc) {
+            // Prevenir duplicados si se da el caso
+            if (!in_array($pc['id'], array_column($todosLosPacientes, 'id'))) {
+                $todosLosPacientes[] = $pc;
+            }
+        }
+
+        if (empty($todosLosPacientes)) {
+            $this->setFlash('danger', 'No se encontró un expediente asociado a esta cuenta.');
             header('Location: ' . APP_URL . '/login');
             exit;
         }
 
-        $pacienteId = (int)$paciente['id'];
+        // Determinar paciente activo
+        $pacienteActivoId = (int)($_SESSION['paciente_activo_id'] ?? $todosLosPacientes[0]['id']);
+        $_SESSION['paciente_activo_id'] = $pacienteActivoId;
+
+        $paciente = null;
+        foreach ($todosLosPacientes as $p) {
+            if ($p['id'] == $pacienteActivoId) {
+                $paciente = $p;
+                break;
+            }
+        }
+
+        if (!$paciente) {
+            // Si por alguna razón el activo no está en la lista (ej. se quitó permiso), resetear
+            $paciente = $todosLosPacientes[0];
+            $pacienteActivoId = (int)$paciente['id'];
+            $_SESSION['paciente_activo_id'] = $pacienteActivoId;
+        }
+
+        $pacienteId = $pacienteActivoId;
 
         // 1.5. Generar tomas dinámicamente si no existen hoy
         $this->medicamentoModel->generarTomasDiarias($pacienteId);
