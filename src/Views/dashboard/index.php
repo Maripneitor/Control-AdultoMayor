@@ -132,11 +132,15 @@
                                 </p>
                             </div>
                         </div>
-                        <a href="<?= APP_URL ?>/medicamentos/control" 
-                           class="tap-bounce touch-min w-full sm:w-auto px-5 py-2.5 bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white font-bold text-xs sm:text-sm rounded-xl shadow-md shadow-rose-600/20 transition-all flex items-center justify-center space-x-1.5 whitespace-nowrap self-stretch sm:self-center">
-                            <span>Gestionar Toma</span>
-                            <span>→</span>
-                        </a>
+                        <form action="<?= APP_URL ?>/medicamentos/toma" method="POST" class="inline m-0 self-stretch sm:self-center">
+                            <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
+                            <input type="hidden" name="toma_id" value="<?= (int)$ad['id'] ?>">
+                            <input type="hidden" name="accion" value="justificar_retraso">
+                            <button type="submit" class="tap-bounce touch-min w-full sm:w-auto px-5 py-2.5 bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white font-bold text-xs sm:text-sm rounded-xl shadow-md shadow-rose-600/20 transition-all flex items-center justify-center space-x-1.5 whitespace-nowrap cursor-pointer">
+                                <span>Gestionar Toma</span>
+                                <span>→</span>
+                            </button>
+                        </form>
                     </div>
                 <?php endforeach; ?>
 

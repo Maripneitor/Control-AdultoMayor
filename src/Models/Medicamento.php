@@ -22,7 +22,7 @@ class Medicamento extends Model {
 
     public function getTodayDoses(int $pacienteId): array {
         $stmt = $this->db->prepare("
-            SELECT rt.id AS registro_id, m.nombre_comercial, m.nombre_comercial AS medicamento_nombre, m.dosis, m.dosis_por_toma, m.color_distintivo, m.forma, rt.momento_dia, rt.estado, rt.fecha_programada, rt.hora_programada
+            SELECT rt.id AS registro_id, rt.id, m.nombre_comercial, m.nombre_comercial AS medicamento_nombre, m.dosis, m.dosis_por_toma, m.color_distintivo, m.forma, rt.momento_dia, rt.estado, rt.fecha_programada, rt.hora_programada, rt.tomado_at
             FROM tomas_historial rt
             JOIN medicamentos m ON rt.medicamento_id = m.id
             WHERE m.paciente_id = :pid 

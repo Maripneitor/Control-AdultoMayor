@@ -224,11 +224,15 @@ $roleLabel = match($userRole) {
                                 </p>
                             </div>
                         </div>
-                        <a href="<?= APP_URL ?>/medicamentos/control" 
-                           class="tap-bounce touch-min shrink-0 px-3.5 py-2 bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white font-bold text-xs rounded-xl shadow-xs transition-all flex items-center gap-1 whitespace-nowrap">
-                            <span>Gestionar</span>
-                            <span>→</span>
-                        </a>
+                        <form action="<?= APP_URL ?>/medicamentos/toma" method="POST" class="inline m-0 shrink-0">
+                            <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
+                            <input type="hidden" name="toma_id" value="<?= (int)$ad['id'] ?>">
+                            <input type="hidden" name="accion" value="justificar_retraso">
+                            <button type="submit" class="tap-bounce touch-min px-3.5 py-2 bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white font-bold text-xs rounded-xl shadow-xs transition-all flex items-center gap-1 whitespace-nowrap cursor-pointer">
+                                <span>Gestionar Toma</span>
+                                <span>→</span>
+                            </button>
+                        </form>
                     </div>
                 <?php endforeach; ?>
 
@@ -352,10 +356,11 @@ $roleLabel = match($userRole) {
                 <?php else: ?>
                     <div class="space-y-3">
                         <?php foreach ($tomasDelDia as $toma): 
-                            $estado = $toma['estado'] ?? 'pendiente';
-                            $esTomada = $estado === 'tomada' || $estado === 'tomado';
+                            $tomaId = (int)($toma['registro_id'] ?? ($toma['id'] ?? 0));
+                            $estado = strtolower((string)($toma['estado'] ?? 'pendiente'));
+                            $esTomada = in_array($estado, ['tomada', 'tomado'], true);
                             $esOmitida = $estado === 'omitido';
-                            $esPospuesta = $estado === 'pospuesta';
+                            $esPospuesta = in_array($estado, ['pospuesto', 'pospuesta'], true);
                         ?>
                             <div class="p-3.5 rounded-2xl border <?= $esTomada ? 'bg-emerald-50/70 border-emerald-200' : ($esOmitida ? 'bg-rose-50/70 border-rose-200' : ($esPospuesta ? 'bg-amber-50/70 border-amber-200' : 'bg-slate-50 border-slate-200/80')) ?> flex items-center justify-between gap-3">
                                 <div class="min-w-0">
@@ -369,26 +374,39 @@ $roleLabel = match($userRole) {
                                             <span class="text-[10px] font-bold text-rose-700 bg-rose-100 px-1.5 py-0.5 rounded">Omitida</span>
                                         <?php elseif ($esPospuesta): ?>
                                             <span class="text-[10px] font-bold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded">Pospuesta</span>
+                                        <?php else: ?>
+                                            <span class="text-[10px] font-bold text-slate-600 bg-slate-200/80 px-1.5 py-0.5 rounded">Pendiente</span>
                                         <?php endif; ?>
                                     </div>
-                                    <p class="text-xs sm:text-sm font-bold text-slate-800 truncate"><?= e($toma['medicamento_nombre']) ?></p>
+                                    <p class="text-xs sm:text-sm font-bold text-slate-800 truncate"><?= e($toma['medicamento_nombre'] ?? $toma['nombre_comercial'] ?? '') ?></p>
                                     <p class="text-[11px] text-slate-500">Dosis: <?= e($toma['dosis']) ?></p>
                                 </div>
 
-                                <div class="flex items-center gap-1 shrink-0">
-                                    <?php if (!$esTomada): ?>
+                                <div class="flex items-center gap-1.5 shrink-0">
+                                    <?php if ($esOmitida): ?>
                                         <form action="<?= APP_URL ?>/medicamentos/toma" method="POST" class="inline m-0">
                                             <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
-                                            <input type="hidden" name="toma_id" value="<?= $toma['id'] ?>">
-                                            <button type="submit" class="tap-bounce touch-min w-10 h-10 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold flex items-center justify-center shadow-xs transition" title="Marcar como tomada">
-                                                ✓
+                                            <input type="hidden" name="toma_id" value="<?= $tomaId ?>">
+                                            <input type="hidden" name="accion" value="justificar_retraso">
+                                            <button type="submit" class="tap-bounce touch-min px-2.5 py-1.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-xl shadow-xs transition flex items-center gap-1 cursor-pointer" title="Registrar toma tardía">
+                                                <svg class="w-3.5 h-3.5" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                                <span>Toma Tardía</span>
+                                            </button>
+                                        </form>
+                                    <?php elseif (!$esTomada): ?>
+                                        <form action="<?= APP_URL ?>/medicamentos/toma" method="POST" class="inline m-0">
+                                            <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
+                                            <input type="hidden" name="toma_id" value="<?= $tomaId ?>">
+                                            <input type="hidden" name="accion" value="marcar_tomada">
+                                            <button type="submit" class="tap-bounce touch-min w-10 h-10 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold flex items-center justify-center shadow-xs transition cursor-pointer" title="Marcar como tomada">
+                                                <svg class="w-5 h-5" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
                                             </button>
                                         </form>
                                     <?php else: ?>
                                         <form action="<?= APP_URL ?>/medicamentos/deshacer" method="POST" class="inline m-0">
                                             <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
-                                            <input type="hidden" name="toma_id" value="<?= $toma['id'] ?>">
-                                            <button type="submit" class="tap-bounce px-2 py-1 bg-slate-200 hover:bg-slate-300 text-slate-700 text-[10px] font-bold rounded-lg transition" title="Deshacer toma">
+                                            <input type="hidden" name="toma_id" value="<?= $tomaId ?>">
+                                            <button type="submit" class="tap-bounce px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-[11px] font-bold rounded-xl border border-slate-200/80 transition cursor-pointer" title="Deshacer toma">
                                                 Deshacer
                                             </button>
                                         </form>

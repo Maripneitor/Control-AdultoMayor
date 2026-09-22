@@ -138,14 +138,19 @@ class MedicamentoController extends Controller {
     public function marcarToma(): void {
         \App\Middlewares\AuthMiddleware::handle();
 
+        $redirectUrl = (!empty($_SERVER['HTTP_REFERER']) && str_contains($_SERVER['HTTP_REFERER'], '/medicamentos/control')) 
+            ? (APP_URL . '/medicamentos/control') 
+            : (APP_URL . '/dashboard');
+
         if (!validateCsrfToken($_POST['csrf_token'] ?? null)) {
             $this->setFlash('danger', 'Token CSRF inválido o sesión expirada.');
-            header('Location: ' . APP_URL . '/dashboard');
+            header('Location: ' . $redirectUrl);
             exit;
         }
 
         $userId = (int)($_SESSION['user_id'] ?? 0);
-        $registroId = (int)($_POST['registro_id'] ?? 0);
+        $registroId = (int)($_POST['toma_id'] ?? ($_POST['registro_id'] ?? 0));
+        $accion = trim($_POST['accion'] ?? 'marcar_tomada');
 
         if ($registroId > 0) {
             try {
@@ -159,7 +164,7 @@ class MedicamentoController extends Controller {
                 if (!$toma) {
                     $db->rollBack();
                     $this->setFlash('warning', 'La toma solicitada no existe.');
-                    header('Location: ' . APP_URL . '/dashboard');
+                    header('Location: ' . $redirectUrl);
                     exit;
                 }
 
@@ -168,7 +173,9 @@ class MedicamentoController extends Controller {
 
                 if ($toma['estado'] !== 'tomado') {
                     $nota = null;
-                    if (!empty($toma['hora_programada'])) {
+                    if ($accion === 'justificar_retraso' || $toma['estado'] === 'omitido') {
+                        $nota = 'Tomada con retraso';
+                    } elseif (!empty($toma['hora_programada'])) {
                         $horaProgramada = strtotime($toma['fecha_programada'] . ' ' . $toma['hora_programada']);
                         $ahora = time();
                         $diff = ($ahora - $horaProgramada) / 60;
@@ -187,18 +194,19 @@ class MedicamentoController extends Controller {
                     $medicamento = $stmtMed->fetch(\PDO::FETCH_ASSOC);
 
                     if ($medicamento) {
-                        $nuevoStock = max(0, $medicamento['stock_actual'] - $medicamento['dosis_por_toma']);
+                        $dosisADescontar = max(1, (int)($medicamento['dosis_por_toma'] ?? 1));
+                        $nuevoStock = max(0, (int)$medicamento['stock_actual'] - $dosisADescontar);
                         $stmtUpdateMed = $db->prepare("UPDATE medicamentos SET stock_actual = :stock WHERE id = :mid");
                         $stmtUpdateMed->execute(['stock' => $nuevoStock, 'mid' => $medId]);
 
-                        if ($nuevoStock <= $medicamento['stock_minimo_alerta']) {
+                        if ($nuevoStock <= (int)$medicamento['stock_minimo_alerta']) {
                             $_SESSION['flash_inventory_alert'] = "Te quedan dosis limitadas para este medicamento. Recuerda surtir tu receta.";
                         }
                     }
 
                     $db->commit();
                     $usuarioModel = new \App\Models\Usuario();
-                    $usuarioModel->registrarAuditoria('TOMA_MARCADA', "Toma $registroId marcada como tomada.");
+                    $usuarioModel->registrarAuditoria('TOMA_MARCADA', "Toma $registroId marcada como tomada (acción: $accion).");
                     $this->setFlash('success', 'Toma registrada correctamente.');
                 } else {
                     $db->rollBack();
@@ -213,7 +221,7 @@ class MedicamentoController extends Controller {
             }
         }
 
-        header('Location: ' . APP_URL . '/dashboard');
+        header('Location: ' . $redirectUrl);
         exit;
     }
 
@@ -225,16 +233,20 @@ class MedicamentoController extends Controller {
     public function posponerToma(): void {
         \App\Middlewares\AuthMiddleware::handle();
 
+        $redirectUrl = (!empty($_SERVER['HTTP_REFERER']) && str_contains($_SERVER['HTTP_REFERER'], '/medicamentos/control')) 
+            ? (APP_URL . '/medicamentos/control') 
+            : (APP_URL . '/dashboard');
+
         if (!validateCsrfToken($_POST['csrf_token'] ?? null)) {
             $this->setFlash('danger', 'Token CSRF inválido.');
-            header('Location: ' . APP_URL . '/dashboard');
+            header('Location: ' . $redirectUrl);
             exit;
         }
 
         $userId = (int)($_SESSION['user_id'] ?? 0);
-        $registroId = trim($_POST['registro_id'] ?? '');
+        $registroId = (int)($_POST['toma_id'] ?? ($_POST['registro_id'] ?? 0));
 
-        if (!empty($registroId)) {
+        if ($registroId > 0) {
             try {
                 $db = \Config\Database::getInstance()->getConnection();
                 $db->beginTransaction();
@@ -251,7 +263,7 @@ class MedicamentoController extends Controller {
                 if (!$toma) {
                     $db->rollBack();
                     $this->setFlash('warning', 'La toma solicitada no existe.');
-                    header('Location: ' . APP_URL . '/dashboard');
+                    header('Location: ' . $redirectUrl);
                     exit;
                 }
 
@@ -261,7 +273,7 @@ class MedicamentoController extends Controller {
                 if (!in_array($toma['estado'], ['pendiente', 'pospuesto'], true)) {
                     $db->rollBack();
                     $this->setFlash('warning', 'La toma no se encuentra pendiente para ser pospuesta.');
-                    header('Location: ' . APP_URL . '/dashboard');
+                    header('Location: ' . $redirectUrl);
                     exit;
                 }
 
@@ -312,7 +324,7 @@ class MedicamentoController extends Controller {
                             'danger', 
                             "⚠️ Bloqueo de Seguridad Clínica: No es posible posponer la toma 30 minutos más. Quedaría a menos de 2 horas (margen de " . round(max(0, $margenMinutos)) . " min) de tu próxima dosis programada de las {$horaProximaLegible} UTC, existiendo riesgo de sobredosis o acumulación tóxica. Por favor marca la dosis como tomada o consulta a tu médico."
                         );
-                        header('Location: ' . APP_URL . '/dashboard');
+                        header('Location: ' . $redirectUrl);
                         exit;
                     }
                 }
@@ -346,7 +358,7 @@ class MedicamentoController extends Controller {
             }
         }
 
-        header('Location: ' . APP_URL . '/dashboard');
+        header('Location: ' . $redirectUrl);
         exit;
     }
 
@@ -357,16 +369,20 @@ class MedicamentoController extends Controller {
     public function deshacerToma(): void {
         \App\Middlewares\AuthMiddleware::handle();
 
+        $redirectUrl = (!empty($_SERVER['HTTP_REFERER']) && str_contains($_SERVER['HTTP_REFERER'], '/medicamentos/control')) 
+            ? (APP_URL . '/medicamentos/control') 
+            : (APP_URL . '/dashboard');
+
         if (!validateCsrfToken($_POST['csrf_token'] ?? null)) {
             $this->setFlash('danger', 'Token CSRF inválido.');
-            header('Location: ' . APP_URL . '/dashboard');
+            header('Location: ' . $redirectUrl);
             exit;
         }
 
         $userId = (int)($_SESSION['user_id'] ?? 0);
-        $registroId = trim($_POST['registro_id'] ?? '');
+        $registroId = (int)($_POST['toma_id'] ?? ($_POST['registro_id'] ?? 0));
 
-        if (!empty($registroId)) {
+        if ($registroId > 0) {
             try {
                 $db = \Config\Database::getInstance()->getConnection();
                 $db->beginTransaction();
@@ -378,7 +394,7 @@ class MedicamentoController extends Controller {
                 if (!$toma) {
                     $db->rollBack();
                     $this->setFlash('warning', 'La toma solicitada no existe.');
-                    header('Location: ' . APP_URL . '/dashboard');
+                    header('Location: ' . $redirectUrl);
                     exit;
                 }
 
@@ -388,7 +404,7 @@ class MedicamentoController extends Controller {
                 if ($toma['estado'] !== 'tomado') {
                     $db->rollBack();
                     $this->setFlash('danger', 'Solo es posible deshacer tomas que figuren como tomadas.');
-                    header('Location: ' . APP_URL . '/dashboard');
+                    header('Location: ' . $redirectUrl);
                     exit;
                 }
 
@@ -396,7 +412,7 @@ class MedicamentoController extends Controller {
                 if (empty($toma['tomado_at'])) {
                     $db->rollBack();
                     $this->setFlash('danger', 'No se dispone del registro de tiempo de la toma.');
-                    header('Location: ' . APP_URL . '/dashboard');
+                    header('Location: ' . $redirectUrl);
                     exit;
                 }
 
@@ -407,7 +423,7 @@ class MedicamentoController extends Controller {
                 if ($diferenciaMinutos > 15) {
                     $db->rollBack();
                     $this->setFlash('warning', 'La ventana de 15 minutos para deshacer la toma ha expirado.');
-                    header('Location: ' . APP_URL . '/dashboard');
+                    header('Location: ' . $redirectUrl);
                     exit;
                 }
 
@@ -438,7 +454,7 @@ class MedicamentoController extends Controller {
             }
         }
 
-        header('Location: ' . APP_URL . '/dashboard');
+        header('Location: ' . $redirectUrl);
         exit;
     }
 }
