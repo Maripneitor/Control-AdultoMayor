@@ -88,6 +88,8 @@ $router->get('/expediente', 'PacienteController@expediente', [AuthMiddleware::cl
 $router->post('/expediente/actualizar', 'PacienteController@actualizarExpediente', [AuthMiddleware::class]);
 $router->post('/expediente/anadir_doctor', 'PacienteController@anadirDoctor', [AuthMiddleware::class]);
 $router->post('/expediente/eliminar_doctor', 'PacienteController@eliminarDoctor', [AuthMiddleware::class]);
+$router->post('/expediente/anadir_contacto', 'PacienteController@anadirContacto', [AuthMiddleware::class]);
+$router->post('/expediente/eliminar_contacto', 'PacienteController@eliminarContacto', [AuthMiddleware::class]);
 $router->post('/expediente/archivos/subir', 'ExpedienteArchivosController@subirArchivo', [AuthMiddleware::class]);
 $router->get('/expediente/archivos/descargar', 'ExpedienteArchivosController@descargarArchivo', [AuthMiddleware::class]);
 

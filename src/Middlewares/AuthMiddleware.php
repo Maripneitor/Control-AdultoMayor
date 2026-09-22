@@ -100,7 +100,7 @@ class AuthMiddleware {
         }
 
         $userRole = $_SESSION['user_role'] ?? '';
-        if ($userRole === 'admin') {
+        if (in_array($userRole, ['admin', 'administrador'], true)) {
             return true;
         }
 
@@ -113,9 +113,9 @@ class AuthMiddleware {
                 return true;
             }
 
-            // Comprobar en vinculaciones
-            $stmtVinc = $db->prepare("SELECT 1 FROM vinculaciones WHERE familiar_id = :fid AND paciente_id = :pid LIMIT 1");
-            $stmtVinc->execute([':fid' => $userId, ':pid' => $pacienteId]);
+            // Comprobar en paciente_cuidador
+            $stmtVinc = $db->prepare("SELECT 1 FROM paciente_cuidador WHERE usuario_cuidador_id = :uid AND paciente_id = :pid LIMIT 1");
+            $stmtVinc->execute([':uid' => $userId, ':pid' => $pacienteId]);
             if ($stmtVinc->fetch()) {
                 return true;
             }
@@ -128,7 +128,7 @@ class AuthMiddleware {
 
     /**
      * Aislamiento de datos Multitenant y Ofuscación de Seguridad.
-     * Garantiza que el usuario en sesión es el propio paciente o un familiar con vínculo activo.
+     * Garantiza que el usuario en sesión es el propio paciente o un familiar/cuidador con vínculo activo.
      * Si no tiene acceso, devuelve un error 404 (en lugar de 403) para ofuscar la existencia del recurso.
      *
      * @param string|int $pacienteId Identificador del paciente a consultar
@@ -137,7 +137,7 @@ class AuthMiddleware {
     public static function requirePatientAccess($pacienteId): array {
         self::handle();
 
-        $userId = $_SESSION['user_id'] ?? null;
+        $userId = (int)($_SESSION['user_id'] ?? 0);
         $userRole = $_SESSION['user_role'] ?? '';
 
         if (!$userId || empty($pacienteId)) {
@@ -147,7 +147,7 @@ class AuthMiddleware {
         $db = Database::getInstance()->getConnection();
 
         // 1. Rol Administrador: Acceso total de auditoría y soporte
-        if ($userRole === 'admin') {
+        if (in_array($userRole, ['admin', 'administrador'], true)) {
             return [
                 'puede_ver' => true,
                 'puede_editar' => true,
@@ -156,46 +156,49 @@ class AuthMiddleware {
             ];
         }
 
-        // 2. Rol Adulto Mayor: Verificar si es el dueño directo del perfil clínico
-        if ($userRole === 'adulto_mayor') {
-            $stmt = $db->prepare("SELECT id FROM pacientes WHERE id = :pid AND usuario_id = :uid LIMIT 1");
-            $stmt->execute([':pid' => $pacienteId, ':uid' => $userId]);
-            $esDuenio = (bool) $stmt->fetch();
+        // 2. Verificar si es el dueño directo del perfil clínico (paciente propio)
+        $stmt = $db->prepare("SELECT id FROM pacientes WHERE id = :pid AND usuario_id = :uid LIMIT 1");
+        $stmt->execute([':pid' => $pacienteId, ':uid' => $userId]);
+        $esDuenio = (bool) $stmt->fetch();
 
-            if ($esDuenio) {
+        if ($esDuenio) {
+            if ($userRole === 'adulto_mayor') {
                 return [
                     'puede_ver' => true,
-                    // El adulto mayor puede ver y registrar tomas, pero las modificaciones estructurales de fármacos se restringen
                     'puede_editar' => false,
                     'es_propio' => true,
                     'nivel_acceso' => 'lectura'
                 ];
+            } else {
+                return [
+                    'puede_ver' => true,
+                    'puede_editar' => true,
+                    'es_propio' => true,
+                    'nivel_acceso' => 'edicion_completa'
+                ];
             }
-
-            // Si intenta acceder a un ID ajeno, ofuscar con 404
-            self::abortWith404();
         }
 
-        // 3. Rol Familiar: Consultar la tabla vinculaciones y el nivel de acceso granular
+        // 3. Rol Familiar / Cuidador: Consultar paciente_cuidador
         $stmtVinc = $db->prepare(
-            "SELECT v.nivel_acceso, v.tipo_gestion, v.permiso_edicion 
-             FROM vinculaciones v 
-             WHERE v.familiar_id = :fid AND v.paciente_id = :pid 
+            "SELECT pc.nivel_acceso, pc.parentesco 
+             FROM paciente_cuidador pc 
+             WHERE pc.usuario_cuidador_id = :uid AND pc.paciente_id = :pid 
              LIMIT 1"
         );
-        $stmtVinc->execute([':fid' => $userId, ':pid' => $pacienteId]);
+        $stmtVinc->execute([':uid' => $userId, ':pid' => $pacienteId]);
         $vinculo = $stmtVinc->fetch(PDO::FETCH_ASSOC);
 
         if ($vinculo) {
-            $nivelAcceso = $vinculo['nivel_acceso'] ?? 'edicion_completa';
-            $puedeEditar = ($nivelAcceso === 'edicion_completa');
+            $nivelAcceso = $vinculo['nivel_acceso'] ?? 'tomas_y_citas';
+            $puedeEditar = in_array($nivelAcceso, ['edicion_completa', 'tomas_y_citas', 'admin'], true);
 
             return [
                 'puede_ver' => true,
                 'puede_editar' => $puedeEditar,
                 'es_propio' => false,
                 'nivel_acceso' => $nivelAcceso,
-                'tipo_gestion' => $vinculo['tipo_gestion'] ?? 'administrado'
+                'parentesco' => $vinculo['parentesco'] ?? 'Cuidador'
             ];
         }
 
@@ -227,26 +230,7 @@ class AuthMiddleware {
     /**
      * Registro estricto de eventos de auditoría clínica en PostgreSQL
      */
-    public static function logAudit(string $pacienteId, string $accion, string $detalles): void {
-        try {
-            $userId = $_SESSION['user_id'] ?? null;
-            if (!$userId) return;
-
-            $db = Database::getInstance()->getConnection();
-            $stmt = $db->prepare(
-                "INSERT INTO logs_auditoria (usuario_id, paciente_id, accion, detalles, ip_origen, user_agent, fecha_utc) 
-                 VALUES (:uid, :pid, :accion, :detalles, :ip, :ua, NOW() AT TIME ZONE 'UTC')"
-            );
-            $stmt->execute([
-                ':uid' => $userId,
-                ':pid' => $pacienteId,
-                ':accion' => $accion,
-                ':detalles' => $detalles,
-                ':ip' => $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1',
-                ':ua' => $_SERVER['HTTP_USER_AGENT'] ?? 'Desconocido'
-            ]);
-        } catch (\Throwable $e) {
-            error_log('[AuthMiddleware::logAudit Error] ' . $e->getMessage());
-        }
+    public static function logAudit($pacienteId, string $accion, string $detalles): void {
+        \App\Security\AuditLogger::log($accion, $pacienteId, $detalles);
     }
 }

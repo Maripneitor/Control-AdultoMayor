@@ -1,6 +1,6 @@
 -- ==============================================================================
--- Vitalsenior Database Schema V2 (Módulos 1-12 Integrados)
--- Características añadidas: UUIDs nativos, Auditoría UTC, Manejo OTP, y Archivos Médicos
+-- VitalSenior Database Schema V2 (Producción PostgreSQL)
+-- Características: UUIDs nativos, Auditoría Clínica UTC, Rate Limiting, Control de Inventario
 -- DBMS: PostgreSQL 13+
 -- ==============================================================================
 
@@ -8,160 +8,166 @@
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 -- ==========================================
--- 1. Usuarios, Autenticación y OTP
+-- 1. Usuarios y Control de Acceso
 -- ==========================================
-CREATE TABLE usuarios (
+CREATE TABLE IF NOT EXISTS usuarios (
     id SERIAL PRIMARY KEY,
-    nombre_completo VARCHAR(255) NOT NULL,
-    email VARCHAR(255) UNIQUE,
-    telefono VARCHAR(20) UNIQUE,
+    nombre VARCHAR(255) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    telefono VARCHAR(20),
     password_hash VARCHAR(255) NOT NULL,
-    rol VARCHAR(50) NOT NULL CHECK (rol IN ('adulto_mayor', 'familiar', 'admin')),
-    acepta_whatsapp BOOLEAN DEFAULT FALSE,
-    telefono_verificado BOOLEAN DEFAULT FALSE,
-    creado_en TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE otp_verifications (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    usuario_id INT REFERENCES usuarios(id) ON DELETE CASCADE,
-    codigo_otp VARCHAR(6) NOT NULL,
-    proposito VARCHAR(50) NOT NULL CHECK (proposito IN ('recuperacion_password', 'validacion_whatsapp')),
-    metodo VARCHAR(20) NOT NULL CHECK (metodo IN ('sms', 'whatsapp', 'email')),
-    expira_en TIMESTAMP WITH TIME ZONE NOT NULL,
-    usado BOOLEAN DEFAULT FALSE,
-    creado_en TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    rol VARCHAR(50) NOT NULL DEFAULT 'cuidador' CHECK (rol IN ('administrador', 'cuidador', 'emergencia', 'adulto_mayor')),
+    activo BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 -- ==========================================
--- 2. Pacientes (Adultos Mayores) con UUID Público
+-- 2. Pacientes (Adultos Mayores) & Ficha QR
 -- ==========================================
-CREATE TABLE pacientes (
+CREATE TABLE IF NOT EXISTS pacientes (
     id SERIAL PRIMARY KEY,
     usuario_id INT UNIQUE REFERENCES usuarios(id) ON DELETE CASCADE,
-    -- Identificador público utilizado para generar la URL del QR de Emergencia
-    uuid_publico UUID UNIQUE DEFAULT gen_random_uuid(),
-    fecha_nacimiento DATE,
+    nombre VARCHAR(100) NOT NULL,
+    apellidos VARCHAR(100) NOT NULL,
+    fecha_nacimiento DATE NOT NULL,
     genero VARCHAR(20),
     tipo_sangre VARCHAR(5) DEFAULT 'N/D',
-    peso DECIMAL(5,2),
-    altura DECIMAL(5,2),
+    alergias TEXT,
+    enfermedades_cronicas TEXT,
+    notas_cognitivas TEXT,
+    qr_token UUID UNIQUE DEFAULT gen_random_uuid(),
     codigo_vinculacion VARCHAR(10) UNIQUE,
-    -- Configuración Zona Horaria del Paciente
-    zona_horaria VARCHAR(50) DEFAULT 'UTC',
-    creado_en TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    actualizado_en TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    zona_horaria VARCHAR(50) DEFAULT 'America/Mexico_City',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 -- ==========================================
--- 3. Vinculaciones Familiares (Cuentas Administradas vs Independientes)
+-- 3. Vínculos Paciente - Cuidador / Familiar
 -- ==========================================
-CREATE TABLE vinculaciones (
-    familiar_id INT REFERENCES usuarios(id) ON DELETE CASCADE,
-    paciente_id INT REFERENCES pacientes(id) ON DELETE CASCADE,
-    es_administrador_principal BOOLEAN DEFAULT FALSE,
-    -- Indica si la cuenta es totalmente administrada por el familiar o si tiene credenciales independientes
-    tipo_gestion VARCHAR(20) DEFAULT 'compartido' CHECK (tipo_gestion IN ('compartido', 'administrado')),
-    vinculado_en TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (familiar_id, paciente_id)
-);
-
--- ==========================================
--- 4. Expediente Médico (Archivos y Diagnósticos)
--- ==========================================
-CREATE TABLE padecimientos (
+CREATE TABLE IF NOT EXISTS paciente_cuidador (
     id SERIAL PRIMARY KEY,
-    paciente_id INT REFERENCES pacientes(id) ON DELETE CASCADE,
-    nombre VARCHAR(255) NOT NULL,
-    tipo VARCHAR(50) CHECK (tipo IN ('alergia', 'enfermedad', 'cirugia', 'dispositivo_medico')),
-    severidad VARCHAR(20) DEFAULT 'moderada',
-    notas TEXT,
-    creado_en TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE doctores (
-    id SERIAL PRIMARY KEY,
-    paciente_id INT REFERENCES pacientes(id) ON DELETE CASCADE,
-    nombre_completo VARCHAR(255) NOT NULL,
-    especialidad VARCHAR(150),
-    telefono VARCHAR(20),
-    creado_en TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
-
--- Tabla para almacenar PDFs o Imágenes seguras (Archivos Médicos)
-CREATE TABLE archivos_medicos (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    paciente_id INT REFERENCES pacientes(id) ON DELETE CASCADE,
-    nombre_original VARCHAR(255) NOT NULL,
-    nombre_hash VARCHAR(255) NOT NULL, -- Nombre ofuscado en el bucket
-    mime_type VARCHAR(100) NOT NULL,
-    size_bytes INT NOT NULL,
-    tipo_documento VARCHAR(50) CHECK (tipo_documento IN ('receta', 'estudio_laboratorio', 'imagen_medica', 'otro')),
-    subido_por_usuario_id INT REFERENCES usuarios(id) ON DELETE SET NULL,
-    creado_en TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    paciente_id INT NOT NULL REFERENCES pacientes(id) ON DELETE CASCADE,
+    usuario_cuidador_id INT NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+    parentesco VARCHAR(50) DEFAULT 'Familiar',
+    nivel_acceso VARCHAR(50) DEFAULT 'edicion_completa' CHECK (nivel_acceso IN ('lectura', 'tomas_y_citas', 'edicion_completa', 'admin')),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT uq_paciente_cuidador UNIQUE (paciente_id, usuario_cuidador_id)
 );
 
 -- ==========================================
--- 5. Módulo de Medicamentos (Fechas en UTC estrictas)
+-- 4. Directorio Médico y Contactos SOS
 -- ==========================================
-CREATE TABLE medicamentos (
+CREATE TABLE IF NOT EXISTS contactos_emergencia (
     id SERIAL PRIMARY KEY,
-    paciente_id INT REFERENCES pacientes(id) ON DELETE CASCADE,
+    paciente_id INT NOT NULL REFERENCES pacientes(id) ON DELETE CASCADE,
+    nombre VARCHAR(150) NOT NULL,
+    parentesco VARCHAR(50) DEFAULT 'Familiar',
+    telefono VARCHAR(25) NOT NULL,
+    es_prioritario BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS doctores (
+    id SERIAL PRIMARY KEY,
+    paciente_id INT NOT NULL REFERENCES pacientes(id) ON DELETE CASCADE,
+    nombre VARCHAR(150) NOT NULL,
+    especialidad VARCHAR(100),
+    telefono_contacto VARCHAR(25),
+    hospital_clinica VARCHAR(150),
+    horario_atencion VARCHAR(100),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ==========================================
+-- 5. Medicamentos & Control de Inventario
+-- ==========================================
+CREATE TABLE IF NOT EXISTS medicamentos (
+    id SERIAL PRIMARY KEY,
+    paciente_id INT NOT NULL REFERENCES pacientes(id) ON DELETE CASCADE,
     nombre_comercial VARCHAR(255) NOT NULL,
     dosis VARCHAR(100) NOT NULL,
-    frecuencia_horas INT NOT NULL,
+    frecuencia_horas INT NOT NULL DEFAULT 8,
     instrucciones TEXT,
-    fecha_inicio DATE,
-    fecha_fin DATE,
+    stock_actual INT DEFAULT 0,
+    dosis_por_toma INT DEFAULT 1,
+    stock_minimo_alerta INT DEFAULT 5,
     activo BOOLEAN DEFAULT TRUE,
-    creado_en TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Historial de tomas con ventana para "Deshacer"
-CREATE TABLE tomas_historial (
+CREATE TABLE IF NOT EXISTS tomas_historial (
     id SERIAL PRIMARY KEY,
-    medicamento_id INT REFERENCES medicamentos(id) ON DELETE CASCADE,
-    paciente_id INT REFERENCES pacientes(id) ON DELETE CASCADE,
-    fecha_programada DATE NOT NULL, 
-    hora_programada TIME NOT NULL,  
-    momento_dia VARCHAR(20),
-    estado VARCHAR(20) DEFAULT 'pendiente' CHECK (estado IN ('pendiente', 'tomada', 'omitido', 'pospuesto')),
-    
-    -- Tiempos UTC para cálculos rigurosos
+    medicamento_id INT NOT NULL REFERENCES medicamentos(id) ON DELETE CASCADE,
+    paciente_id INT NOT NULL REFERENCES pacientes(id) ON DELETE CASCADE,
+    fecha_programada DATE NOT NULL,
+    hora_programada TIME NOT NULL,
+    fecha_programada_utc TIMESTAMP WITH TIME ZONE,
+    pospuesto_hasta TIMESTAMP WITH TIME ZONE,
+    estado VARCHAR(20) DEFAULT 'pendiente' CHECK (estado IN ('pendiente', 'tomada', 'omitido', 'pospuesta', 'deshecha')),
     tomado_at TIMESTAMP WITH TIME ZONE,
-    
+    deshecho_at TIMESTAMP WITH TIME ZONE,
+    recordatorio_enviado BOOLEAN DEFAULT FALSE,
     nota_incidencia TEXT,
     registrado_por_usuario_id INT REFERENCES usuarios(id) ON DELETE SET NULL,
-    creado_en TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 -- ==========================================
--- 6. Citas y Eventos Médicos
+-- 6. Registro de Salud Diario & Citas
 -- ==========================================
-CREATE TABLE citas (
+CREATE TABLE IF NOT EXISTS registro_salud_diario (
     id SERIAL PRIMARY KEY,
-    paciente_id INT REFERENCES pacientes(id) ON DELETE CASCADE,
+    paciente_id INT NOT NULL REFERENCES pacientes(id) ON DELETE CASCADE,
+    presion_sistolica INT,
+    presion_diastolica INT,
+    frecuencia_cardiaca INT,
+    glucosa DECIMAL(5,2),
+    temperatura DECIMAL(4,2),
+    nivel_dolor INT CHECK (nivel_dolor BETWEEN 0 AND 10),
+    calidad_sueno VARCHAR(50),
+    notas TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS citas_laboratorios (
+    id SERIAL PRIMARY KEY,
+    paciente_id INT NOT NULL REFERENCES pacientes(id) ON DELETE CASCADE,
     doctor_id INT REFERENCES doctores(id) ON DELETE SET NULL,
     tipo_evento VARCHAR(50) DEFAULT 'cita_medica',
     titulo VARCHAR(255) NOT NULL,
-    lugar VARCHAR(255) NOT NULL,
-    
-    -- Fecha absoluta guardada en UTC (Calculada desde el frontend)
-    fecha_hora_utc TIMESTAMP WITH TIME ZONE NOT NULL,
-    
+    lugar VARCHAR(255),
+    fecha_hora TIMESTAMP WITH TIME ZONE NOT NULL,
     notas TEXT,
-    estado VARCHAR(20) DEFAULT 'programada' CHECK (estado IN ('programada', 'completada', 'cancelada')),
-    creado_en TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 -- ==========================================
--- 7. Auditoría General (Requisito Seguridad y Logueo)
+-- 7. Seguridad: Rate Limiting & Auditoría Clínica
 -- ==========================================
-CREATE TABLE logs_auditoria (
-    id SERIAL PRIMARY KEY,
-    usuario_id INT REFERENCES usuarios(id) ON DELETE SET NULL,
+CREATE TABLE IF NOT EXISTS rate_limits (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    ip_address VARCHAR(45) NOT NULL,
     accion VARCHAR(100) NOT NULL,
-    descripcion TEXT,
-    direccion_ip VARCHAR(45),
-    creado_en TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    intentos INT DEFAULT 1,
+    primer_intento TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    ultimo_intento TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    CONSTRAINT uq_ip_accion UNIQUE (ip_address, accion)
 );
+CREATE INDEX IF NOT EXISTS idx_rate_limits_busqueda ON rate_limits(ip_address, accion, primer_intento);
+
+CREATE TABLE IF NOT EXISTS logs_auditoria (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    usuario_id INT REFERENCES usuarios(id) ON DELETE SET NULL,
+    paciente_id INT REFERENCES pacientes(id) ON DELETE CASCADE,
+    accion VARCHAR(100) NOT NULL,
+    detalles TEXT,
+    ip_origen VARCHAR(45),
+    user_agent VARCHAR(255),
+    fecha_utc TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_logs_auditoria_paciente ON logs_auditoria(paciente_id, fecha_utc DESC);
+CREATE INDEX IF NOT EXISTS idx_logs_auditoria_usuario ON logs_auditoria(usuario_id, fecha_utc DESC);
+CREATE INDEX IF NOT EXISTS idx_logs_auditoria_accion ON logs_auditoria(accion, fecha_utc DESC);
+

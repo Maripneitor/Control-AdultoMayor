@@ -19,4 +19,26 @@ class ContactoEmergencia extends Model {
         $stmt->execute(['pid' => $pacienteId]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+
+    public function agregar(array $data): bool {
+        $stmt = $this->db->prepare("
+            INSERT INTO contactos_emergencia (paciente_id, nombre, parentesco, telefono, es_prioritario) 
+            VALUES (:paciente_id, :nombre, :parentesco, :telefono, :es_prioritario)
+        ");
+        return $stmt->execute([
+            'paciente_id' => $data['paciente_id'],
+            'nombre' => $data['nombre'],
+            'parentesco' => $data['parentesco'] ?? 'Familiar',
+            'telefono' => $data['telefono'],
+            'es_prioritario' => !empty($data['es_prioritario']) ? true : false
+        ]);
+    }
+
+    public function eliminar(int $id, int $pacienteId): bool {
+        $stmt = $this->db->prepare("DELETE FROM contactos_emergencia WHERE id = :id AND paciente_id = :paciente_id");
+        return $stmt->execute([
+            'id' => $id,
+            'paciente_id' => $pacienteId
+        ]);
+    }
 }

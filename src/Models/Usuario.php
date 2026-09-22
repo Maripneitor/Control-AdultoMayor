@@ -41,9 +41,7 @@ class Usuario extends Model {
     }
 
     public function registrarAuditoria(string $accion, string $detalle): void {
-        $userId = $_SESSION['user_id'] ?? 0;
-        $fecha = date('Y-m-d H:i:s');
-        error_log("[AUDIT $fecha] UserID $userId: $accion - $detalle");
+        \App\Security\AuditLogger::log($accion, $_SESSION['paciente_activo_id'] ?? null, $detalle);
     }
 
     public function register(string $nombre, string $email, string $telefono, string $password, string $rol = 'cuidador'): int {

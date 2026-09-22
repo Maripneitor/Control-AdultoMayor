@@ -1,206 +1,489 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="h-full bg-slate-50 antialiased">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VitalSenior - Expediente Médico</title>
+    <title>VitalSenior - Expediente Clínico de <?= e($paciente['nombre'] ?? 'Paciente') ?></title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'system-ui', '-apple-system', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace'],
+                    },
+                    boxShadow: {
+                        'subtle': '0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px 0 rgba(0, 0, 0, 0.02)',
+                        'card': '0 4px 20px -2px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(226, 232, 240, 0.8)',
+                    }
+                }
+            }
+        }
+
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
             document.querySelectorAll('.tab-btn').forEach(t => {
-                t.classList.remove('border-blue-600', 'text-blue-600');
-                t.classList.add('border-transparent', 'text-slate-500');
+                t.classList.remove('border-blue-600', 'text-blue-600', 'bg-blue-50/70', 'font-bold');
+                t.classList.add('border-transparent', 'text-slate-500', 'font-semibold');
             });
             
-            document.getElementById(tabId).classList.remove('hidden');
-            document.getElementById('btn-' + tabId).classList.remove('border-transparent', 'text-slate-500');
-            document.getElementById('btn-' + tabId).classList.add('border-blue-600', 'text-blue-600');
+            const targetContent = document.getElementById(tabId);
+            const targetBtn = document.getElementById('btn-' + tabId);
+            
+            if (targetContent && targetBtn) {
+                targetContent.classList.remove('hidden');
+                targetBtn.classList.remove('border-transparent', 'text-slate-500', 'font-semibold');
+                targetBtn.classList.add('border-blue-600', 'text-blue-600', 'bg-blue-50/70', 'font-bold');
+                if (history.replaceState) {
+                    history.replaceState(null, null, '#' + tabId);
+                }
+            }
         }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const hash = window.location.hash.replace('#', '');
+            if (hash && document.getElementById(hash)) {
+                switchTab(hash);
+            }
+        });
     </script>
+    <style>
+        .tap-bounce {
+            transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .tap-bounce:active {
+            transform: scale(0.98);
+        }
+    </style>
 </head>
-<body class="bg-slate-50 text-slate-900 font-sans min-h-screen">
-    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 px-6 py-4 flex justify-between items-center shadow-sm">
-        <div class="flex items-center space-x-3">
-            <a href="<?= APP_URL ?>/dashboard" class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-xl hover:bg-blue-700 transition">←</a>
-            <div>
-                <h1 class="text-lg font-bold text-slate-800 leading-tight">Expediente Médico</h1>
-                <?php 
-                    $nombrePaciente = trim(($paciente['nombre'] ?? '') . ' ' . ($paciente['apellidos'] ?? '')) ?: ($paciente['nombre_completo'] ?? 'Paciente VitalSenior');
-                    $uuidPublico = $paciente['uuid_publico'] ?? ($paciente['id'] ?? '');
-                ?>
-                <p class="text-xs text-slate-500">Paciente: <span class="font-semibold text-blue-700"><?= e($nombrePaciente) ?></span></p>
+<body class="bg-slate-50 text-slate-900 font-sans min-h-full flex flex-col justify-between">
+    
+    <!-- Barra Superior de Navegación -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 px-4 sm:px-8 py-3.5 shadow-xs">
+        <div class="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+            <div class="flex items-center space-x-3.5">
+                <a href="<?= APP_URL ?>/dashboard" class="tap-bounce w-9 h-9 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl flex items-center justify-center font-bold text-sm border border-slate-200 transition">
+                    ←
+                </a>
+                <div>
+                    <div class="flex items-center space-x-2">
+                        <h1 class="text-base sm:text-lg font-black text-slate-900 tracking-tight leading-tight">
+                            Expediente Clínico Geriátrico
+                        </h1>
+                        <span class="px-2.5 py-0.5 text-[10px] font-bold rounded-full <?= $puedeEditar ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-100 text-slate-600 border border-slate-200' ?>">
+                            <?= $puedeEditar ? 'Modo Edición' : 'Solo Lectura (' . e($nivelAcceso ?? 'consulta') . ')' ?>
+                        </span>
+                    </div>
+                    <?php 
+                        $nombreCompleto = trim(($paciente['nombre'] ?? '') . ' ' . ($paciente['apellidos'] ?? ''));
+                        if (empty($nombreCompleto) || $nombreCompleto === 'Por completar') {
+                            $nombreCompleto = 'Paciente sin nombre registrado';
+                        }
+                        $uuidPublico = $paciente['uuid_publico'] ?? ($paciente['qr_token'] ?? $paciente['id']);
+                        
+                        $edad = null;
+                        if (!empty($paciente['fecha_nacimiento'])) {
+                            try {
+                                $fn = new DateTime($paciente['fecha_nacimiento']);
+                                $hoy = new DateTime();
+                                $edad = $hoy->diff($fn)->y;
+                            } catch (\Exception $e) {}
+                        }
+                    ?>
+                    <p class="text-xs text-slate-500 font-medium">
+                        Paciente: <strong class="text-slate-800"><?= e($nombreCompleto) ?></strong>
+                        <?php if ($edad !== null): ?>
+                            • <span class="text-blue-700 font-bold"><?= $edad ?> años</span>
+                        <?php endif; ?>
+                        • <span class="font-mono text-slate-600">ID: <?= e((string)$paciente['id']) ?></span>
+                    </p>
+                </div>
             </div>
-        </div>
-        <div class="flex items-center space-x-4">
-            <button type="button" 
-                    id="btn-abrir-qr"
-                    onclick="abrirModalQR('<?= e($uuidPublico) ?>', '<?= e($nombrePaciente) ?>')" 
-                    class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-sm transition flex items-center space-x-2 cursor-pointer">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path>
-                </svg>
-                <span>Generar / Imprimir Código QR de Emergencia</span>
-            </button>
+
+            <div class="flex flex-wrap items-center gap-2 no-print w-full sm:w-auto justify-end">
+                <a href="<?= APP_URL ?>/paciente/pdf?id=<?= e((string)$paciente['id']) ?>" 
+                   target="_blank"
+                   class="tap-bounce px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl border border-slate-200 shadow-xs transition flex items-center space-x-1.5 cursor-pointer">
+                    <span>📄</span>
+                    <span>Descargar PDF</span>
+                </a>
+
+                <button type="button" 
+                        id="btn-abrir-qr"
+                        onclick="abrirModalQR('<?= e($uuidPublico) ?>', '<?= e($nombreCompleto) ?>')" 
+                        class="tap-bounce px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-xs shadow-blue-500/20 transition flex items-center space-x-1.5 cursor-pointer">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path>
+                    </svg>
+                    <span>Ficha QR SOS</span>
+                </button>
+            </div>
         </div>
     </header>
 
-    <main class="max-w-4xl mx-auto p-6 mt-4">
-        <?php if (!empty($flash)): ?>
-            <div class="mb-4 p-4 rounded-lg <?= $flash['type'] === 'success' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800' ?>">
-                <?= htmlspecialchars($flash['message']); ?>
-            </div>
-        <?php endif; ?>
+    <main class="max-w-6xl mx-auto p-4 sm:p-8 w-full space-y-6">
+        <?php require_once dirname(__DIR__) . '/components/toast.php'; ?>
 
-        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-            <!-- Tabs Navigation -->
-            <div class="flex border-b border-slate-200 px-6">
-                <button id="btn-tab-datos" onclick="switchTab('tab-datos')" class="tab-btn py-4 px-4 font-bold text-sm border-b-2 border-blue-600 text-blue-600 focus:outline-none">Datos Básicos</button>
-                <button id="btn-tab-padecimientos" onclick="switchTab('tab-padecimientos')" class="tab-btn py-4 px-4 font-bold text-sm border-b-2 border-transparent text-slate-500 hover:text-slate-700 focus:outline-none">Alergias y Padecimientos</button>
-                <button id="btn-tab-doctores" onclick="switchTab('tab-doctores')" class="tab-btn py-4 px-4 font-bold text-sm border-b-2 border-transparent text-slate-500 hover:text-slate-700 focus:outline-none">Doctores</button>
+        <!-- Tarjeta Principal con Pestañas -->
+        <div class="bg-white rounded-3xl border border-slate-200/80 shadow-card overflow-hidden">
+            <!-- Barra de Pestañas Estilo Píldora -->
+            <div class="flex overflow-x-auto border-b border-slate-200 bg-slate-50/50 px-4 sm:px-6">
+                <button id="btn-tab-datos" onclick="switchTab('tab-datos')" class="tab-btn py-3.5 px-4 font-bold text-xs sm:text-sm border-b-2 border-blue-600 text-blue-600 bg-blue-50/70 whitespace-nowrap focus:outline-none transition-all flex items-center space-x-2 cursor-pointer">
+                    <span>👤</span>
+                    <span>Ficha General</span>
+                </button>
+                <button id="btn-tab-padecimientos" onclick="switchTab('tab-padecimientos')" class="tab-btn py-3.5 px-4 font-semibold text-xs sm:text-sm border-b-2 border-transparent text-slate-500 hover:text-slate-800 whitespace-nowrap focus:outline-none transition-all flex items-center space-x-2 cursor-pointer">
+                    <span>🩺</span>
+                    <span>Antecedentes & Clínica</span>
+                </button>
+                <button id="btn-tab-contactos" onclick="switchTab('tab-contactos')" class="tab-btn py-3.5 px-4 font-semibold text-xs sm:text-sm border-b-2 border-transparent text-slate-500 hover:text-slate-800 whitespace-nowrap focus:outline-none transition-all flex items-center space-x-2 cursor-pointer">
+                    <span>📞</span>
+                    <span>Contactos de Emergencia (<?= count($contactosEmergencia ?? []) ?>)</span>
+                </button>
+                <button id="btn-tab-doctores" onclick="switchTab('tab-doctores')" class="tab-btn py-3.5 px-4 font-semibold text-xs sm:text-sm border-b-2 border-transparent text-slate-500 hover:text-slate-800 whitespace-nowrap focus:outline-none transition-all flex items-center space-x-2 cursor-pointer">
+                    <span>👨‍⚕️</span>
+                    <span>Médicos Tratantes (<?= count($doctores ?? []) ?>)</span>
+                </button>
             </div>
 
-            <div class="p-6">
-                <!-- Tab: Datos Básicos -->
-                <div id="tab-datos" class="tab-content space-y-4">
-                    <form action="<?= APP_URL ?>/expediente/actualizar" method="POST">
+            <div class="p-6 sm:p-8">
+                <!-- ============================================================== -->
+                <!-- PESTAÑA 1: FICHA GENERAL & IDENTIFICACIÓN                      -->
+                <!-- ============================================================== -->
+                <div id="tab-datos" class="tab-content space-y-6">
+                    <div class="bg-blue-50/60 p-4 rounded-2xl border border-blue-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+                        <div>
+                            <h2 class="font-bold text-blue-950 text-xs sm:text-sm">Identificación y Código de Vinculación Familiar</h2>
+                            <p class="text-xs text-blue-700">Comparte este código con familiares o médicos para concederles acceso al expediente.</p>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="text-xs font-semibold text-slate-500">Código de Enlace:</span>
+                            <span class="font-mono text-sm font-black bg-white px-3 py-1.5 rounded-xl border border-blue-200 text-blue-800 tracking-wider shadow-xs">
+                                <?= e($paciente['codigo_vinculacion'] ?? 'NO-GEN') ?>
+                            </span>
+                        </div>
+                    </div>
+
+                    <form action="<?= APP_URL ?>/expediente/actualizar" method="POST" class="space-y-6">
                         <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
                         <input type="hidden" name="seccion" value="datos">
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <input type="hidden" name="paciente_id" value="<?= e((string)$paciente['id']) ?>">
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                             <div>
-                                <label class="block text-sm font-semibold text-slate-700 mb-1">Tipo de Sangre</label>
-                                <select name="tipo_sangre" class="w-full rounded-lg border-slate-300 px-3 py-2 text-sm focus:border-blue-500">
-                                    <option value="N/D" <?= ($paciente['tipo_sangre'] ?? 'N/D') === 'N/D' ? 'selected' : '' ?>>No Especificado</option>
+                                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Nombre(s) <span class="text-rose-500">*</span></label>
+                                <input type="text" name="nombre" value="<?= e($paciente['nombre'] ?? '') ?>" required
+                                       class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-sm text-slate-800 font-semibold focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none">
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Apellidos <span class="text-rose-500">*</span></label>
+                                <input type="text" name="apellidos" value="<?= e(($paciente['apellidos'] ?? '') === 'Por completar' ? '' : ($paciente['apellidos'] ?? '')) ?>" required placeholder="Apellidos del adulto mayor"
+                                       class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-sm text-slate-800 font-semibold focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none">
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Fecha de Nacimiento <span class="text-rose-500">*</span></label>
+                                <input type="date" name="fecha_nacimiento" value="<?= e($paciente['fecha_nacimiento'] ?? date('Y-m-d')) ?>" required
+                                       class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-sm text-slate-800 font-semibold focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none">
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Grupo Sanguíneo y Factor Rh</label>
+                                <select name="tipo_sangre" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-800 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none">
+                                    <option value="N/D" <?= ($paciente['tipo_sangre'] ?? 'N/D') === 'N/D' ? 'selected' : '' ?>>No Especificado / Desconocido</option>
                                     <?php foreach(['A+','A-','B+','B-','AB+','AB-','O+','O-'] as $ts): ?>
                                         <option value="<?= $ts ?>" <?= ($paciente['tipo_sangre'] ?? '') === $ts ? 'selected' : '' ?>><?= $ts ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
-                            <div>
-                                <label class="block text-sm font-semibold text-slate-700 mb-1">Peso (kg)</label>
-                                <input type="number" step="0.1" name="peso" value="<?= e((string)($paciente['peso'] ?? '')) ?>" class="w-full rounded-lg border-slate-300 px-3 py-2 text-sm focus:border-blue-500">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-semibold text-slate-700 mb-1">Altura (cm)</label>
-                                <input type="number" step="1" name="altura" value="<?= e((string)($paciente['altura'] ?? '')) ?>" class="w-full rounded-lg border-slate-300 px-3 py-2 text-sm focus:border-blue-500">
-                            </div>
                         </div>
-                        <div class="mt-6">
-                            <button type="submit" class="px-6 py-2 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700">Guardar Cambios</button>
-                        </div>
+
+                        <?php if ($puedeEditar): ?>
+                            <div class="pt-4 border-t border-slate-100 flex justify-end">
+                                <button type="submit" class="tap-bounce px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs sm:text-sm rounded-xl shadow-xs shadow-blue-500/20 transition-all cursor-pointer">
+                                    Guardar Ficha de Identificación
+                                </button>
+                            </div>
+                        <?php endif; ?>
                     </form>
                 </div>
 
-                <!-- Tab: Alergias y Padecimientos -->
+                <!-- ============================================================== -->
+                <!-- PESTAÑA 2: ANTECEDENTES MÉDICOS & CLÍNICA GERIÁTRICA           -->
+                <!-- ============================================================== -->
                 <div id="tab-padecimientos" class="tab-content hidden space-y-6">
-                    <form action="<?= APP_URL ?>/expediente/actualizar" method="POST" class="space-y-4">
+                    <form action="<?= APP_URL ?>/expediente/actualizar" method="POST" class="space-y-6">
                         <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
                         <input type="hidden" name="seccion" value="padecimientos">
-                        
-                        <div>
-                            <label class="block text-sm font-semibold text-slate-700 mb-1">Alergias Conocidas</label>
-                            <textarea name="alergias" rows="2" class="w-full rounded-lg border-slate-300 px-3 py-2 text-sm focus:border-blue-500" placeholder="Ej. Penicilina, Nueces"><?= e($paciente['alergias'] ?? '') ?></textarea>
-                            <p class="text-xs text-slate-500 mt-1">Separa con comas.</p>
+                        <input type="hidden" name="paciente_id" value="<?= e((string)$paciente['id']) ?>">
+
+                        <div class="bg-rose-50/50 p-4 rounded-2xl border border-rose-100">
+                            <div class="flex items-center justify-between mb-2">
+                                <label class="block text-xs font-bold text-rose-800 uppercase tracking-wider">Alergias Conocidas y Reacciones Adversas (RAM)</label>
+                                <span class="text-[11px] font-semibold text-rose-600 bg-rose-100 px-2 py-0.5 rounded-md">Crítico en Ficha QR</span>
+                            </div>
+                            <textarea name="alergias" rows="2" class="w-full bg-white border border-rose-200 rounded-xl p-3 text-sm text-slate-800 focus:border-rose-500 focus:ring-4 focus:ring-rose-500/10 transition-all outline-none font-medium" placeholder="Ej. Alergia severa a Penicilina, AINEs, Yodo, Mariscos"><?= e($paciente['alergias'] ?? '') ?></textarea>
+                            <p class="text-[11px] text-rose-700 mt-1.5 font-medium">⚠️ Esta información se presenta con alta prioridad a paramédicos al escanear el QR de auxilio.</p>
                         </div>
 
                         <div>
-                            <label class="block text-sm font-semibold text-slate-700 mb-1">Padecimientos Crónicos / Mayores</label>
-                            <textarea name="enfermedades_cronicas" rows="3" class="w-full rounded-lg border-slate-300 px-3 py-2 text-sm focus:border-blue-500" placeholder="Ej. Hipertensión, Diabetes Tipo 2, Marcapasos"><?= e($paciente['enfermedades_cronicas'] ?? '') ?></textarea>
-                            <p class="text-xs text-slate-500 mt-1">Esta información aparecerá en la Ficha de Emergencia pública.</p>
+                            <div class="flex items-center justify-between mb-2">
+                                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">Diagnósticos Crónicos y Dispositivos Médicos</label>
+                                <span class="text-[11px] text-slate-400">Patologías, prótesis o implantes</span>
+                            </div>
+                            <textarea name="enfermedades_cronicas" rows="3" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 text-sm text-slate-800 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none font-medium" placeholder="Ej. Hipertensión Arterial (2015), Diabetes Mellitus Tipo 2, Marcapasos bicameral implantado en 2021, Prótesis de cadera derecha"><?= e($paciente['enfermedades_cronicas'] ?? '') ?></textarea>
                         </div>
-                        
-                        <div class="mt-6">
-                            <button type="submit" class="px-6 py-2 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700">Guardar Cambios</button>
+
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <label class="block text-xs font-bold text-indigo-900 uppercase tracking-wider">Autonomía, Estado Cognitivo y Movilidad</label>
+                                <span class="text-[11px] text-slate-400">Escala funcional Geriátrica</span>
+                            </div>
+                            <textarea name="notas_cognitivas" rows="3" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 text-sm text-slate-800 focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none font-medium" placeholder="Ej. Autonomía funcional Katz B, requiere andadera para traslados largos, riesgo moderado de caídas, usa prótesis dental y audífono derecho"><?= e($paciente['notas_cognitivas'] ?? '') ?></textarea>
                         </div>
+
+                        <?php if ($puedeEditar): ?>
+                            <div class="pt-4 border-t border-slate-100 flex justify-end">
+                                <button type="submit" class="tap-bounce px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs sm:text-sm rounded-xl shadow-xs shadow-blue-500/20 transition-all cursor-pointer">
+                                    Guardar Antecedentes Clínicos
+                                </button>
+                            </div>
+                        <?php endif; ?>
                     </form>
                 </div>
 
-                <!-- Tab: Doctores -->
-                <div id="tab-doctores" class="tab-content hidden space-y-6">
-                    <?php if (!empty($doctores)): ?>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <?php foreach ($doctores as $doc): ?>
-                                <div class="p-4 bg-slate-50 rounded-xl border border-slate-200">
-                                    <h3 class="font-bold text-slate-800">Dr. <?= e($doc['nombre']) ?></h3>
-                                    <p class="text-sm text-slate-600"><?= e($doc['especialidad']) ?></p>
-                                    <p class="text-sm text-blue-600 font-semibold mt-1">📞 <?= e($doc['telefono']) ?></p>
-                                    <form action="<?= APP_URL ?>/expediente/eliminar_doctor" method="POST" class="mt-3" onsubmit="return confirm('¿Seguro que deseas eliminar este doctor?');">
-                                        <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
-                                        <input type="hidden" name="doctor_id" value="<?= $doc['id'] ?>">
-                                        <button type="submit" class="text-xs text-red-600 font-semibold hover:underline">Eliminar</button>
-                                    </form>
-                                </div>
-                            <?php endforeach; ?>
+                <!-- ============================================================== -->
+                <!-- PESTAÑA 3: RED DE CONTACTOS DE EMERGENCIA                      -->
+                <!-- ============================================================== -->
+                <div id="tab-contactos" class="tab-content hidden space-y-6">
+                    <div>
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4">
+                            <div>
+                                <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wide">Red de Apoyo y Familiares de Auxilio</h2>
+                                <p class="text-xs text-slate-500">Contactos alertados prioritariamente ante eventos del Botón SOS.</p>
+                            </div>
                         </div>
-                    <?php else: ?>
-                        <p class="text-sm text-slate-500">No hay médicos registrados.</p>
-                    <?php endif; ?>
 
-                    <hr class="border-slate-200">
-                    <h3 class="font-bold text-slate-800">Añadir Médico Tratante</h3>
-                    <form action="<?= APP_URL ?>/expediente/anadir_doctor" method="POST" class="bg-blue-50 p-4 rounded-xl border border-blue-100">
-                        <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-700 mb-1">Nombre</label>
-                                <input type="text" name="nombre" required class="w-full rounded-lg border-slate-300 px-3 py-2 text-sm">
+                        <?php if (!empty($contactosEmergencia)): ?>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                                <?php foreach ($contactosEmergencia as $contacto): ?>
+                                    <div class="p-4 bg-slate-50/80 rounded-2xl border <?= !empty($contacto['es_prioritario']) ? 'border-amber-300 bg-amber-50/30' : 'border-slate-200' ?> relative shadow-xs hover:border-slate-300 transition-colors">
+                                        <div class="flex justify-between items-start">
+                                            <div>
+                                                <div class="flex items-center space-x-2">
+                                                    <h3 class="font-bold text-slate-900 text-sm"><?= e($contacto['nombre']) ?></h3>
+                                                    <?php if (!empty($contacto['es_prioritario'])): ?>
+                                                        <span class="px-2 py-0.5 text-[9px] font-black rounded-full bg-amber-500 text-white tracking-wider">PRIORITARIO</span>
+                                                    <?php endif; ?>
+                                                </div>
+                                                <p class="text-xs text-slate-500 font-semibold mt-0.5"><?= e($contacto['parentesco'] ?? 'Familiar') ?></p>
+                                            </div>
+                                            <a href="tel:<?= e($contacto['telefono']) ?>" class="tap-bounce px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-xs transition flex items-center space-x-1">
+                                                <span>📞</span>
+                                                <span>Llamar</span>
+                                            </a>
+                                        </div>
+
+                                        <p class="text-xs font-mono font-bold text-slate-700 mt-2.5">
+                                            <?= e($contacto['telefono']) ?>
+                                        </p>
+
+                                        <?php if ($puedeEditar): ?>
+                                            <form action="<?= APP_URL ?>/expediente/eliminar_contacto" method="POST" class="mt-3 pt-2 border-t border-slate-200/80 flex justify-end" onsubmit="return confirm('¿Seguro que deseas eliminar este contacto de auxilio?');">
+                                                <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
+                                                <input type="hidden" name="paciente_id" value="<?= e((string)$paciente['id']) ?>">
+                                                <input type="hidden" name="contacto_id" value="<?= e((string)$contacto['id']) ?>">
+                                                <button type="submit" class="text-xs text-rose-600 font-bold hover:underline cursor-pointer">Eliminar Contacto</button>
+                                            </form>
+                                        <?php endif; ?>
+                                    </div>
+                                <?php endforeach; ?>
                             </div>
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-700 mb-1">Especialidad</label>
-                                <input type="text" name="especialidad" class="w-full rounded-lg border-slate-300 px-3 py-2 text-sm">
+                        <?php else: ?>
+                            <div class="p-8 bg-amber-50/60 rounded-3xl border border-amber-200/80 text-center mb-6">
+                                <span class="text-3xl">⚠️</span>
+                                <h3 class="font-bold text-amber-900 text-sm mt-2">Sin contactos de auxilio registrados</h3>
+                                <p class="text-xs text-amber-700 mt-1 max-w-sm mx-auto">
+                                    Es indispensable registrar al menos un familiar prioritario para responder ante emergencias médicas.
+                                </p>
                             </div>
+                        <?php endif; ?>
+
+                        <?php if ($puedeEditar): ?>
+                            <div class="bg-slate-50/80 p-5 rounded-3xl border border-slate-200">
+                                <h3 class="font-bold text-slate-900 text-xs uppercase tracking-wider mb-3">Registrar Nuevo Contacto de Auxilio</h3>
+                                <form action="<?= APP_URL ?>/expediente/anadir_contacto" method="POST">
+                                    <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
+                                    <input type="hidden" name="paciente_id" value="<?= e((string)$paciente['id']) ?>">
+
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                                        <div>
+                                            <label class="block text-xs font-bold text-slate-700 mb-1">Nombre Completo <span class="text-rose-500">*</span></label>
+                                            <input type="text" name="nombre" required placeholder="Ej. Roberto Moguel" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-sm text-slate-800 font-medium focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-bold text-slate-700 mb-1">Parentesco o Rol</label>
+                                            <input type="text" name="parentesco" placeholder="Ej. Hijo/a, Cónyuge, Cuidador" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-sm text-slate-800 font-medium focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-bold text-slate-700 mb-1">Teléfono Móvil (WhatsApp) <span class="text-rose-500">*</span></label>
+                                            <input type="tel" name="telefono" required placeholder="Ej. +52 999 123 4567" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-sm text-slate-800 font-medium focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none">
+                                        </div>
+                                    </div>
+
+                                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                                        <label class="inline-flex items-center space-x-2 text-xs font-bold text-slate-700 cursor-pointer">
+                                            <input type="checkbox" name="es_prioritario" value="1" class="rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-4 h-4">
+                                            <span>Marcar como Contacto Principal Prioritario</span>
+                                        </label>
+
+                                        <button type="submit" class="tap-bounce px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-xs transition cursor-pointer">
+                                            + Añadir Contacto
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+
+                <!-- ============================================================== -->
+                <!-- PESTAÑA 4: DIRECTORIO DE MÉDICOS TRATANTES                     -->
+                <!-- ============================================================== -->
+                <div id="tab-doctores" class="tab-content hidden space-y-6">
+                    <div>
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4">
                             <div>
-                                <label class="block text-xs font-semibold text-slate-700 mb-1">Teléfono</label>
-                                <input type="tel" name="telefono" required class="w-full rounded-lg border-slate-300 px-3 py-2 text-sm">
+                                <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wide">Equipo Médico Tratante</h2>
+                                <p class="text-xs text-slate-500">Directorio de geriatras y especialistas a cargo del cuidado clínico.</p>
                             </div>
                         </div>
-                        <button type="submit" class="px-6 py-2 bg-blue-600 text-white text-sm font-bold rounded-lg hover:bg-blue-700">Añadir Médico</button>
-                    </form>
+
+                        <?php if (!empty($doctores)): ?>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                                <?php foreach ($doctores as $doc): ?>
+                                    <div class="p-4 bg-slate-50/80 rounded-2xl border border-slate-200 shadow-xs relative hover:border-slate-300 transition-colors">
+                                        <div class="flex justify-between items-start">
+                                            <div>
+                                                <h3 class="font-bold text-slate-900 text-sm">Dr(a). <?= e($doc['nombre']) ?></h3>
+                                                <p class="text-xs text-blue-700 font-bold mt-0.5"><?= e($doc['especialidad'] ?: 'Médico General') ?></p>
+                                            </div>
+                                            <?php if (!empty($doc['telefono'])): ?>
+                                                <a href="tel:<?= e($doc['telefono']) ?>" class="tap-bounce px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 text-xs font-bold rounded-xl border border-blue-200 transition">
+                                                    📞 Llamar
+                                                </a>
+                                            <?php endif; ?>
+                                        </div>
+
+                                        <?php if (!empty($doc['hospital_clinica'])): ?>
+                                            <p class="text-xs text-slate-600 mt-2 font-medium">🏥 <?= e($doc['hospital_clinica']) ?></p>
+                                        <?php endif; ?>
+
+                                        <?php if (!empty($doc['horario_atencion'])): ?>
+                                            <p class="text-[11px] text-slate-500 mt-1">🕒 Horario: <?= e($doc['horario_atencion']) ?></p>
+                                        <?php endif; ?>
+
+                                        <?php if ($puedeEditar): ?>
+                                            <form action="<?= APP_URL ?>/expediente/eliminar_doctor" method="POST" class="mt-3 pt-2 border-t border-slate-200/80 flex justify-end" onsubmit="return confirm('¿Seguro que deseas eliminar este médico del expediente?');">
+                                                <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
+                                                <input type="hidden" name="paciente_id" value="<?= e((string)$paciente['id']) ?>">
+                                                <input type="hidden" name="doctor_id" value="<?= e((string)$doc['id']) ?>">
+                                                <button type="submit" class="text-xs text-rose-600 font-bold hover:underline cursor-pointer">Eliminar Médico</button>
+                                            </form>
+                                        <?php endif; ?>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                        <?php else: ?>
+                            <div class="p-8 bg-slate-50 rounded-3xl border border-slate-200 text-center mb-6">
+                                <span class="text-3xl">👨‍⚕️</span>
+                                <h3 class="font-bold text-slate-800 text-sm mt-2">Sin médicos especialistas registrados</h3>
+                                <p class="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+                                    Registra a los médicos de cabecera y geriatras para tener a mano sus números de consultorio.
+                                </p>
+                            </div>
+                        <?php endif; ?>
+
+                        <?php if ($puedeEditar): ?>
+                            <div class="bg-blue-50/40 p-5 rounded-3xl border border-blue-100">
+                                <h3 class="font-bold text-slate-900 text-xs uppercase tracking-wider mb-3">Registrar Médico Especialista</h3>
+                                <form action="<?= APP_URL ?>/expediente/anadir_doctor" method="POST">
+                                    <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
+                                    <input type="hidden" name="paciente_id" value="<?= e((string)$paciente['id']) ?>">
+
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                        <div>
+                                            <label class="block text-xs font-bold text-slate-700 mb-1">Nombre del Médico <span class="text-rose-500">*</span></label>
+                                            <input type="text" name="nombre" required placeholder="Ej. Dra. Laura Sánchez" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-sm text-slate-800 font-medium focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-bold text-slate-700 mb-1">Especialidad</label>
+                                            <input type="text" name="especialidad" placeholder="Ej. Geriatría, Cardiología, Medicina Interna" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-sm text-slate-800 font-medium focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-bold text-slate-700 mb-1">Teléfono de Contacto</label>
+                                            <input type="tel" name="telefono" placeholder="Ej. +52 999 987 6543" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-sm text-slate-800 font-medium focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-bold text-slate-700 mb-1">Hospital o Consultorio</label>
+                                            <input type="text" name="hospital_clinica" placeholder="Ej. Clínica Médica Norte, Consultorio 302" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-sm text-slate-800 font-medium focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none">
+                                        </div>
+                                    </div>
+
+                                    <div class="flex justify-end">
+                                        <button type="submit" class="tap-bounce px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-xs transition cursor-pointer">
+                                            + Registrar Médico
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        <?php endif; ?>
+                    </div>
                 </div>
             </div>
         </div>
     </main>
 
-    <!-- Modal de Código QR de Emergencia (Vista 6) -->
-    <div id="modal-qr-emergencia" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+    <!-- Modal de Código QR de Emergencia (Carnet Digital) -->
+    <div id="modal-qr-emergencia" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
         <div class="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-6 border border-slate-100 transform transition-all text-center relative print-area">
-            <!-- Botón Cerrar (no imprimible) -->
-            <button type="button" onclick="cerrarModalQR()" class="no-print absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-2 rounded-full hover:bg-slate-100 transition">
+            <button type="button" onclick="cerrarModalQR()" class="no-print absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-2 rounded-full hover:bg-slate-100 transition cursor-pointer">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                 </svg>
             </button>
 
-            <!-- Encabezado del Carnet de Emergencia -->
-            <div class="flex items-center justify-center space-x-2 mb-2">
-                <span class="w-7 h-7 bg-red-600 rounded-lg flex items-center justify-center text-white font-black text-sm">✚</span>
-                <span class="font-extrabold text-slate-900 tracking-tight text-lg">VitalSenior SOS</span>
+            <div class="flex items-center justify-center space-x-2 mb-1">
+                <span class="w-6 h-6 bg-rose-600 rounded-lg flex items-center justify-center text-white font-black text-xs">✚</span>
+                <span class="font-extrabold text-slate-900 tracking-tight text-base">VitalSenior SOS</span>
             </div>
             <p class="text-xs text-slate-500 font-medium">Carnet Médico de Emergencia</p>
             
-            <h3 id="qr-paciente-nombre" class="mt-3 text-base font-bold text-slate-800 leading-tight">
-                <?= e($nombrePaciente) ?>
+            <h3 id="qr-paciente-nombre" class="mt-2 text-sm font-bold text-slate-800 leading-tight">
+                <?= e($nombreCompleto) ?>
             </h3>
 
-            <!-- Canvas contenedor del QR renderizado client-side -->
             <div class="my-4 flex justify-center bg-slate-50 p-4 rounded-2xl border border-slate-200">
-                <canvas id="qr-canvas" class="mx-auto rounded-lg shadow-sm"></canvas>
+                <canvas id="qr-canvas" class="mx-auto rounded-lg shadow-xs"></canvas>
             </div>
 
             <p class="text-[11px] text-slate-500 leading-relaxed">
-                Escanee este código con cualquier cámara de smartphone para acceder inmediatamente a la información de emergencia, tipo de sangre y contactos de auxilio.
+                Escanea con la cámara del teléfono para ver tipo de sangre, alergias y llamar a contactos de auxilio.
             </p>
 
-            <!-- Acciones Modal (no imprimibles) -->
-            <div class="mt-6 flex flex-col sm:flex-row gap-2 no-print">
-                <button type="button" onclick="imprimirCarnetQR()" class="flex-1 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-md shadow-blue-500/20 transition flex items-center justify-center space-x-2 cursor-pointer">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="mt-5 flex flex-col sm:flex-row gap-2 no-print">
+                <button type="button" onclick="imprimirCarnetQR()" class="tap-bounce flex-1 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-xs transition flex items-center justify-center space-x-1.5 cursor-pointer">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4H9v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
                     </svg>
-                    <span>Imprimir Carnet</span>
+                    <span>Imprimir</span>
                 </button>
-                <button type="button" onclick="cerrarModalQR()" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition cursor-pointer">
+                <button type="button" onclick="cerrarModalQR()" class="tap-bounce px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition cursor-pointer">
                     Cerrar
                 </button>
             </div>
@@ -234,7 +517,11 @@
         }
     </style>
 
-    <!-- Script de Generación Client-Side y Manejador del Modal -->
+    <footer class="text-center py-6 text-xs text-slate-400">
+        VitalSenior • Sistema de Expediente Clínico Geriátrico
+    </footer>
+
+    <!-- Script del Generador QR -->
     <script src="<?= APP_URL ?>/assets/js/qr-modal.js"></script>
 </body>
 </html>

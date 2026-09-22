@@ -60,19 +60,51 @@ class Paciente extends Model {
         return $paciente ?: null;
     }
 
+    public function getExpedienteById(int $id): ?array {
+        $stmt = $this->db->prepare("
+            SELECT id, usuario_id, qr_token, qr_token AS uuid_publico, nombre, apellidos, 
+                   fecha_nacimiento, tipo_sangre, alergias, enfermedades_cronicas, 
+                   notas_cognitivas, codigo_vinculacion, token_sos, created_at, updated_at 
+            FROM pacientes 
+            WHERE id = :id LIMIT 1
+        ");
+        $stmt->execute(['id' => $id]);
+        $paciente = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $paciente ?: null;
+    }
+
     public function updateDatosBasicos(int $id, array $data): bool {
-        $stmt = $this->db->prepare("UPDATE pacientes SET tipo_sangre = :tipo_sangre, updated_at = NOW() WHERE id = :id");
+        $stmt = $this->db->prepare("
+            UPDATE pacientes 
+            SET nombre = :nombre,
+                apellidos = :apellidos,
+                fecha_nacimiento = :fecha_nacimiento,
+                tipo_sangre = :tipo_sangre, 
+                updated_at = NOW() 
+            WHERE id = :id
+        ");
         return $stmt->execute([
+            'nombre' => $data['nombre'],
+            'apellidos' => $data['apellidos'],
+            'fecha_nacimiento' => $data['fecha_nacimiento'],
             'tipo_sangre' => $data['tipo_sangre'] ?? 'N/D',
             'id' => $id
         ]);
     }
 
     public function updatePadecimientos(int $id, array $data): bool {
-        $stmt = $this->db->prepare("UPDATE pacientes SET alergias = :alergias, enfermedades_cronicas = :enfermedades_cronicas, updated_at = NOW() WHERE id = :id");
+        $stmt = $this->db->prepare("
+            UPDATE pacientes 
+            SET alergias = :alergias, 
+                enfermedades_cronicas = :enfermedades_cronicas, 
+                notas_cognitivas = :notas_cognitivas,
+                updated_at = NOW() 
+            WHERE id = :id
+        ");
         return $stmt->execute([
             'alergias' => $data['alergias'] ?? 'Ninguna',
             'enfermedades_cronicas' => $data['enfermedades_cronicas'] ?? 'Ninguna',
+            'notas_cognitivas' => $data['notas_cognitivas'] ?? '',
             'id' => $id
         ]);
     }

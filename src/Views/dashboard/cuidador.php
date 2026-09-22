@@ -49,41 +49,47 @@
         <?php require_once dirname(__DIR__) . '/components/toast.php'; ?>
 
 
-        <!-- BANNER DE ALERTAS CRÍTICAS (Mock/Estructura base) -->
-        <div class="lg:col-span-3 space-y-3 no-print">
-            <!-- Alerta: Dosis Omitida -->
-            <?php 
-                // Esto requeriría una variable en el DashboardController como $alertasCriticas, por ahora simulamos la vista
-                $hayDosisOmitida = true; // Simulación UI para el requerimiento
-                $hayInventarioBajo = true;
-            ?>
-            <?php if ($hayDosisOmitida): ?>
-            <div class="bg-rose-600 rounded-xl shadow-lg p-4 flex items-center justify-between border-2 border-rose-700 animate-pulse">
-                <div class="flex items-center space-x-4">
-                    <div class="text-4xl">🚨</div>
-                    <div>
-                        <h3 class="text-white font-black text-lg">ALERTA CRÍTICA: DOSIS OMITIDA</h3>
-                        <p class="text-rose-100 text-sm font-medium">No se registró la toma de Losartán a las 08:00 AM. El cron job detectó la omisión.</p>
+        <!-- BANNER DE ALERTAS CRÍTICAS Y DESABASTECIMIENTO DINÁMICO -->
+        <?php if (!empty($alertasDosis) || !empty($alertasInventario)): ?>
+            <div class="lg:col-span-3 space-y-3 no-print">
+                <!-- Alertas: Dosis Omitidas Reales -->
+                <?php foreach ($alertasDosis as $ad): ?>
+                    <div class="bg-rose-600 rounded-2xl shadow-lg p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-2 border-rose-700 animate-pulse">
+                        <div class="flex items-center space-x-4">
+                            <div class="text-3xl">🚨</div>
+                            <div>
+                                <h3 class="text-white font-black text-base">ALERTA CRÍTICA: DOSIS OMITIDA</h3>
+                                <p class="text-rose-100 text-xs sm:text-sm font-medium">
+                                    No se registró la toma de <strong><?= e($ad['nombre_comercial']) ?></strong> programada a las <strong><?= date('H:i', strtotime($ad['hora_programada'])) ?></strong>.
+                                    <?= !empty($ad['nota_incidencia']) ? '(' . e($ad['nota_incidencia']) . ')' : '' ?>
+                                </p>
+                            </div>
+                        </div>
+                        <a href="<?= APP_URL ?>/medicamentos/control" class="px-4 py-2 bg-white hover:bg-rose-50 text-rose-700 font-bold text-xs rounded-xl shadow-sm transition whitespace-nowrap">
+                            Gestionar Toma
+                        </a>
                     </div>
-                </div>
-                <a href="<?= APP_URL ?>/medicamentos/control" class="px-5 py-2 bg-white text-rose-700 font-bold rounded-lg hover:bg-rose-50">Gestionar</a>
-            </div>
-            <?php endif; ?>
+                <?php endforeach; ?>
 
-            <!-- Alerta: Inventario Bajo -->
-            <?php if ($hayInventarioBajo): ?>
-            <div class="bg-amber-500 rounded-xl shadow-lg p-4 flex items-center justify-between border-2 border-amber-600">
-                <div class="flex items-center space-x-4">
-                    <div class="text-4xl">⚠️</div>
-                    <div>
-                        <h3 class="text-white font-black text-lg">ATENCIÓN: INVENTARIO BAJO</h3>
-                        <p class="text-amber-50 text-sm font-medium">Quedan menos de 4 días de dosis para Metformina. Es necesario resurtir.</p>
+                <!-- Alertas: Inventario Bajo Real -->
+                <?php foreach ($alertasInventario as $ai): ?>
+                    <div class="bg-amber-500 rounded-2xl shadow-lg p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-2 border-amber-600">
+                        <div class="flex items-center space-x-4">
+                            <div class="text-3xl">⚠️</div>
+                            <div>
+                                <h3 class="text-white font-black text-base">ATENCIÓN: INVENTARIO BAJO</h3>
+                                <p class="text-amber-50 text-xs sm:text-sm font-medium">
+                                    Quedan <strong><?= e((string)$ai['dias_restantes']) ?> días</strong> de suministro para <strong><?= e($ai['nombre_comercial']) ?></strong> (Stock: <?= e((string)$ai['stock_actual']) ?> unidades). Es necesario resurtir.
+                                </p>
+                            </div>
+                        </div>
+                        <a href="<?= APP_URL ?>/medicamentos" class="px-4 py-2 bg-white hover:bg-amber-50 text-amber-700 font-bold text-xs rounded-xl shadow-sm transition whitespace-nowrap">
+                            Resurtir Stock
+                        </a>
                     </div>
-                </div>
-                <a href="<?= APP_URL ?>/medicamentos" class="px-5 py-2 bg-white text-amber-700 font-bold rounded-lg hover:bg-amber-50">Comprar/Resurtir</a>
+                <?php endforeach; ?>
             </div>
-            <?php endif; ?>
-        </div>
+        <?php endif; ?>
 
         <!-- Columna 1: Información Vital, Contactos y Salud Diaria -->
         <section class="space-y-6">

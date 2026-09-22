@@ -101,6 +101,8 @@ class DashboardController extends Controller {
         $proximasCitas = $this->citaModel->getUpcomingByPacienteId($pacienteId, 5);
         $doctores = $this->doctorModel->getByPacienteId($pacienteId);
         $contactosEmergencia = $this->contactoModel->getByPacienteId($pacienteId);
+        $alertasDosis = $this->medicamentoModel->getOmitidasHoy($pacienteId);
+        $alertasInventario = $this->medicamentoModel->getBajoInventario($pacienteId);
 
         // 3. Renderizar la vista pasando los datos
         $userRole = $_SESSION['user_role'] ?? '';

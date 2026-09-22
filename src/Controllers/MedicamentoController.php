@@ -83,33 +83,52 @@ class MedicamentoController extends Controller {
     }
 
     public function store(): void {
-        \App\Middlewares\AuthMiddleware::requirePermission('gestionar_medicamentos');
+        \App\Middlewares\AuthMiddleware::handle();
 
         if (!validateCsrfToken($_POST['csrf_token'] ?? null)) {
-            die('Error CSRF.');
+            $this->setFlash('danger', 'Token CSRF inválido.');
+            header('Location: ' . APP_URL . '/medicamentos');
+            exit;
         }
 
-        $userId = (int)$_SESSION['user_id'];
-        $paciente = $this->pacienteModel->findByUserId($userId);
+        $userId = (int)($_SESSION['user_id'] ?? 0);
+        $pacienteId = (int)($_POST['paciente_id'] ?? ($_SESSION['paciente_activo_id'] ?? 0));
+        if ($pacienteId === 0) {
+            $paciente = $this->pacienteModel->findByUserId($userId);
+            $pacienteId = $paciente ? (int)$paciente['id'] : 0;
+        }
+
+        // Validación Multitenant
+        $acceso = \App\Middlewares\AuthMiddleware::requirePatientAccess($pacienteId);
+        if (!$acceso['puede_editar']) {
+            http_response_code(403);
+            die('Error 403: No tienes permisos para agregar medicamentos a este paciente.');
+        }
 
         $nombre = trim($_POST['nombre_comercial'] ?? '');
         $dosis = trim($_POST['dosis'] ?? '');
         $frecuenciaHoras = (int)($_POST['frecuencia_horas'] ?? 8);
+        $stockActual = max(0, (int)($_POST['stock_actual'] ?? 30));
+        $dosisPorToma = max(1, (int)($_POST['dosis_por_toma'] ?? 1));
+        $stockMinimo = max(1, (int)($_POST['stock_minimo_alerta'] ?? 5));
         $instrucciones = trim($_POST['instrucciones'] ?? '');
 
-        if (!empty($nombre) && !empty($dosis) && $frecuenciaHoras > 0) {
+        if (!empty($nombre) && !empty($dosis) && $frecuenciaHoras > 0 && $pacienteId > 0) {
             $this->medicamentoModel->agregar([
-                'paciente_id' => (int)$paciente['id'],
+                'paciente_id' => $pacienteId,
                 'nombre_comercial' => $nombre,
                 'dosis' => $dosis,
                 'frecuencia_horas' => $frecuenciaHoras,
+                'stock_actual' => $stockActual,
+                'dosis_por_toma' => $dosisPorToma,
+                'stock_minimo_alerta' => $stockMinimo,
                 'instrucciones' => $instrucciones
             ]);
             $usuarioModel = new \App\Models\Usuario();
-            $usuarioModel->registrarAuditoria('MEDICAMENTO_REGISTRADO', "Medicamento $nombre registrado para paciente {$paciente['id']}.");
+            $usuarioModel->registrarAuditoria('MEDICAMENTO_REGISTRADO', "Medicamento $nombre registrado para paciente {$pacienteId}.");
             $this->setFlash('success', 'Medicamento registrado exitosamente.');
         } else {
-            $this->setFlash('danger', 'Por favor completa todos los campos correctamente.');
+            $this->setFlash('danger', 'Por favor completa todos los campos requeridos correctamente.');
         }
 
         header('Location: ' . APP_URL . '/medicamentos');
@@ -117,27 +136,37 @@ class MedicamentoController extends Controller {
     }
 
     public function marcarToma(): void {
-        \App\Middlewares\AuthMiddleware::requirePermission('marcar_tomas');
+        \App\Middlewares\AuthMiddleware::handle();
 
         if (!validateCsrfToken($_POST['csrf_token'] ?? null)) {
-            die('Error CSRF.');
+            $this->setFlash('danger', 'Token CSRF inválido o sesión expirada.');
+            header('Location: ' . APP_URL . '/dashboard');
+            exit;
         }
 
-        $userId = (int)$_SESSION['user_id'];
-        $paciente = $this->pacienteModel->findByUserId($userId);
-        
+        $userId = (int)($_SESSION['user_id'] ?? 0);
         $registroId = (int)($_POST['registro_id'] ?? 0);
-        
-        if ($registroId > 0 && $paciente) {
+
+        if ($registroId > 0) {
             try {
                 $db = \Config\Database::getInstance()->getConnection();
                 $db->beginTransaction();
 
-                $stmt = $db->prepare("SELECT estado, medicamento_id, hora_programada, fecha_programada FROM tomas_historial WHERE id = :id FOR UPDATE");
+                $stmt = $db->prepare("SELECT id, paciente_id, estado, medicamento_id, hora_programada, fecha_programada FROM tomas_historial WHERE id = :id FOR UPDATE");
                 $stmt->execute(['id' => $registroId]);
                 $toma = $stmt->fetch(\PDO::FETCH_ASSOC);
 
-                if ($toma && $toma['estado'] !== 'tomada') {
+                if (!$toma) {
+                    $db->rollBack();
+                    $this->setFlash('warning', 'La toma solicitada no existe.');
+                    header('Location: ' . APP_URL . '/dashboard');
+                    exit;
+                }
+
+                // Validación Multitenant para asegurar que el usuario puede interactuar con el paciente de esta toma
+                $acceso = \App\Middlewares\AuthMiddleware::requirePatientAccess($toma['paciente_id']);
+
+                if ($toma['estado'] !== 'tomada') {
                     $nota = null;
                     if (!empty($toma['hora_programada'])) {
                         $horaProgramada = strtotime($toma['fecha_programada'] . ' ' . $toma['hora_programada']);
@@ -150,7 +179,7 @@ class MedicamentoController extends Controller {
                         }
                     }
 
-                    $this->medicamentoModel->actualizarEstadoToma($registroId, (int)$paciente['id'], 'tomada', $userId, $nota);
+                    $this->medicamentoModel->actualizarEstadoToma($registroId, (int)$toma['paciente_id'], 'tomada', $userId, $nota);
 
                     $medId = (int)$toma['medicamento_id'];
                     $stmtMed = $db->prepare("SELECT stock_actual, dosis_por_toma, stock_minimo_alerta FROM medicamentos WHERE id = :mid FOR UPDATE");
@@ -173,7 +202,7 @@ class MedicamentoController extends Controller {
                     $this->setFlash('success', 'Toma registrada correctamente.');
                 } else {
                     $db->rollBack();
-                    $this->setFlash('warning', 'La toma ya estaba registrada o no existe.');
+                    $this->setFlash('warning', 'La toma ya estaba registrada como tomada.');
                 }
 
             } catch (\Exception $e) {
@@ -194,22 +223,23 @@ class MedicamentoController extends Controller {
      * La nueva hora pospuesta (+30 min) NO debe quedar a menos de 2 horas de la siguiente dosis programada.
      */
     public function posponerToma(): void {
-        \App\Middlewares\AuthMiddleware::requirePermission('marcar_tomas');
+        \App\Middlewares\AuthMiddleware::handle();
 
         if (!validateCsrfToken($_POST['csrf_token'] ?? null)) {
-            die('Error CSRF.');
+            $this->setFlash('danger', 'Token CSRF inválido.');
+            header('Location: ' . APP_URL . '/dashboard');
+            exit;
         }
 
-        $userId = (int)$_SESSION['user_id'];
-        $paciente = $this->pacienteModel->findByUserId($userId);
+        $userId = (int)($_SESSION['user_id'] ?? 0);
         $registroId = trim($_POST['registro_id'] ?? '');
 
-        if (!empty($registroId) && $paciente) {
+        if (!empty($registroId)) {
             try {
                 $db = \Config\Database::getInstance()->getConnection();
                 $db->beginTransaction();
 
-                // 1. Obtener la toma actual
+                // 1. Obtener la toma actual con bloqueo FOR UPDATE
                 $stmt = $db->prepare(
                     "SELECT id, medicamento_id, paciente_id, fecha_programada_utc, pospuesto_hasta, estado 
                      FROM tomas_historial 
@@ -218,7 +248,17 @@ class MedicamentoController extends Controller {
                 $stmt->execute([':id' => $registroId]);
                 $toma = $stmt->fetch(\PDO::FETCH_ASSOC);
 
-                if (!$toma || !in_array($toma['estado'], ['pendiente', 'pospuesta'], true)) {
+                if (!$toma) {
+                    $db->rollBack();
+                    $this->setFlash('warning', 'La toma solicitada no existe.');
+                    header('Location: ' . APP_URL . '/dashboard');
+                    exit;
+                }
+
+                // Validación Multitenant
+                $acceso = \App\Middlewares\AuthMiddleware::requirePatientAccess($toma['paciente_id']);
+
+                if (!in_array($toma['estado'], ['pendiente', 'pospuesta'], true)) {
                     $db->rollBack();
                     $this->setFlash('warning', 'La toma no se encuentra pendiente para ser pospuesta.');
                     header('Location: ' . APP_URL . '/dashboard');
@@ -267,7 +307,6 @@ class MedicamentoController extends Controller {
                     if ($margenMinutos < 120) {
                         $db->rollBack();
                         
-                        // Convertir a formato legible en zona horaria
                         $horaProximaLegible = $siguienteHoraUtc->format('H:i');
                         $this->setFlash(
                             'danger', 
@@ -316,26 +355,37 @@ class MedicamentoController extends Controller {
      * Deshace una toma registrada por error dentro de una ventana de 15 minutos (UTC)
      */
     public function deshacerToma(): void {
-        \App\Middlewares\AuthMiddleware::requirePermission('marcar_tomas');
+        \App\Middlewares\AuthMiddleware::handle();
 
         if (!validateCsrfToken($_POST['csrf_token'] ?? null)) {
-            die('Error CSRF.');
+            $this->setFlash('danger', 'Token CSRF inválido.');
+            header('Location: ' . APP_URL . '/dashboard');
+            exit;
         }
 
-        $userId = (int)$_SESSION['user_id'];
-        $paciente = $this->pacienteModel->findByUserId($userId);
+        $userId = (int)($_SESSION['user_id'] ?? 0);
         $registroId = trim($_POST['registro_id'] ?? '');
 
-        if (!empty($registroId) && $paciente) {
+        if (!empty($registroId)) {
             try {
                 $db = \Config\Database::getInstance()->getConnection();
                 $db->beginTransaction();
 
-                $stmt = $db->prepare("SELECT id, estado, medicamento_id, tomado_at FROM tomas_historial WHERE id = :id FOR UPDATE");
+                $stmt = $db->prepare("SELECT id, paciente_id, estado, medicamento_id, tomado_at FROM tomas_historial WHERE id = :id FOR UPDATE");
                 $stmt->execute([':id' => $registroId]);
                 $toma = $stmt->fetch(\PDO::FETCH_ASSOC);
 
-                if (!$toma || $toma['estado'] !== 'tomada') {
+                if (!$toma) {
+                    $db->rollBack();
+                    $this->setFlash('warning', 'La toma solicitada no existe.');
+                    header('Location: ' . APP_URL . '/dashboard');
+                    exit;
+                }
+
+                // Validación Multitenant
+                $acceso = \App\Middlewares\AuthMiddleware::requirePatientAccess($toma['paciente_id']);
+
+                if ($toma['estado'] !== 'tomada') {
                     $db->rollBack();
                     $this->setFlash('danger', 'Solo es posible deshacer tomas que figuren como tomadas.');
                     header('Location: ' . APP_URL . '/dashboard');

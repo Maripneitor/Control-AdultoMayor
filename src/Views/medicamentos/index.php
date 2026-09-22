@@ -106,6 +106,7 @@
             
             <form action="<?= APP_URL ?>/medicamentos/crear" method="POST" class="space-y-4">
                 <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
+                <input type="hidden" name="paciente_id" value="<?= e((string)($paciente['id'] ?? '')) ?>">
                 
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 mb-1">Nombre Comercial</label>
@@ -113,18 +114,35 @@
                 </div>
                 
                 <div>
-                    <label class="block text-xs font-semibold text-slate-700 mb-1">Dosis (Cantidad)</label>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Dosis (Presentación)</label>
                     <input type="text" name="dosis" required class="w-full rounded-lg border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500" placeholder="Ej. 1 Tableta (500mg)">
                 </div>
 
-                <div>
-                    <label class="block text-xs font-semibold text-slate-700 mb-1">Frecuencia (Horas)</label>
-                    <input type="number" name="frecuencia_horas" min="1" max="72" value="8" required class="w-full rounded-lg border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Frecuencia (Horas)</label>
+                        <input type="number" name="frecuencia_horas" min="1" max="72" value="8" required class="w-full rounded-lg border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Dosis por Toma</label>
+                        <input type="number" name="dosis_por_toma" min="1" max="20" value="1" required class="w-full rounded-lg border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Stock Inicial</label>
+                        <input type="number" name="stock_actual" min="0" value="30" required class="w-full rounded-lg border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Alerta Stock Mínimo</label>
+                        <input type="number" name="stock_minimo_alerta" min="1" value="5" required class="w-full rounded-lg border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500">
+                    </div>
                 </div>
 
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 mb-1">Instrucciones Especiales</label>
-                    <textarea name="instrucciones" rows="2" class="w-full rounded-lg border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500" placeholder="Ej. Tomar en ayunas"></textarea>
+                    <textarea name="instrucciones" rows="2" class="w-full rounded-lg border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500" placeholder="Ej. Tomar en ayunas con agua"></textarea>
                 </div>
 
                 <button type="submit" class="w-full py-2.5 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition">

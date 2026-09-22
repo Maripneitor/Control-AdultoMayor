@@ -44,15 +44,58 @@ class Medicamento extends Model {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function agregar(array $data): int {
-        // La validación de permisos ($usuarioId y roles) ya se realizó en el Middleware/Controller
-
+    public function getOmitidasHoy(int $pacienteId): array {
         $stmt = $this->db->prepare("
-            INSERT INTO medicamentos (paciente_id, nombre_comercial, dosis, frecuencia_horas, instrucciones)
-            VALUES (:paciente_id, :nombre_comercial, :dosis, :frecuencia_horas, :instrucciones)
+            SELECT th.id, m.nombre_comercial, th.hora_programada, th.fecha_programada, th.momento_dia, th.nota_incidencia
+            FROM tomas_historial th
+            JOIN medicamentos m ON th.medicamento_id = m.id
+            WHERE th.paciente_id = :pid 
+              AND th.fecha_programada = CURRENT_DATE 
+              AND th.estado = 'omitido'
+            ORDER BY th.hora_programada ASC
+        ");
+        $stmt->execute(['pid' => $pacienteId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getBajoInventario(int $pacienteId): array {
+        $stmt = $this->db->prepare("
+            SELECT id, nombre_comercial, stock_actual, stock_minimo_alerta, dosis_por_toma, frecuencia_horas,
+                   FLOOR(stock_actual / NULLIF(FLOOR(24 / GREATEST(frecuencia_horas, 1)) * GREATEST(dosis_por_toma, 1), 0)) AS dias_restantes
+            FROM medicamentos
+            WHERE paciente_id = :pid AND activo = TRUE 
+              AND (
+                  stock_actual <= stock_minimo_alerta 
+                  OR stock_actual / NULLIF(FLOOR(24 / GREATEST(frecuencia_horas, 1)) * GREATEST(dosis_por_toma, 1), 0) < 4
+              )
+            ORDER BY dias_restantes ASC, stock_actual ASC
+        ");
+        $stmt->execute(['pid' => $pacienteId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function agregar(array $data): int {
+        $stmt = $this->db->prepare("
+            INSERT INTO medicamentos (
+                paciente_id, nombre_comercial, dosis, frecuencia_horas, 
+                stock_actual, dosis_por_toma, stock_minimo_alerta, instrucciones, activo
+            )
+            VALUES (
+                :paciente_id, :nombre_comercial, :dosis, :frecuencia_horas, 
+                :stock_actual, :dosis_por_toma, :stock_minimo_alerta, :instrucciones, TRUE
+            )
             RETURNING id
         ");
-        $stmt->execute($data);
+        $stmt->execute([
+            'paciente_id' => $data['paciente_id'],
+            'nombre_comercial' => $data['nombre_comercial'],
+            'dosis' => $data['dosis'],
+            'frecuencia_horas' => $data['frecuencia_horas'],
+            'stock_actual' => $data['stock_actual'] ?? 30,
+            'dosis_por_toma' => $data['dosis_por_toma'] ?? 1,
+            'stock_minimo_alerta' => $data['stock_minimo_alerta'] ?? 5,
+            'instrucciones' => $data['instrucciones'] ?? ''
+        ]);
         return (int)$stmt->fetchColumn();
     }
 
