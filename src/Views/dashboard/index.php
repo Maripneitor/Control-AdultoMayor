@@ -91,6 +91,69 @@
     <main class="max-w-5xl mx-auto p-4 sm:p-6 md:p-8 w-full space-y-6">
         <?php require_once dirname(__DIR__) . '/components/toast.php'; ?>
 
+        <!-- BANNER DE ALERTAS DINÁMICAS (Anti-slop & Modern UI) -->
+        <?php if (!empty($alertasDosis) || !empty($alertasInventario)): ?>
+            <div class="space-y-3 no-print">
+                <!-- Alertas Críticas: Dosis Omitidas -->
+                <?php foreach ($alertasDosis as $ad): ?>
+                    <div class="bg-rose-50/90 hover:bg-rose-50 border border-rose-200/90 rounded-2xl sm:rounded-3xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3.5 shadow-sm transition-all">
+                        <div class="flex items-start sm:items-center gap-3.5">
+                            <div class="w-11 h-11 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center text-xl shrink-0 border border-rose-200/80 shadow-xs">
+                                🚨
+                            </div>
+                            <div>
+                                <div class="flex items-center gap-2 mb-0.5">
+                                    <span class="bg-rose-100 text-rose-700 text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full border border-rose-200 tracking-wider">
+                                        Crítica
+                                    </span>
+                                    <h3 class="text-rose-950 font-extrabold text-sm sm:text-base tracking-tight">
+                                        Dosis Omitida no Registrada
+                                    </h3>
+                                </div>
+                                <p class="text-slate-700 text-xs sm:text-sm font-medium leading-relaxed">
+                                    Se omitió la toma de <strong class="text-slate-900 font-black"><?= e($ad['nombre_comercial']) ?></strong> programada para las <span class="font-mono font-bold text-rose-800 bg-rose-100/60 px-1.5 py-0.5 rounded"><?= date('H:i', strtotime($ad['hora_programada'])) ?></span>.
+                                </p>
+                            </div>
+                        </div>
+                        <a href="<?= APP_URL ?>/medicamentos/control" 
+                           class="tap-bounce touch-min w-full sm:w-auto px-5 py-2.5 bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white font-bold text-xs sm:text-sm rounded-xl shadow-md shadow-rose-600/20 transition-all flex items-center justify-center space-x-1.5 whitespace-nowrap self-stretch sm:self-center">
+                            <span>Gestionar Toma</span>
+                            <span>→</span>
+                        </a>
+                    </div>
+                <?php endforeach; ?>
+
+                <!-- Alertas de Inventario: Stock Bajo -->
+                <?php foreach ($alertasInventario as $ai): ?>
+                    <div class="bg-amber-50/90 hover:bg-amber-50 border border-amber-200/90 rounded-2xl sm:rounded-3xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3.5 shadow-sm transition-all">
+                        <div class="flex items-start sm:items-center gap-3.5">
+                            <div class="w-11 h-11 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center text-xl shrink-0 border border-amber-200/80 shadow-xs">
+                                ⚠️
+                            </div>
+                            <div>
+                                <div class="flex items-center gap-2 mb-0.5">
+                                    <span class="bg-amber-100 text-amber-800 text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full border border-amber-200 tracking-wider">
+                                        Inventario
+                                    </span>
+                                    <h3 class="text-amber-950 font-extrabold text-sm sm:text-base tracking-tight">
+                                        Suministro Próximo a Agotarse
+                                    </h3>
+                                </div>
+                                <p class="text-slate-700 text-xs sm:text-sm font-medium leading-relaxed">
+                                    Quedan aprox. <strong class="text-amber-900 font-black font-mono"><?= e((string)$ai['dias_restantes']) ?> días</strong> de <strong class="text-slate-900"><?= e($ai['nombre_comercial']) ?></strong> (Stock: <span class="font-bold text-slate-800"><?= e((string)$ai['stock_actual']) ?> uds</span>).
+                                </p>
+                            </div>
+                        </div>
+                        <a href="<?= APP_URL ?>/medicamentos" 
+                           class="tap-bounce touch-min w-full sm:w-auto px-5 py-2.5 bg-amber-600 hover:bg-amber-700 active:bg-amber-800 text-white font-bold text-xs sm:text-sm rounded-xl shadow-md shadow-amber-600/20 transition-all flex items-center justify-center space-x-1.5 whitespace-nowrap self-stretch sm:self-center">
+                            <span>Resurtir Stock</span>
+                            <span>→</span>
+                        </a>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
+
         <?php
             // Lógica de cálculo de próxima medicina
             $proximaMedicina = null;
