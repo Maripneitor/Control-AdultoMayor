@@ -1,374 +1,456 @@
 <!DOCTYPE html>
-<html class="light" lang="es">
+<html class="light h-full bg-slate-50" lang="es">
 <head>
     <meta charset="utf-8"/>
-    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
     <title>VitalSenior - Iniciar Sesión / Registro</title>
     
     <!-- Fuentes Google -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
     
     <!-- Tailwind CSS desde CDN -->
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <script src="<?php echo APP_URL; ?>/assets/js/tailwind-config.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'system-ui', '-apple-system', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'subtle': '0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px 0 rgba(0, 0, 0, 0.02)',
+                        'card': '0 4px 20px -2px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(226, 232, 240, 0.8)',
+                    }
+                }
+            }
+        }
+    </script>
     
     <style>
         body {
-            font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: #f8fafc;
+            font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
         }
-        .form-input-styled {
-            width: 100%;
-            height: 48px;
-            padding: 10px 16px;
-            font-size: 15px;
-            color: #0f172a;
-            background-color: #f1f5f9;
-            border: 2px solid #e2e8f0;
-            border-radius: 12px;
-            transition: all 0.2s ease;
+        
+        .tap-bounce {
+            transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.15s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        .form-input-styled:focus {
-            background-color: #ffffff;
-            border-color: #004ac6;
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(0, 74, 198, 0.12);
+        .tap-bounce:active {
+            transform: scale(0.98);
         }
-        .form-label-styled {
-            display: block;
-            font-size: 13px;
-            font-weight: 600;
-            color: #334155;
-            margin-bottom: 6px;
+
+        .touch-min {
+            min-height: 48px;
+            min-width: 48px;
         }
-        .btn-primary {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 100%;
-            height: 50px;
-            font-size: 15px;
-            font-weight: 700;
-            background-color: #004ac6;
-            color: #ffffff;
-            border-radius: 12px;
-            transition: all 0.2s ease;
-            box-shadow: 0 4px 14px rgba(0, 74, 198, 0.35);
+
+        .spinner-loader {
+            border: 2.5px solid rgba(255, 255, 255, 0.3);
+            border-top: 2.5px solid #ffffff;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            animation: spin 0.6s linear infinite;
         }
-        .btn-primary:hover {
-            background-color: #003ea8;
-            transform: translateY(-1px);
-            box-shadow: 0 6px 20px rgba(0, 74, 198, 0.3);
-        }
-        .btn-primary:active {
-            transform: translateY(1px);
-            box-shadow: none;
-        }
-        .tab-btn {
-            flex: 1;
-            padding: 12px 16px;
-            font-size: 15px;
-            font-weight: 600;
-            text-align: center;
-            color: #64748b;
-            border-bottom: 2px solid transparent;
-            transition: all 0.2s ease;
-            cursor: pointer;
-        }
-        .tab-btn.active {
-            color: #004ac6;
-            border-color: #004ac6;
-            background-color: rgba(0, 74, 198, 0.04);
-            font-weight: 700;
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
-<body id="login-body" class="bg-slate-50 text-slate-900 min-h-screen flex flex-col md:flex-row antialiased">
+<body class="bg-slate-50 text-slate-900 min-h-screen antialiased selection:bg-blue-600/20 selection:text-blue-700">
 
-<!-- Left Column (Showcase / Blue Panel) -->
-<div class="hidden md:flex flex-col justify-between w-1/2 bg-[#1e3a8a] text-white p-10 lg:p-14 relative overflow-hidden">
-    <!-- Decorative Glow Effects -->
-    <div class="absolute inset-0 opacity-20 pointer-events-none" style="background-image: radial-gradient(circle at 20% 30%, rgba(255,255,255,0.4) 0%, transparent 60%);"></div>
-    <div class="absolute -bottom-24 -left-24 w-96 h-96 bg-blue-400/20 rounded-full blur-3xl pointer-events-none"></div>
+<div class="min-h-screen grid grid-cols-1 lg:grid-cols-2">
 
-    <!-- Header / Brand -->
-    <div class="relative z-10">
-        <a href="<?php echo APP_URL; ?>/" class="flex items-center gap-3 group mb-4">
-            <div class="w-11 h-11 rounded-xl bg-white text-[#1e3a8a] flex items-center justify-center shadow-md shadow-blue-900/30 group-hover:scale-105 transition-transform">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                </svg>
-            </div>
-            <span class="text-3xl font-extrabold tracking-tight text-white">VitalSenior</span>
-        </a>
-        <p class="text-xl text-blue-100/90 font-medium max-w-md leading-relaxed mt-3">
-            Cuidamos de tu salud. Gestión sencilla para ti y tu familia.
-        </p>
-    </div>
-
-    <!-- Center High-Quality Eldercare Imagery -->
-    <div class="relative z-10 flex-grow flex items-center justify-center py-8">
-        <div class="w-full max-w-md relative">
-            <div class="relative rounded-3xl overflow-hidden shadow-2xl border-2 border-white/20 bg-blue-900/50 backdrop-blur-sm aspect-[4/3]">
-                <img 
-                    alt="Atención médica y cuidado familiar de adultos mayores" 
-                    class="object-cover w-full h-full" 
-                    src="https://images.unsplash.com/photo-1576765608535-5f04d1e3f289?q=80&w=900&auto=format&fit=crop"
-                />
-                <div class="absolute inset-0 bg-gradient-to-t from-blue-950/80 via-transparent to-transparent"></div>
-                
-                <!-- Overlay Floating Badge -->
-                <div class="absolute bottom-4 left-4 right-4 bg-white/90 backdrop-blur-md rounded-2xl p-3.5 border border-white/40 text-slate-800 shadow-lg flex items-center gap-3">
-                    <div class="w-9 h-9 rounded-xl bg-[#004ac6] text-white flex items-center justify-center flex-shrink-0">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    </div>
-                    <div>
-                        <p class="text-xs font-bold text-slate-900">Historial Médico Protegido</p>
-                        <p class="text-[11px] text-slate-500">Acceso seguro para familiares y cuidadores</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Bottom Highlights -->
-    <div class="relative z-10 pt-4 border-t border-blue-400/20 text-xs text-blue-200 flex items-center justify-between">
-        <div class="flex items-center gap-2">
-            <svg class="w-4 h-4 text-emerald-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
-            <span>Recordatorios automáticos</span>
-        </div>
-        <div class="flex items-center gap-2">
-            <svg class="w-4 h-4 text-emerald-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
-            <span>Código QR de emergencias</span>
-        </div>
-    </div>
-</div>
-
-<!-- Right Column (Forms) -->
-<div class="w-full md:w-1/2 bg-white flex flex-col justify-center px-6 py-10 sm:px-12 md:px-12 lg:px-16 min-h-screen relative shadow-[-10px_0_30px_rgba(0,0,0,0.03)] z-20">
-    
-    <div class="max-w-[420px] w-full mx-auto">
+    <!-- ========================================== -->
+    <!-- COLUMNA IZQUIERDA (Branding & Showcase) -->
+    <!-- ========================================== -->
+    <div class="hidden lg:flex flex-col justify-between bg-gradient-to-br from-blue-700 via-blue-600 to-indigo-800 text-white p-12 xl:p-16 relative overflow-hidden select-none">
         
-        <!-- Back to Home Link -->
-        <a href="<?php echo APP_URL; ?>/" class="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-500 hover:text-[#004ac6] transition-colors mb-6 group">
-            <svg class="w-4 h-4 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-            <span>Volver al inicio</span>
-        </a>
+        <!-- Efectos de Iluminación Suave y Gradientes Radiales -->
+        <div class="absolute -top-32 -left-32 w-96 h-96 bg-white/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute bottom-0 right-0 w-[500px] h-[500px] bg-indigo-900/40 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute inset-0 opacity-15 pointer-events-none" style="background-image: radial-gradient(circle at 30% 25%, rgba(255,255,255,0.6) 0%, transparent 60%);"></div>
 
-        <!-- Mobile Brand Header (Visible only on small screens) -->
-        <div class="md:hidden flex items-center gap-2.5 mb-6 justify-center">
-            <div class="w-9 h-9 rounded-xl bg-[#004ac6] flex items-center justify-center text-white">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                </svg>
+        <!-- Header / Logo -->
+        <div class="relative z-10">
+            <a href="<?php echo APP_URL; ?>/" class="tap-bounce inline-flex items-center gap-3 group">
+                <div class="w-11 h-11 rounded-2xl bg-white text-blue-600 flex items-center justify-center font-black text-xl shadow-lg shadow-blue-900/30 group-hover:scale-105 transition-transform">
+                    ✚
+                </div>
+                <span class="text-2xl xl:text-3xl font-black tracking-tight text-white">Vital<span class="text-blue-200">Senior</span></span>
+            </a>
+            <p class="text-base xl:text-lg text-blue-100/90 font-medium max-w-md leading-relaxed mt-3">
+                Cuidamos de la salud de quienes más amas con tecnología simple y humana.
+            </p>
+        </div>
+
+        <!-- Showcase Central / Tarjeta con Imagen y Badges -->
+        <div class="relative z-10 my-auto py-8">
+            <div class="w-full max-w-md mx-auto">
+                <div class="relative rounded-3xl overflow-hidden shadow-2xl border border-white/20 bg-blue-900/40 backdrop-blur-sm aspect-[4/3] group">
+                    <img 
+                        alt="Atención médica y cuidado familiar de adultos mayores" 
+                        class="object-cover w-full h-full transform group-hover:scale-105 transition-transform duration-700" 
+                        src="https://images.unsplash.com/photo-1576765608535-5f04d1e3f289?q=80&w=900&auto=format&fit=crop"
+                        loading="lazy"
+                    />
+                    <div class="absolute inset-0 bg-gradient-to-t from-blue-950/80 via-blue-950/20 to-transparent"></div>
+                    
+                    <!-- Floating Overlay Badge -->
+                    <div class="absolute bottom-4 left-4 right-4 bg-white/95 backdrop-blur-md rounded-2xl p-3.5 border border-white/60 text-slate-800 shadow-xl flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center text-lg flex-shrink-0 shadow-md shadow-blue-600/30">
+                            🛡️
+                        </div>
+                        <div class="min-w-0">
+                            <p class="text-xs font-extrabold text-slate-900 truncate">Historial Médico Protegido</p>
+                            <p class="text-[11px] text-slate-500 font-medium truncate">Acceso seguro para familiares y médicos</p>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <span class="text-2xl font-bold text-[#004ac6]">VitalSenior</span>
         </div>
 
-        <!-- Title & Subtitle -->
-        <div class="mb-6 text-center md:text-left">
-            <h2 class="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight mb-2">¡Bienvenido a VitalSenior!</h2>
-            <p class="text-sm md:text-base text-slate-600 leading-relaxed">Accede a tu historial y gestiona tus cuidados o crea tu cuenta familiar.</p>
+        <!-- Highlights Inferiores -->
+        <div class="relative z-10 pt-6 border-t border-white/15 text-xs text-blue-100 flex items-center justify-between font-semibold">
+            <div class="flex items-center gap-2">
+                <span class="w-5 h-5 rounded-full bg-emerald-400/20 text-emerald-300 flex items-center justify-center text-xs">✓</span>
+                <span>Recordatorios automáticos</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="w-5 h-5 rounded-full bg-emerald-400/20 text-emerald-300 flex items-center justify-center text-xs">✓</span>
+                <span>Ficha QR de Emergencias</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="w-5 h-5 rounded-full bg-emerald-400/20 text-emerald-300 flex items-center justify-center text-xs">✓</span>
+                <span>Portal Médico Seguro</span>
+            </div>
         </div>
+    </div>
 
-        <?php 
-        $activeTab = $tab ?? ($_GET['tab'] ?? (str_contains($_SERVER['REQUEST_URI'] ?? '', 'register') ? 'register' : 'login'));
-        ?>
-        <!-- Navigation Tabs -->
-        <div class="flex mb-6 border-b border-slate-200" role="tablist">
-            <button class="tab-btn <?= $activeTab === 'login' ? 'active' : '' ?>" id="tab-login" onclick="switchTab('login')" type="button" role="tab" aria-selected="<?= $activeTab === 'login' ? 'true' : 'false' ?>">Iniciar Sesión</button>
-            <button class="tab-btn <?= $activeTab === 'register' ? 'active' : '' ?>" id="tab-register" onclick="switchTab('register')" type="button" role="tab" aria-selected="<?= $activeTab === 'register' ? 'true' : 'false' ?>">Regístrate</button>
-        </div>
+    <!-- ========================================== -->
+    <!-- COLUMNA DERECHA (Formularios Auth) -->
+    <!-- ========================================== -->
+    <div class="min-h-screen flex flex-col justify-center items-center px-4 sm:px-8 md:px-12 lg:px-16 py-8 sm:py-12 bg-white lg:bg-slate-50/60 relative">
+        
+        <!-- Envoltorio Centrado y Acotado (Anti-Espacio Blanco Vacío) -->
+        <div class="w-full max-w-md mx-auto bg-white lg:p-8 lg:rounded-3xl lg:border lg:border-slate-200/80 lg:shadow-card">
+            
+            <!-- Botón Volver al Inicio -->
+            <div class="mb-5 flex items-center justify-between">
+                <a href="<?php echo APP_URL; ?>/" class="tap-bounce inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-blue-600 transition-colors group">
+                    <svg class="w-4 h-4 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                    </svg>
+                    <span>Volver al inicio</span>
+                </a>
 
-        <!-- Inline Flash & Errors Card -->
-        <?php 
-        $notification = $flash ?? (!empty($error) ? ['type' => 'danger', 'message' => $error] : null);
-        if ($notification && !empty($notification['message'])): 
-            $nType = $notification['type'] ?? 'info';
-            $bgColors = [
-                'danger'  => 'bg-rose-50 border-rose-200 text-rose-800',
-                'error'   => 'bg-rose-50 border-rose-200 text-rose-800',
-                'warning' => 'bg-amber-50 border-amber-200 text-amber-800',
-                'success' => 'bg-emerald-50 border-emerald-200 text-emerald-800',
-                'info'    => 'bg-blue-50 border-blue-200 text-blue-800'
-            ];
-            $iconColors = [
-                'danger'  => 'text-rose-500',
-                'error'   => 'text-rose-500',
-                'warning' => 'text-amber-500',
-                'success' => 'text-emerald-500',
-                'info'    => 'text-blue-500'
-            ];
-            $cardClass = $bgColors[$nType] ?? $bgColors['info'];
-            $iconClass = $iconColors[$nType] ?? $iconColors['info'];
-        ?>
-            <div id="inline-flash-alert" class="mb-5 p-4 rounded-2xl border <?= $cardClass; ?> shadow-sm flex items-start gap-3 animate-fade-in transition-all">
-                <div class="flex-shrink-0 mt-0.5">
-                    <?php if (in_array($nType, ['danger', 'error'])): ?>
-                        <svg class="w-5 h-5 <?= $iconClass; ?>" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-                    <?php elseif ($nType === 'success'): ?>
-                        <svg class="w-5 h-5 <?= $iconClass; ?>" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    <?php elseif ($nType === 'warning'): ?>
-                        <svg class="w-5 h-5 <?= $iconClass; ?>" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-                    <?php else: ?>
-                        <svg class="w-5 h-5 <?= $iconClass; ?>" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    <?php endif; ?>
+                <!-- Isotipo en móvil -->
+                <div class="lg:hidden flex items-center gap-2">
+                    <div class="w-7 h-7 rounded-xl bg-blue-600 text-white flex items-center justify-center text-xs font-black shadow-xs">
+                        ✚
+                    </div>
+                    <span class="text-sm font-black text-slate-900">Vital<span class="text-blue-600">Senior</span></span>
                 </div>
-                <div class="flex-1 text-sm font-medium leading-relaxed">
-                    <?php if (!empty($notification['title'])): ?>
-                        <p class="font-bold text-xs uppercase tracking-wider mb-0.5 opacity-90"><?= htmlspecialchars($notification['title']); ?></p>
-                    <?php endif; ?>
-                    <p><?= htmlspecialchars($notification['message']); ?></p>
-                </div>
-                <button type="button" onclick="document.getElementById('inline-flash-alert').remove()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-black/5 transition" aria-label="Cerrar aviso">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </div>
+
+            <!-- Título y Subtítulo -->
+            <div class="mb-6">
+                <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight mb-1">
+                    ¡Bienvenido a VitalSenior!
+                </h1>
+                <p class="text-xs sm:text-sm text-slate-500 leading-relaxed font-medium">
+                    Ingresa a tu cuenta o regístrate para comenzar a gestionar los cuidados.
+                </p>
+            </div>
+
+            <?php 
+            $activeTab = $tab ?? ($_GET['tab'] ?? (str_contains($_SERVER['REQUEST_URI'] ?? '', 'register') ? 'register' : 'login'));
+            ?>
+
+            <!-- Tabs Segmentados Tipo Pastilla (Emil Design Style) -->
+            <div class="bg-slate-100/90 p-1.5 rounded-2xl flex gap-1 mb-6 border border-slate-200/80" role="tablist">
+                <button type="button" 
+                        id="tab-login" 
+                        onclick="switchTab('login')" 
+                        role="tab" 
+                        aria-selected="<?= $activeTab === 'login' ? 'true' : 'false' ?>"
+                        class="tap-bounce touch-min flex-1 py-2.5 px-4 text-xs font-bold rounded-xl transition-all duration-200 text-center cursor-pointer <?= $activeTab === 'login' ? 'bg-white text-blue-600 shadow-sm font-extrabold' : 'text-slate-500 hover:text-slate-900' ?>">
+                    Iniciar Sesión
+                </button>
+                <button type="button" 
+                        id="tab-register" 
+                        onclick="switchTab('register')" 
+                        role="tab" 
+                        aria-selected="<?= $activeTab === 'register' ? 'true' : 'false' ?>"
+                        class="tap-bounce touch-min flex-1 py-2.5 px-4 text-xs font-bold rounded-xl transition-all duration-200 text-center cursor-pointer <?= $activeTab === 'register' ? 'bg-white text-blue-600 shadow-sm font-extrabold' : 'text-slate-500 hover:text-slate-900' ?>">
+                    Regístrate
                 </button>
             </div>
-        <?php endif; ?>
 
-        <!-- 1. LOGIN FORM -->
-        <form class="space-y-4 <?= $activeTab === 'login' ? 'block' : 'hidden' ?>" id="form-login" method="POST" action="<?php echo APP_URL; ?>/login">
-            <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token'] ?? ''; ?>">
-            
-            <!-- Email / Phone Field -->
-            <div>
-                <label class="form-label-styled" for="login-email">Correo Electrónico</label>
-                <div class="relative">
-                    <div class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
-                        </svg>
+            <!-- Inline Flash & Alertas -->
+            <?php 
+            $notification = $flash ?? (!empty($error) ? ['type' => 'danger', 'message' => $error] : null);
+            if ($notification && !empty($notification['message'])): 
+                $nType = $notification['type'] ?? 'info';
+                $bgColors = [
+                    'danger'  => 'bg-rose-50 border-rose-200 text-rose-800',
+                    'error'   => 'bg-rose-50 border-rose-200 text-rose-800',
+                    'warning' => 'bg-amber-50 border-amber-200 text-amber-800',
+                    'success' => 'bg-emerald-50 border-emerald-200 text-emerald-800',
+                    'info'    => 'bg-blue-50 border-blue-200 text-blue-800'
+                ];
+                $cardClass = $bgColors[$nType] ?? $bgColors['info'];
+            ?>
+                <div id="inline-flash-alert" class="mb-5 p-3.5 rounded-2xl border <?= $cardClass; ?> shadow-subtle flex items-start gap-2.5 transition-all text-xs">
+                    <span class="text-sm shrink-0">
+                        <?= in_array($nType, ['danger', 'error']) ? '🚨' : ($nType === 'warning' ? '⚠️' : ($nType === 'success' ? '✅' : 'ℹ️')) ?>
+                    </span>
+                    <div class="flex-1 font-medium leading-relaxed">
+                        <?php if (!empty($notification['title'])): ?>
+                            <p class="font-extrabold uppercase tracking-wider text-[10px] mb-0.5"><?= htmlspecialchars($notification['title']); ?></p>
+                        <?php endif; ?>
+                        <p><?= htmlspecialchars($notification['message']); ?></p>
                     </div>
-                    <input class="form-input-styled pl-11" id="login-email" name="email" placeholder="ejemplo@correo.com" type="email" required />
-                </div>
-            </div>
-
-
-            <!-- Password Field -->
-            <div>
-                <label class="form-label-styled" for="login-password">Contraseña</label>
-                <div class="relative">
-                    <div class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                        </svg>
-                    </div>
-                    <input class="form-input-styled pl-11 pr-11" id="login-password" name="password" placeholder="••••••••" type="password" required />
-                    <button class="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none transition-colors" type="button" onclick="togglePasswordVisibility('login-password', this)" aria-label="Mostrar u ocultar contraseña">
-                        <!-- Closed / Show Eye SVG Default -->
-                        <svg class="w-5 h-5 eye-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                        </svg>
+                    <button type="button" onclick="document.getElementById('inline-flash-alert').remove()" class="text-slate-400 hover:text-slate-600 p-0.5 rounded-lg transition" aria-label="Cerrar aviso">
+                        ✕
                     </button>
                 </div>
-            </div>
+            <?php endif; ?>
 
-            <!-- Options: Remember Me & Forgot Password -->
-            <div class="flex items-center justify-between pt-1">
-                <label class="flex items-center gap-2 cursor-pointer">
-                    <input class="w-4 h-4 rounded border-slate-300 text-[#004ac6] focus:ring-[#004ac6]" type="checkbox"/>
-                    <span class="text-sm font-medium text-slate-600">Recordarme</span>
-                </label>
-                <a class="text-sm font-semibold text-[#004ac6] hover:underline" href="<?php echo APP_URL; ?>/recovery">¿Olvidaste tu contraseña?</a>
-            </div>
-
-            <!-- Submit Button -->
-            <button class="btn-primary mt-2" type="submit">Iniciar sesión</button>
-        </form>
-
-        <!-- 2. REGISTER FORM -->
-        <form class="space-y-4 <?= $activeTab === 'register' ? 'block' : 'hidden' ?>" id="form-register" method="POST" action="<?php echo APP_URL; ?>/register">
-            <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token'] ?? ''; ?>">
-            
-            <div>
-                <label class="form-label-styled" for="reg-name">Nombre Completo</label>
-                <div class="relative">
-                    <div class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+            <!-- ========================================== -->
+            <!-- 1. FORMULARIO DE INICIO DE SESIÓN -->
+            <!-- ========================================== -->
+            <form id="form-login" method="POST" action="<?php echo APP_URL; ?>/login" onsubmit="handleFormSubmit(this, 'btn-submit-login')" class="space-y-4 <?= $activeTab === 'login' ? 'block' : 'hidden' ?>">
+                <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token'] ?? ''; ?>">
+                
+                <!-- Email Field -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5" for="login-email">
+                        Correo Electrónico
+                    </label>
+                    <div class="relative">
+                        <div class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-base">
+                            ✉️
+                        </div>
+                        <input 
+                            class="w-full h-12 pl-11 pr-4 text-xs sm:text-sm font-medium text-slate-900 bg-slate-50/70 hover:bg-slate-50 focus:bg-white border border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-2xl outline-none transition-all placeholder:text-slate-400" 
+                            id="login-email" 
+                            name="email" 
+                            placeholder="ejemplo@correo.com" 
+                            type="email" 
+                            required 
+                            autocomplete="email"
+                        />
                     </div>
-                    <input class="form-input-styled pl-11" id="reg-name" name="nombre" placeholder="Juan Pérez" type="text" required/>
                 </div>
-            </div>
 
-            <div>
-                <label class="form-label-styled" for="reg-rol">Tipo de Cuenta</label>
-                <select class="form-input-styled" id="reg-rol" name="rol" required>
-                    <option value="" disabled selected>Selecciona una opción</option>
-                    <option value="adulto_mayor">Adulto Mayor (Para mí)</option>
-                    <option value="familiar">Familiar / Cuidador Principal</option>
-                </select>
-            </div>
-
-            <div>
-                <label class="form-label-styled" for="reg-phone">Teléfono (WhatsApp)</label>
-                <div class="relative">
-                    <div class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                <!-- Password Field -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5" for="login-password">
+                        Contraseña
+                    </label>
+                    <div class="relative">
+                        <div class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-base">
+                            🔒
+                        </div>
+                        <input 
+                            class="w-full h-12 pl-11 pr-11 text-xs sm:text-sm font-medium text-slate-900 bg-slate-50/70 hover:bg-slate-50 focus:bg-white border border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-2xl outline-none transition-all placeholder:text-slate-400" 
+                            id="login-password" 
+                            name="password" 
+                            placeholder="••••••••" 
+                            type="password" 
+                            required 
+                            autocomplete="current-password"
+                        />
+                        <button 
+                            class="touch-min absolute right-0 top-0 bottom-0 px-3.5 text-slate-400 hover:text-slate-600 focus:outline-none transition-colors flex items-center justify-center cursor-pointer" 
+                            type="button" 
+                            onclick="togglePasswordVisibility('login-password', this)" 
+                            aria-label="Mostrar u ocultar contraseña">
+                            <span class="eye-icon text-xs">👁️</span>
+                        </button>
                     </div>
-                    <input class="form-input-styled pl-11" id="reg-phone" name="telefono" placeholder="+34 600 000 000" type="tel"/>
                 </div>
-            </div>
 
-            <div>
-                <label class="form-label-styled" for="reg-email">Correo Electrónico</label>
-                <div class="relative">
-                    <div class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                <!-- Opciones: Recordarme & Recuperación -->
+                <div class="flex items-center justify-between pt-1">
+                    <label class="flex items-center gap-2 cursor-pointer select-none">
+                        <input class="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500/20" type="checkbox"/>
+                        <span class="text-xs font-semibold text-slate-600">Recordarme</span>
+                    </label>
+                    <a class="text-xs font-bold text-blue-600 hover:text-blue-700 hover:underline" href="<?php echo APP_URL; ?>/recovery">
+                        ¿Olvidaste tu contraseña?
+                    </a>
+                </div>
+
+                <!-- Submit Button -->
+                <button 
+                    id="btn-submit-login" 
+                    class="tap-bounce touch-min w-full h-12 bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white font-extrabold text-xs sm:text-sm rounded-2xl shadow-lg shadow-blue-600/25 transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer mt-2" 
+                    type="submit">
+                    <span>Iniciar sesión</span>
+                    <span>→</span>
+                </button>
+            </form>
+
+            <!-- ========================================== -->
+            <!-- 2. FORMULARIO DE REGISTRO -->
+            <!-- ========================================== -->
+            <form id="form-register" method="POST" action="<?php echo APP_URL; ?>/register" onsubmit="handleFormSubmit(this, 'btn-submit-register')" class="space-y-4 <?= $activeTab === 'register' ? 'block' : 'hidden' ?>">
+                <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token'] ?? ''; ?>">
+                
+                <!-- Nombre Completo -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5" for="reg-name">
+                        Nombre Completo
+                    </label>
+                    <div class="relative">
+                        <div class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-base">
+                            👤
+                        </div>
+                        <input 
+                            class="w-full h-12 pl-11 pr-4 text-xs sm:text-sm font-medium text-slate-900 bg-slate-50/70 hover:bg-slate-50 focus:bg-white border border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-2xl outline-none transition-all placeholder:text-slate-400" 
+                            id="reg-name" 
+                            name="nombre" 
+                            placeholder="Ej. María Elena Garza" 
+                            type="text" 
+                            required 
+                            autocomplete="name"
+                        />
                     </div>
-                    <input class="form-input-styled pl-11" id="reg-email" name="email" placeholder="ejemplo@correo.com" type="email" required/>
                 </div>
-            </div>
 
-            <div>
-                <label class="form-label-styled" for="reg-password">Contraseña Segura</label>
-                <div class="relative mb-2">
-                    <div class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                <!-- Tipo de Rol -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5" for="reg-rol">
+                        Tipo de Cuenta
+                    </label>
+                    <div class="relative">
+                        <select 
+                            class="w-full h-12 px-4 text-xs sm:text-sm font-medium text-slate-900 bg-slate-50/70 hover:bg-slate-50 focus:bg-white border border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-2xl outline-none transition-all cursor-pointer" 
+                            id="reg-rol" 
+                            name="rol" 
+                            required>
+                            <option value="familiar" selected>Familiar / Cuidador Principal</option>
+                            <option value="adulto_mayor">Adulto Mayor (Para mí)</option>
+                        </select>
                     </div>
-                    <input class="form-input-styled pl-11 pr-11" id="reg-password" name="password" placeholder="•••••••• (mínimo 8 caracteres)" type="password" required minlength="8" onkeyup="checkPasswordStrength(this.value)"/>
-                    <button class="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none transition-colors" type="button" onclick="togglePasswordVisibility('reg-password', this)" aria-label="Mostrar u ocultar contraseña">
-                        <svg class="w-5 h-5 eye-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                        </svg>
-                    </button>
                 </div>
 
-                <!-- Password Strength Meter -->
-                <div class="flex gap-1.5 h-1.5 mb-1.5">
-                    <div id="strength-1" class="flex-1 bg-slate-200 rounded-full transition-colors"></div>
-                    <div id="strength-2" class="flex-1 bg-slate-200 rounded-full transition-colors"></div>
-                    <div id="strength-3" class="flex-1 bg-slate-200 rounded-full transition-colors"></div>
-                    <div id="strength-4" class="flex-1 bg-slate-200 rounded-full transition-colors"></div>
+                <!-- Teléfono WhatsApp -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5" for="reg-phone">
+                        Teléfono (WhatsApp de Alertas)
+                    </label>
+                    <div class="relative">
+                        <div class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-base">
+                            📱
+                        </div>
+                        <input 
+                            class="w-full h-12 pl-11 pr-4 text-xs sm:text-sm font-medium text-slate-900 bg-slate-50/70 hover:bg-slate-50 focus:bg-white border border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-2xl outline-none transition-all placeholder:text-slate-400" 
+                            id="reg-phone" 
+                            name="telefono" 
+                            placeholder="+52 999 123 4567" 
+                            type="tel"
+                            inputmode="tel"
+                            autocomplete="tel"
+                        />
+                    </div>
                 </div>
-                <span id="strength-text" class="text-xs font-semibold text-slate-500"></span>
-            </div>
 
-            <!-- Terms Checkbox -->
-            <div class="pt-1">
-                <label class="flex items-start gap-2 cursor-pointer">
-                    <input class="w-4 h-4 rounded border-slate-300 text-[#004ac6] focus:ring-[#004ac6] mt-0.5" type="checkbox" required/>
-                    <span class="text-xs text-slate-600 leading-tight">Acepto la Política de Privacidad y Términos de Servicio de VitalSenior.</span>
-                </label>
-            </div>
+                <!-- Correo Electrónico -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5" for="reg-email">
+                        Correo Electrónico
+                    </label>
+                    <div class="relative">
+                        <div class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-base">
+                            ✉️
+                        </div>
+                        <input 
+                            class="w-full h-12 pl-11 pr-4 text-xs sm:text-sm font-medium text-slate-900 bg-slate-50/70 hover:bg-slate-50 focus:bg-white border border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-2xl outline-none transition-all placeholder:text-slate-400" 
+                            id="reg-email" 
+                            name="email" 
+                            placeholder="ejemplo@correo.com" 
+                            type="email" 
+                            required 
+                            autocomplete="email"
+                        />
+                    </div>
+                </div>
 
-            <!-- Register Button -->
-            <button class="btn-primary mt-3 flex items-center justify-center gap-2" type="submit">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-                <span>Crear cuenta</span>
-            </button>
-        </form>
+                <!-- Contraseña Segura con Medidor -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5" for="reg-password">
+                        Contraseña Segura
+                    </label>
+                    <div class="relative mb-2">
+                        <div class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-base">
+                            🔒
+                        </div>
+                        <input 
+                            class="w-full h-12 pl-11 pr-11 text-xs sm:text-sm font-medium text-slate-900 bg-slate-50/70 hover:bg-slate-50 focus:bg-white border border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-2xl outline-none transition-all placeholder:text-slate-400" 
+                            id="reg-password" 
+                            name="password" 
+                            placeholder="Mínimo 8 caracteres" 
+                            type="password" 
+                            required 
+                            minlength="8" 
+                            autocomplete="new-password"
+                            onkeyup="checkPasswordStrength(this.value)"
+                        />
+                        <button 
+                            class="touch-min absolute right-0 top-0 bottom-0 px-3.5 text-slate-400 hover:text-slate-600 focus:outline-none transition-colors flex items-center justify-center cursor-pointer" 
+                            type="button" 
+                            onclick="togglePasswordVisibility('reg-password', this)" 
+                            aria-label="Mostrar u ocultar contraseña">
+                            <span class="eye-icon text-xs">👁️</span>
+                        </button>
+                    </div>
 
+                    <!-- Indicador de Fortaleza -->
+                    <div class="space-y-1">
+                        <div class="flex gap-1.5 h-1.5">
+                            <div id="strength-1" class="flex-1 bg-slate-200 rounded-full transition-colors"></div>
+                            <div id="strength-2" class="flex-1 bg-slate-200 rounded-full transition-colors"></div>
+                            <div id="strength-3" class="flex-1 bg-slate-200 rounded-full transition-colors"></div>
+                            <div id="strength-4" class="flex-1 bg-slate-200 rounded-full transition-colors"></div>
+                        </div>
+                        <span id="strength-text" class="text-[11px] font-semibold text-slate-400 block"></span>
+                    </div>
+                </div>
+
+                <!-- Checkbox Términos -->
+                <div class="pt-1">
+                    <label class="flex items-start gap-2.5 cursor-pointer select-none">
+                        <input class="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500/20 mt-0.5" type="checkbox" required/>
+                        <span class="text-xs text-slate-600 leading-tight font-medium">
+                            Acepto los Términos de Servicio y la Política de Privacidad de VitalSenior.
+                        </span>
+                    </label>
+                </div>
+
+                <!-- Submit Button Register -->
+                <button 
+                    id="btn-submit-register" 
+                    class="tap-bounce touch-min w-full h-12 bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white font-extrabold text-xs sm:text-sm rounded-2xl shadow-lg shadow-blue-600/25 transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer mt-2" 
+                    type="submit">
+                    <span>Crear cuenta familiar</span>
+                    <span>→</span>
+                </button>
+            </form>
+
+        </div>
     </div>
+
 </div>
 
 <?php require_once dirname(__DIR__) . '/components/toast.php'; ?>
 
+<!-- Scripts de Interacción y Validaciones -->
 <script>
     function switchTab(tab) {
         const loginForm = document.getElementById('form-login');
@@ -382,9 +464,10 @@
             registerForm.classList.add('hidden');
             registerForm.classList.remove('block');
             
-            loginTab.classList.add('active');
+            loginTab.className = 'tap-bounce touch-min flex-1 py-2.5 px-4 text-xs font-extrabold rounded-xl transition-all duration-200 text-center cursor-pointer bg-white text-blue-600 shadow-sm';
             loginTab.setAttribute('aria-selected', 'true');
-            registerTab.classList.remove('active');
+            
+            registerTab.className = 'tap-bounce touch-min flex-1 py-2.5 px-4 text-xs font-bold rounded-xl transition-all duration-200 text-center cursor-pointer text-slate-500 hover:text-slate-900';
             registerTab.setAttribute('aria-selected', 'false');
 
             if (history.pushState) {
@@ -397,9 +480,10 @@
             loginForm.classList.add('hidden');
             loginForm.classList.remove('block');
             
-            registerTab.classList.add('active');
+            registerTab.className = 'tap-bounce touch-min flex-1 py-2.5 px-4 text-xs font-extrabold rounded-xl transition-all duration-200 text-center cursor-pointer bg-white text-blue-600 shadow-sm';
             registerTab.setAttribute('aria-selected', 'true');
-            loginTab.classList.remove('active');
+            
+            loginTab.className = 'tap-bounce touch-min flex-1 py-2.5 px-4 text-xs font-bold rounded-xl transition-all duration-200 text-center cursor-pointer text-slate-500 hover:text-slate-900';
             loginTab.setAttribute('aria-selected', 'false');
 
             if (history.pushState) {
@@ -414,10 +498,10 @@
         const icon = btn.querySelector('.eye-icon');
         if (input.type === 'password') {
             input.type = 'text';
-            icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" />';
+            icon.innerText = '🙈';
         } else {
             input.type = 'password';
-            icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />';
+            icon.innerText = '👁️';
         }
     }
 
@@ -447,27 +531,37 @@
         
         if (strength <= 1) {
             bars[0].className = 'flex-1 bg-rose-500 rounded-full transition-colors';
-            text.textContent = 'Débil (mínimo 8 caracteres)';
-            text.className = 'text-xs font-semibold text-rose-600';
+            text.textContent = 'Contraseña Débil (mínimo 8 caracteres)';
+            text.className = 'text-[11px] font-semibold text-rose-600 block';
         } else if (strength === 2) {
             bars[0].className = 'flex-1 bg-amber-500 rounded-full transition-colors';
             bars[1].className = 'flex-1 bg-amber-500 rounded-full transition-colors';
-            text.textContent = 'Regular';
-            text.className = 'text-xs font-semibold text-amber-600';
+            text.textContent = 'Contraseña Regular';
+            text.className = 'text-[11px] font-semibold text-amber-600 block';
         } else if (strength === 3) {
-            bars[0].className = 'flex-1 bg-[#004ac6] rounded-full transition-colors';
-            bars[1].className = 'flex-1 bg-[#004ac6] rounded-full transition-colors';
-            bars[2].className = 'flex-1 bg-[#004ac6] rounded-full transition-colors';
-            text.textContent = 'Buena';
-            text.className = 'text-xs font-semibold text-[#004ac6]';
+            bars[0].className = 'flex-1 bg-blue-600 rounded-full transition-colors';
+            bars[1].className = 'flex-1 bg-blue-600 rounded-full transition-colors';
+            bars[2].className = 'flex-1 bg-blue-600 rounded-full transition-colors';
+            text.textContent = 'Contraseña Buena';
+            text.className = 'text-[11px] font-semibold text-blue-600 block';
         } else if (strength >= 4) {
             bars[0].className = 'flex-1 bg-emerald-500 rounded-full transition-colors';
             bars[1].className = 'flex-1 bg-emerald-500 rounded-full transition-colors';
             bars[2].className = 'flex-1 bg-emerald-500 rounded-full transition-colors';
             bars[3].className = 'flex-1 bg-emerald-500 rounded-full transition-colors';
-            text.textContent = 'Muy Segura';
-            text.className = 'text-xs font-semibold text-emerald-600';
+            text.textContent = 'Contraseña Muy Segura';
+            text.className = 'text-[11px] font-semibold text-emerald-600 block';
         }
+    }
+
+    function handleFormSubmit(form, btnId) {
+        const btn = document.getElementById(btnId);
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-loader"></span> <span>Procesando...</span>';
+            btn.classList.add('opacity-80', 'cursor-not-allowed');
+        }
+        return true;
     }
 </script>
 </body>
