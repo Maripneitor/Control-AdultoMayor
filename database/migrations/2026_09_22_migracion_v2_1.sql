@@ -102,3 +102,23 @@ ON medicamentos(paciente_id, activo, stock_actual, stock_minimo_alerta);
 -- Aceleración getTodayDoses()
 CREATE INDEX IF NOT EXISTS idx_tomas_historial_hoy 
 ON tomas_historial(paciente_id, fecha_programada, hora_programada ASC);
+
+-- 7. Actualización de Columnas en Tabla Registro Salud Diario (IMC y métricas)
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'registro_salud_diario' AND column_name = 'peso') THEN
+        ALTER TABLE registro_salud_diario ADD COLUMN peso NUMERIC(5,2);
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'registro_salud_diario' AND column_name = 'altura') THEN
+        ALTER TABLE registro_salud_diario ADD COLUMN altura NUMERIC(5,2);
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'registro_salud_diario' AND column_name = 'imc') THEN
+        ALTER TABLE registro_salud_diario ADD COLUMN imc NUMERIC(4,2);
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'registro_salud_diario' AND column_name = 'registrado_por_usuario_id') THEN
+        ALTER TABLE registro_salud_diario ADD COLUMN registrado_por_usuario_id INT REFERENCES usuarios(id) ON DELETE SET NULL;
+    END IF;
+END $$;

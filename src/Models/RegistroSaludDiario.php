@@ -15,7 +15,9 @@ class RegistroSaludDiario extends Model {
 
     public function getTodayByPacienteId(int $pacienteId): ?array {
         $stmt = $this->db->prepare("
-            SELECT id, paciente_id, presion_sistolica, presion_diastolica, glucosa, momento_glucosa, ritmo_cardiaco, horas_sueno, nivel_dolor, alerta_emitida, confirmado_por_usuario, created_at 
+            SELECT id, paciente_id, presion_sistolica, presion_diastolica, glucosa, momento_glucosa, 
+                   ritmo_cardiaco, horas_sueno, nivel_dolor, peso, altura, imc, alerta_emitida, 
+                   confirmado_por_usuario, registrado_por_usuario_id, created_at 
             FROM registro_salud_diario 
             WHERE paciente_id = :pid 
             AND DATE(created_at) = CURRENT_DATE 
@@ -29,7 +31,9 @@ class RegistroSaludDiario extends Model {
 
     public function getAllByPacienteId(int $pacienteId, int $limit = 30): array {
         $stmt = $this->db->prepare("
-            SELECT id, paciente_id, presion_sistolica, presion_diastolica, glucosa, momento_glucosa, ritmo_cardiaco, horas_sueno, nivel_dolor, alerta_emitida, confirmado_por_usuario, created_at 
+            SELECT id, paciente_id, presion_sistolica, presion_diastolica, glucosa, momento_glucosa, 
+                   ritmo_cardiaco, horas_sueno, nivel_dolor, peso, altura, imc, alerta_emitida, 
+                   confirmado_por_usuario, registrado_por_usuario_id, created_at 
             FROM registro_salud_diario 
             WHERE paciente_id = :pid 
             ORDER BY created_at DESC 
@@ -39,5 +43,20 @@ class RegistroSaludDiario extends Model {
         $stmt->bindValue(':lim', $limit, PDO::PARAM_INT);
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getUltimoRegistro(int $pacienteId): ?array {
+        $stmt = $this->db->prepare("
+            SELECT id, paciente_id, presion_sistolica, presion_diastolica, glucosa, momento_glucosa, 
+                   ritmo_cardiaco, horas_sueno, nivel_dolor, peso, altura, imc, alerta_emitida, 
+                   confirmado_por_usuario, registrado_por_usuario_id, created_at 
+            FROM registro_salud_diario 
+            WHERE paciente_id = :pid 
+            ORDER BY created_at DESC 
+            LIMIT 1
+        ");
+        $stmt->execute(['pid' => $pacienteId]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $result ?: null;
     }
 }

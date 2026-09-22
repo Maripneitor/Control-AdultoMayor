@@ -56,15 +56,24 @@ abstract class Model {
         $columns = implode(', ', array_keys($data));
         $placeholders = ':' . implode(', :', array_keys($data));
         
-        $sql = "INSERT INTO {$this->table} ({$columns}) VALUES ({$placeholders})";
+        $sql = "INSERT INTO {$this->table} ({$columns}) VALUES ({$placeholders}) RETURNING id";
         $stmt = $this->db->prepare($sql);
         
         foreach ($data as $key => $value) {
-            $stmt->bindValue(':' . $key, $value);
+            if (is_bool($value)) {
+                $stmt->bindValue(':' . $key, $value, PDO::PARAM_BOOL);
+            } elseif (is_int($value)) {
+                $stmt->bindValue(':' . $key, $value, PDO::PARAM_INT);
+            } elseif (is_null($value)) {
+                $stmt->bindValue(':' . $key, null, PDO::PARAM_NULL);
+            } else {
+                $stmt->bindValue(':' . $key, $value, PDO::PARAM_STR);
+            }
         }
         
         $stmt->execute();
-        return $this->db->lastInsertId();
+        $insertedId = $stmt->fetchColumn();
+        return $insertedId ? (int)$insertedId : (int)$this->db->lastInsertId();
     }
 
     public function update($id, $data) {

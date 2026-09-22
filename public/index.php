@@ -79,6 +79,7 @@ $router->get('/citas', 'CitaController@index', [AuthMiddleware::class]);
 $router->post('/citas/crear', 'CitaController@store', [AuthMiddleware::class]);
 
 // Salud y Signos Vitales
+$router->get('/salud', 'SaludController@stepper', [AuthMiddleware::class]);
 $router->get('/salud/stepper', 'SaludController@stepper', [AuthMiddleware::class]);
 $router->post('/salud/registrar', 'SaludController@registrar', [AuthMiddleware::class]);
 $router->get('/salud/confirmar', 'SaludController@mostrarConfirmacion', [AuthMiddleware::class]);
