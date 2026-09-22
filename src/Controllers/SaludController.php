@@ -19,25 +19,25 @@ class SaludController extends Controller {
 
     public function registrar(): void {
         AuthMiddleware::handle();
+        AuthMiddleware::requirePermission('registrar_signos');
 
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            $this->setFlash('Método no permitido.', 'danger');
+            $this->setFlash('danger', 'Método no permitido.');
             header('Location: ' . APP_URL . '/dashboard');
             exit;
         }
 
         if (!validateCsrfToken($_POST['csrf_token'] ?? null)) {
-            $this->setFlash('Token de seguridad inválido.', 'danger');
+            $this->setFlash('danger', 'Token de seguridad inválido.');
             header('Location: ' . APP_URL . '/dashboard');
             exit;
         }
 
         // El paciente_activo_id lo tomamos de la sesión si es cuidador múltiple, si no, del paciente del usuario.
-        // Asumimos que AuthController/DashboardController establece $_SESSION['paciente_activo_id']
         $pacienteId = (int)($_SESSION['paciente_activo_id'] ?? 0);
         
         if ($pacienteId === 0) {
-            $this->setFlash('No hay paciente activo seleccionado.', 'danger');
+            $this->setFlash('danger', 'No hay paciente activo seleccionado.');
             header('Location: ' . APP_URL . '/dashboard');
             exit;
         }
@@ -85,7 +85,7 @@ class SaludController extends Controller {
 
         if ($evaluacion['requiere_confirmacion']) {
             $_SESSION['salud_datos_pendientes'] = $_POST;
-            $this->setFlash($evaluacion['mensaje_confirmacion'], 'warning');
+            $this->setFlash('warning', $evaluacion['mensaje_confirmacion']);
             header('Location: ' . APP_URL . '/salud/confirmar');
             exit;
         }
@@ -116,7 +116,7 @@ class SaludController extends Controller {
             $flashType = $evaluacion['estado'] === SaludEvaluatorService::STATUS_CRITICAL ? 'danger' : 'warning';
         }
 
-        $this->setFlash($mensaje, $flashType);
+        $this->setFlash($flashType, $mensaje);
         header('Location: ' . APP_URL . '/dashboard');
         exit;
     }

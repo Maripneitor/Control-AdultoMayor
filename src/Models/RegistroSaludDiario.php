@@ -15,7 +15,8 @@ class RegistroSaludDiario extends Model {
 
     public function getTodayByPacienteId(int $pacienteId): ?array {
         $stmt = $this->db->prepare("
-            SELECT * FROM registro_salud_diario 
+            SELECT id, paciente_id, presion_sistolica, presion_diastolica, glucosa, momento_glucosa, ritmo_cardiaco, horas_sueno, nivel_dolor, alerta_emitida, confirmado_por_usuario, created_at 
+            FROM registro_salud_diario 
             WHERE paciente_id = :pid 
             AND DATE(created_at) = CURRENT_DATE 
             ORDER BY created_at DESC 
@@ -28,7 +29,8 @@ class RegistroSaludDiario extends Model {
 
     public function getAllByPacienteId(int $pacienteId, int $limit = 30): array {
         $stmt = $this->db->prepare("
-            SELECT * FROM registro_salud_diario 
+            SELECT id, paciente_id, presion_sistolica, presion_diastolica, glucosa, momento_glucosa, ritmo_cardiaco, horas_sueno, nivel_dolor, alerta_emitida, confirmado_por_usuario, created_at 
+            FROM registro_salud_diario 
             WHERE paciente_id = :pid 
             ORDER BY created_at DESC 
             LIMIT :lim

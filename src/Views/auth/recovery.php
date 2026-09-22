@@ -1,196 +1,117 @@
 <!DOCTYPE html>
-
-<html lang="es"><head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>VitalSenior - Recuperar Contraseña</title>
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<script id="tailwind-config">
-      tailwind.config = {
-        darkMode: "class",
-        theme: {
-          extend: {
-            "colors": {
-                    "secondary-fixed-dim": "#b6c4ff",
-                    "secondary-container": "#8fa7fe",
-                    "error": "#ba1a1a",
-                    "tertiary-fixed-dim": "#b7c9d5",
-                    "on-primary-fixed-variant": "#003ea8",
-                    "on-tertiary": "#ffffff",
-                    "surface-container-low": "#f2f4f6",
-                    "on-error-container": "#93000a",
-                    "on-background": "#191c1e",
-                    "tertiary-container": "#5f707a",
-                    "on-primary": "#ffffff",
-                    "inverse-primary": "#b4c5ff",
-                    "surface": "#f7f9fb",
-                    "primary-fixed-dim": "#b4c5ff",
-                    "surface-dim": "#d8dadc",
-                    "inverse-surface": "#2d3133",
-                    "primary-fixed": "#dbe1ff",
-                    "on-surface": "#191c1e",
-                    "outline-variant": "#c3c6d7",
-                    "surface-container-high": "#e6e8ea",
-                    "background": "#f7f9fb",
-                    "surface-bright": "#f7f9fb",
-                    "tertiary": "#475861",
-                    "on-tertiary-fixed-variant": "#384953",
-                    "surface-container": "#eceef0",
-                    "on-tertiary-container": "#e2f4ff",
-                    "surface-container-lowest": "#ffffff",
-                    "inverse-on-surface": "#eff1f3",
-                    "on-secondary-container": "#1d3989",
-                    "on-primary-container": "#eeefff",
-                    "on-primary-fixed": "#00174b",
-                    "primary": "#004ac6",
-                    "error-container": "#ffdad6",
-                    "on-error": "#ffffff",
-                    "surface-variant": "#e0e3e5",
-                    "on-secondary-fixed": "#00164e",
-                    "outline": "#737686",
-                    "surface-container-highest": "#e0e3e5",
-                    "on-secondary": "#ffffff",
-                    "secondary-fixed": "#dce1ff",
-                    "on-surface-variant": "#434655",
-                    "on-tertiary-fixed": "#0c1e26",
-                    "primary-container": "#2563eb",
-                    "tertiary-fixed": "#d3e5f1",
-                    "secondary": "#4059aa",
-                    "surface-tint": "#0053db",
-                    "on-secondary-fixed-variant": "#264191"
-            },
-            "borderRadius": {
-                    "DEFAULT": "0.25rem",
-                    "lg": "0.5rem",
-                    "xl": "0.75rem",
-                    "full": "9999px"
-            },
-            "spacing": {
-                    "margin-mobile": "20px",
-                    "stack-sm": "12px",
-                    "container-max": "1280px",
-                    "stack-lg": "48px",
-                    "stack-md": "24px",
-                    "unit": "8px",
-                    "gutter": "24px"
-            },
-            "fontFamily": {
-                    "headline-lg": ["Outfit"],
-                    "headline-md": ["Outfit"],
-                    "body-lg": ["Outfit"],
-                    "label-md": ["Outfit"],
-                    "body-md": ["Outfit"],
-                    "display-lg": ["Outfit"],
-                    "headline-lg-mobile": ["Outfit"]
-            },
-            "fontSize": {
-                    "headline-lg": ["32px", {"lineHeight": "40px", "fontWeight": "600"}],
-                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
-                    "body-lg": ["20px", {"lineHeight": "30px", "fontWeight": "400"}],
-                    "label-md": ["16px", {"lineHeight": "24px", "fontWeight": "600"}],
-                    "body-md": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
-                    "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
-                    "headline-lg-mobile": ["28px", {"lineHeight": "36px", "fontWeight": "600"}]
-            }
-          },
-        },
-      }
-    </script>
-<style>
+<html lang="es">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>VitalSenior - Recuperar Contraseña</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+    
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script src="<?php echo APP_URL; ?>/assets/js/tailwind-config.js"></script>
+    
+    <style>
         body {
-            background-color: #f8fafc; /* Fallback */
-            background-color: theme('colors.surface-container-low');
+            font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #f1f5f9;
         }
-        /* Custom Scrollbar for better UI */
-        ::-webkit-scrollbar {
-            width: 8px;
+        .form-input-styled {
+            width: 100%;
+            height: 48px;
+            padding: 10px 16px;
+            font-size: 15px;
+            color: #0f172a;
+            background-color: #f1f5f9;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            transition: all 0.2s ease;
         }
-        ::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: theme('colors.surface-variant');
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: theme('colors.outline');
+        .form-input-styled:focus {
+            background-color: #ffffff;
+            border-color: #004ac6;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(0, 74, 198, 0.12);
         }
     </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-margin-mobile md:p-gutter antialiased text-on-surface">
-<main class="w-full max-w-[1024px] bg-surface-container-lowest rounded-2xl shadow-[0_8px_30px_rgb(0,74,198,0.15)] overflow-hidden flex flex-col md:flex-row min-h-[600px]">
-<!-- Left Column: Brand Showcase -->
-<section class="hidden md:flex md:w-1/2 bg-primary relative flex-col justify-between p-stack-lg overflow-hidden group">
-<!-- Decorative Elements -->
-<div class="absolute inset-0 opacity-20 pointer-events-none">
-<svg height="100%" width="100%" xmlns="http://www.w3.org/2000/svg">
-<defs>
-<pattern height="40" id="grid" patternunits="userSpaceOnUse" width="40">
-<path d="M 40 0 L 0 0 0 40" fill="none" stroke="white" stroke-width="0.5"></path>
-</pattern>
-</defs>
-<rect fill="url(#grid)" height="100%" width="100%"></rect>
-</svg>
-</div>
-<div class="relative z-10">
-<div class="flex items-center gap-2 mb-stack-lg">
-<span class="material-symbols-outlined text-on-primary text-[32px]">medical_services</span>
-<h1 class="font-headline-lg text-headline-lg text-on-primary">VitalSenior</h1>
-</div>
-<h2 class="font-headline-md text-headline-md text-on-primary mb-stack-md leading-tight">
+<body class="min-h-screen flex items-center justify-center p-4 sm:p-6 antialiased text-slate-900">
+    <main class="w-full max-w-[960px] bg-white rounded-3xl shadow-xl border border-slate-200/80 overflow-hidden flex flex-col md:flex-row min-h-[540px]">
+        <!-- Left Column: Brand Showcase -->
+        <section class="hidden md:flex md:w-1/2 bg-[#1e3a8a] text-white relative flex-col justify-between p-10 lg:p-12 overflow-hidden">
+            <div class="absolute inset-0 opacity-20 pointer-events-none" style="background-image: radial-gradient(circle at 20% 30%, rgba(255,255,255,0.4) 0%, transparent 60%);"></div>
+            
+            <div class="relative z-10">
+                <a href="<?php echo APP_URL; ?>/" class="flex items-center gap-3 mb-6">
+                    <div class="w-10 h-10 rounded-xl bg-white text-[#1e3a8a] flex items-center justify-center shadow-md">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                        </svg>
+                    </div>
+                    <span class="text-2xl font-extrabold text-white">VitalSenior</span>
+                </a>
+                <h2 class="text-2xl font-bold text-white mb-3 leading-tight">
                     Cuidamos de tu salud. Gestión sencilla para ti y tu familia.
                 </h2>
-<p class="font-body-md text-body-md text-on-primary/80">
-                    Tu bienestar y tranquilidad son nuestra prioridad. Recupera el acceso a tu expediente médico de forma segura.
+                <p class="text-sm text-blue-100/90 leading-relaxed">
+                    Tu bienestar y tranquilidad son nuestra prioridad. Recupera el acceso a tu expediente médico de forma segura en unos sencillos pasos.
                 </p>
-</div>
-<!-- Image/Illustration Area -->
-<div class="relative z-10 w-full flex-grow mt-stack-lg rounded-xl overflow-hidden shadow-lg border border-white/10 bg-white/5 backdrop-blur-sm flex items-center justify-center">
-<img class="absolute inset-0 w-full h-full object-cover opacity-90 transition-transform duration-700 group-hover:scale-105" data-alt="A comforting, stylized illustration in a clinical humanist style showing a caring medical professional in light blue scrubs holding a digital tablet, smiling reassuringly at a senior person. The background is a soft, minimalist gradient of sapphire blue and pure white, conveying trust, modern healthcare, and emotional support. High quality, soft lighting, clean lines." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBX3lubAEqZagWUmjXd9g1DCMCipje4vGR9ej7I-HU2cZZvjF_I_hVDizcFe1C3MJWXnh_OpWgv26gbHMiBxGhaSWTrj6P6nCEVRw-AWJltiq4wB-SqxwPK6HNiKRWG1cbYQFWfQDeAaNCrQi9vM4Aw1-knGxrX92ylJDS5GSqoC-DPc7KxE6c-9yDl2ykoA9K4VLKlDj0H5EuNgUXQ_vjq9Qws0w9gJeCFikoghEq6uzqOVL2ix8zi5A"/>
-<div class="absolute inset-0 bg-gradient-to-t from-primary/80 to-transparent"></div>
-</div>
-</section>
-<!-- Right Column: Recovery Form -->
-<section class="w-full md:w-1/2 p-stack-lg flex flex-col justify-center bg-surface-container-lowest">
-<!-- Mobile Logo (Hidden on Desktop) -->
-<div class="md:hidden flex items-center gap-2 mb-stack-lg justify-center">
-<span class="material-symbols-outlined text-primary text-[32px]">medical_services</span>
-<span class="font-headline-lg-mobile text-headline-lg-mobile text-primary">VitalSenior</span>
-</div>
-<div class="max-w-md w-full mx-auto">
-<div class="mb-stack-lg text-center md:text-left">
-<h2 class="font-headline-md text-headline-md text-on-surface mb-stack-sm">¿Olvidaste tu contraseña?</h2>
-<p class="font-body-md text-body-md text-on-surface-variant">
-                        No te preocupes, dinos tu correo electrónico y te enviaremos las instrucciones para restablecerla.
+            </div>
+
+            <!-- Illustration Area -->
+            <div class="relative z-10 w-full rounded-2xl overflow-hidden shadow-lg border border-white/20 aspect-[16/9] mt-6">
+                <img class="w-full h-full object-cover" alt="Soporte y recuperación de cuenta" src="https://images.unsplash.com/photo-1576091160550-2173ff9e5eb3?q=80&w=800&auto=format&fit=crop"/>
+                <div class="absolute inset-0 bg-gradient-to-t from-blue-950/70 to-transparent"></div>
+            </div>
+        </section>
+
+        <!-- Right Column: Recovery Form -->
+        <section class="w-full md:w-1/2 p-8 sm:p-10 lg:p-12 flex flex-col justify-center bg-white">
+            <!-- Mobile Logo -->
+            <div class="md:hidden flex items-center gap-2.5 mb-6 justify-center">
+                <div class="w-9 h-9 rounded-xl bg-[#004ac6] flex items-center justify-center text-white">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+                </div>
+                <span class="text-2xl font-bold text-[#004ac6]">VitalSenior</span>
+            </div>
+
+            <div class="max-w-sm w-full mx-auto">
+                <div class="mb-6 text-center md:text-left">
+                    <h2 class="text-2xl font-extrabold text-slate-900 mb-2">¿Olvidaste tu contraseña?</h2>
+                    <p class="text-sm text-slate-600 leading-relaxed">
+                        Ingresa tu correo electrónico registrado y te enviaremos un enlace seguro para restablecerla.
                     </p>
-</div>
-<form action="#" class="space-y-stack-md" method="POST">
-<!-- Email Field -->
-<div>
-<label class="block font-label-md text-label-md text-on-surface mb-unit" for="email">Correo Electrónico</label>
-<div class="relative">
-<div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-<span class="material-symbols-outlined text-outline" style="font-variation-settings: 'FILL' 0;">mail</span>
-</div>
-<input class="block w-full pl-12 pr-4 py-4 text-[18px] bg-surface rounded-xl border-2 border-surface-variant focus:border-primary focus:ring-0 transition-colors text-on-surface placeholder-outline-variant" id="email" name="email" placeholder="tu@correo.com" required="" type="email"/>
-</div>
-</div>
-<!-- Submit Button -->
-<button class="w-full min-h-[56px] bg-primary text-on-primary font-label-md text-label-md rounded-xl shadow-sm hover:shadow-md hover:-translate-y-[1px] active:translate-y-[1px] active:shadow-none transition-all duration-200 flex items-center justify-center gap-2 mt-stack-md" type="submit">
-                        ENVIAR INSTRUCCIONES
+                </div>
+
+                <form action="<?php echo APP_URL; ?>/recovery" class="space-y-4" method="POST">
+                    <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token'] ?? ''; ?>">
+                    
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5" for="email">Correo Electrónico</label>
+                        <div class="relative">
+                            <div class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                            </div>
+                            <input class="form-input-styled pl-11" id="email" name="email" placeholder="ejemplo@correo.com" required type="email"/>
+                        </div>
+                    </div>
+
+                    <button class="w-full h-12 bg-[#004ac6] hover:bg-[#003ea8] text-white font-bold text-sm rounded-xl shadow-md shadow-blue-600/30 hover:shadow-lg hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 mt-4" type="submit">
+                        <span>Enviar Instrucciones</span>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
                     </button>
-</form>
-<!-- Back to Login Link -->
-<div class="mt-stack-lg text-center">
-<a class="inline-flex items-center gap-2 font-label-md text-label-md text-primary hover:text-on-primary-fixed-variant transition-colors group" href="{{DATA:SCREEN:SCREEN_2}}">
-<span class="material-symbols-outlined text-[20px] group-hover:-translate-x-1 transition-transform">arrow_back</span>
-                        Volver al inicio de sesión
+                </form>
+
+                <div class="mt-8 text-center">
+                    <a class="inline-flex items-center gap-1.5 text-sm font-semibold text-[#004ac6] hover:underline group" href="<?php echo APP_URL; ?>/login">
+                        <svg class="w-4 h-4 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                        <span>Volver al inicio de sesión</span>
                     </a>
-</div>
-</div>
-</section>
-</main>
-</body></html>
+                </div>
+            </div>
+        </section>
+    </main>
+    <?php require_once dirname(__DIR__) . '/components/toast.php'; ?>
+</body>
+</html>

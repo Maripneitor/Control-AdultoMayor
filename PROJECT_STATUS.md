@@ -1,47 +1,47 @@
-# Auditoría de Proyecto - Control Adulto Mayor
+# Auditoría y Remediación de Proyecto - Control Adulto Mayor
 
-## 1. Exposición de Credenciales y Archivos Sensibles
-- **Severidad:** Crítica
-- **Archivo:** `.env` (Líneas 1-8)
-- **Descripción:** El archivo `.env` se encuentra presente en el directorio de trabajo con credenciales reales (contraseña de base de datos `DB_PASS=110905`) expuestas.
-- **Sugerencia técnica:** Eliminar el archivo `.env` del control de versiones (usar `git rm --cached .env`), mantener solo `.env.example` y rotar las contraseñas de la base de datos inmediatamente.
+## Fase 7: Remediación de Seguridad, Optimización y Pulido de UI (COMPLETADA)
+* **Objetivo:** Cerrar vulnerabilidades críticas de infraestructura, optimizar rendimiento en DB, refactorizar lógica de concurrencia y pulir la experiencia del usuario (UX) para perfiles Senior y Cuidadores.
+* **Estado:** Integración y remediación finalizadas.
+* **Vulnerabilidades Resueltas:**
+  * **Exposición de Credenciales (Crítica):** `.env` eliminado de Git. Se estableció `.env.example` con variables seguras (DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASS, APP_URL).
+  * **Fuga de Información (Crítica):** Desactivado `display_errors`. Se implementó un manejador global que muestra una vista HTML de Error 500 y oculta detalles técnicos en `config/Database.php`.
+  * **Fuerza Bruta (Media):** Reemplazado rate limiting de sesiones por almacenamiento en DB.
+    * *Nuevo esquema:* Tabla `rate_limits (ip_address, action, attempts, last_attempt)`.
+    * Limpieza automática (`purgeOldRecords`) de intentos mayores a 24 horas.
+  * **Rendimiento N+1 (Media):** Refactorizado `Medicamento::generarTomasDiarias` usando Bulk Insert.
 
-## 2. Exposición de Información por Modo Debug (Display Errors)
-- **Severidad:** Crítica
-- **Archivo:** `public/index.php` (Líneas 4-6)
-- **Descripción:** Las directivas `display_errors` y `display_startup_errors` están activadas forzosamente en el código (`ini_set('display_errors', '1');`), lo cual expone rutas internas y configuraciones del servidor a los usuarios finales en caso de fallos.
-- **Sugerencia técnica:** Cambiar a `ini_set('display_errors', '0');` en entornos de producción y usar `error_log()` para registrar los errores internamente.
+* **Integraciones y Servicios:**
+  * Creado `EmailNotificationService` tolerante a fallos para enviar alertas (mock/PHPMailer).
+  * Cron de inactividad actualizado para delegar envíos de correo sin trabar la base de datos.
+  * `MedicamentoController::posponerToma` actualizado para cambiar formalmente el estado a `pospuesto` y posponer 30 minutos la `hora_programada`.
 
-## 3. Rate Limiting Basado en Sesiones (Bypass Fácil)
-- **Severidad:** Media
-- **Archivo:** `src/Controllers/AuthController.php` (Líneas 87-101) y `src/Controllers/RecoveryController.php` (Líneas 28-40)
-- **Descripción:** El control de límite de intentos (rate limiting) para el login y recuperación de contraseña se basa únicamente en variables de sesión (`$_SESSION`). Un atacante puede evadir esta protección (fuerza bruta) simplemente eliminando su cookie de sesión en cada intento.
-- **Sugerencia técnica:** Implementar el rate limiting basado en la dirección IP (`$_SERVER['REMOTE_ADDR']`) y/o el correo electrónico objetivo, almacenando los intentos en la base de datos o en caché (Redis/Memcached).
+* **Mapa de Endpoints Actualizado:**
+  * `GET /login`, `POST /login`: Controlado por RateLimiter (5 intentos / 15 min).
+  * `GET /recovery`, `POST /recovery`: Controlado por RateLimiter (3 intentos / 15 min).
+  * `POST /medicamentos/toma`: Marca tomas con validación de antelación/retraso (± 45 min) y actualiza stock transaccionalmente.
+  * `POST /medicamentos/posponer`: Pospones tomas por 30 minutos sin descontar inventario.
+  * `GET /dashboard`: Enruta automáticamente a vistas específicas de admin, paciente activo (adulto_mayor) o cuidador con selector de pacientes y alertas críticas de stock/omisión.
 
-## 4. Exposición de Detalles Internos en Errores de Base de Datos
-- **Severidad:** Media
-- **Archivo:** `config/Database.php` (Líneas 31-47)
-- **Descripción:** En la captura de excepciones PDO (`catch(\Throwable $e)`), se inyecta y muestra el mensaje técnico del error directamente en la vista HTML (`$e->getMessage()`). Esto revela detalles de la infraestructura, usuarios o posibles esquemas de BD.
-- **Sugerencia técnica:** Registrar el detalle del error en un archivo de logs y mostrar al usuario únicamente un mensaje genérico ("Ocurrió un problema de conexión").
 
-## 5. Problema de Rendimiento: Consultas N+1 (N+1 Query Problem)
-- **Severidad:** Media
-- **Archivo:** `src/Models/Medicamento.php` (Líneas 57-100)
-- **Descripción:** En el método `generarTomasDiarias`,## Fase 6: Arquitectura Integral, Concurrencia y Steppers Médicos (COMPLETADA)
-* **Objetivo:** Refactorizar módulos faltantes, implementar control de concurrencia (transacciones), mejorar el registro clínico para UX Senior y endurecer seguridad (SOS persistente, Cron jobs).
+## 7. Integración de Sistema de Roles, Permisos y Recuperación de Contraseña (COMPLETADA)
+* **Objetivo:** Refactorizar la arquitectura para incluir control de acceso basado en roles, inyección de permisos en sesión y un flujo unificado de recuperación de contraseña.
 * **Estado:** Integración arquitectónica finalizada.
 * **Componentes:**
-  * **Servicios (SRP):** `SaludEvaluatorService` creado para verificar límites fisiológicos (Two-Step Verification).
-  * **Concurrencia DB:** Las tomas en `MedicamentoController` ahora emplean transacciones transaccionales, evitando descuentos dobles en el inventario de medicamentos.
-  * **UX Senior (Steppers):** Formulario escalonado para glucosa, presión y dolor con botones gigantes en `stepper.php`. Control de tomas dividido en Mañana, Tarde, Noche (`control_tomas.php`).
-  * **Emergencias:** Botón global flotante añadido al layout (`header.php`) con modal seguro (contador de 3 segundos) y retención del token SOS.
-  * **Jobs Automáticos:** Cron job (`bin/cron_inactividad.php`) habilitado para buscar tomas no realizadas y constantes omitidas durante 24h, enviando alertas por email a cuidadores.
-  * **Reportes (PDF):** Se migró a la API de QuickChart para generar resúmenes con gráficos 100% compatibles con Dompdf usando únicamente CSS 2.1 estándar y tablas HTML.
-* **Estado Base de Datos:** Base de datos Postgres refactorizada con éxito mediante `refactor_db_fase6.php` (ampliando `registro_salud_diario` y `medicamentos`, creando `tomas_historial` y `codigos_vinculacion`). múltiple (`INSERT INTO ... VALUES (...), (...), ...`).
+  * **Modelos y Dominio:** `Usuario.php` ahora define constantes `ROLES` y `PERMISOS` y registra en un archivo de log básico cada operación crítica. `PasswordReset.php` traducido a español (`crearToken`, `validarToken`, `marcarComoUsado`).
+  * **Seguridad y Middlewares:** `AuthMiddleware::requirePermission()` implementado para validar sesión y nivel de permisos. Se refactorizó `autorizarAccesoPaciente` basándose en el rol activo del usuario (diferenciando admin, adultos mayores y familiares).
+  * **Controladores y UI:**
+    * El registro (`AuthController.php`) admite estrictamente roles en lista blanca (`adulto_mayor` o `familiar`). Los intentos ajenos retornan 400.
+    * Los Adultos Mayores obtienen de forma transparente su registro en `pacientes` junto con un `token_sos`.
+    * Enrutamiento dinámico en `DashboardController` (`admin/dashboard.php`, `dashboard/index.php` para AM, `dashboard/cuidador.php` para familiares).
+    * `header.php` renderiza condicionalmente el menú para evitar ruido visual a adultos mayores.
+    * Los controladores clínicos bloquean endpoints críticos (`store`, `registrarToma`) validando que el rol cuente con el permiso adecuado.
 
-## 6. Archivo Composer Vacío
-- **Severidad:** Baja
-- **Archivo:** `composer.json` (Línea 1)
-- **Descripción:** El manifiesto `composer.json` existe en la raíz del proyecto pero está completamente vacío (0 bytes), lo que romperá cualquier intento de ejecución de herramientas de PHP o integraciones.
-
-
+## 8. Especialización de Roles en Medicamentos y Alertas Predictivas (COMPLETADA)
+* **Objetivo:** Separar las acciones de medicamentos según el rol (Adulto Mayor = registrar; Familiar = crear/surtir), implementar notificaciones de adherencia (±45 min, posponer) y stock.
+* **Estado:** Integrado y probado.
+* **Componentes:**
+  * **Motor de Tolerancia:** `MedicamentoController@marcarToma` verifica el registro en relación a `hora_programada` de `tomas_historial` y añade una nota de retraso o antelación si excede los 45 min.
+  * **Snooze:** Nuevo método `posponerToma` y acción en el frontend (Adulto Mayor) que cambia el estado a `pospuesto` sin deducir dosis.
+  * **Alerta Predictiva & Cron:** El script CLI `bin/cron_inactividad.php` calcula `stock_actual / dosis_diaria` y emite logs ("alertas") si quedan menos de 4 días de dosis. Además, el script marca como `omitido` las tomas olvidadas por más de 60 minutos.
+  * **Modificaciones DB Directas:** Se amplió el tipo `enum_estado_toma` y se añadieron `hora_programada` y `nota_incidencia` a `tomas_historial`.

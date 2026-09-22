@@ -18,42 +18,66 @@ class AuthController extends Controller {
     }
 
     public function showLoginForm(): void {
-        $this->render('auth/login', [], false);
+        $tab = $_GET['tab'] ?? 'login';
+        $this->render('auth/login', ['tab' => $tab], false);
+    }
+
+    public function showRegisterForm(): void {
+        $this->render('auth/login', ['tab' => 'register'], false);
     }
 
     public function register(): void {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            header('Location: ' . APP_URL . '/login');
+            header('Location: ' . APP_URL . '/register');
             exit;
         }
 
         if (!validateCsrfToken($_POST['csrf_token'] ?? null)) {
-            die('Error: Token de seguridad no válido (CSRF).');
+            $this->setFlash('danger', 'La sesión ha expirado por inactividad. Por favor intenta registrarte nuevamente.', 'Seguridad');
+            header('Location: ' . APP_URL . '/register');
+            exit;
         }
 
         $nombre = trim($_POST['nombre'] ?? '');
         $email = filter_var(trim($_POST['email'] ?? ''), FILTER_VALIDATE_EMAIL);
         $telefono = trim($_POST['telefono'] ?? '');
         $password = $_POST['password'] ?? '';
+        $rolInput = $_POST['rol'] ?? 'adulto_mayor';
 
-        if (!$email || strlen($password) < 8 || empty($nombre)) {
-            $this->setFlash('danger', "Datos inválidos o contraseña menor a 8 caracteres.");
-            header('Location: ' . APP_URL . '/login');
+        if (empty($nombre)) {
+            $this->setFlash('warning', 'Por favor ingresa tu nombre completo para el registro.', 'Nombre requerido');
+            header('Location: ' . APP_URL . '/register');
+            exit;
+        }
+
+        if (!$email) {
+            $this->setFlash('warning', 'Por favor ingresa un correo electrónico válido.', 'Correo inválido');
+            header('Location: ' . APP_URL . '/register');
+            exit;
+        }
+
+        if (strlen($password) < 8) {
+            $this->setFlash('warning', 'La contraseña debe tener un mínimo de 8 caracteres para garantizar la seguridad de tu información médica.', 'Contraseña muy corta');
+            header('Location: ' . APP_URL . '/register');
             exit;
         }
 
         if ($this->usuarioModel->findByEmail($email)) {
-            $this->setFlash('danger', "El correo ingresado ya está registrado.");
-            header('Location: ' . APP_URL . '/login');
+            $this->setFlash('danger', 'El correo ' . htmlspecialchars($email) . ' ya se encuentra registrado. Puedes iniciar sesión o recuperar tu contraseña si la olvidaste.', 'Correo ya registrado');
+            header('Location: ' . APP_URL . '/register');
             exit;
         }
 
-        // Transacción para registrar usuario y crear expediente vinculado
+        // Determinar rol en la base de datos
+        $rolDb = ($rolInput === 'familiar') ? 'cuidador' : 'cuidador';
+
         $db = Database::getInstance()->getConnection();
         try {
             $db->beginTransaction();
 
-            $userId = $this->usuarioModel->register($nombre, $email, $telefono, $password);
+            $userId = $this->usuarioModel->register($nombre, $email, $telefono, $password, $rolDb);
+            
+            // Crear expediente médico inicial
             $this->pacienteModel->createInitialProfile($userId, "Expediente de " . $nombre);
 
             $db->commit();
@@ -61,13 +85,19 @@ class AuthController extends Controller {
             session_regenerate_id(true);
             $_SESSION['user_id'] = $userId;
             $_SESSION['user_name'] = $nombre;
+            $_SESSION['user_role'] = $rolDb;
+            $_SESSION['user_permissions'] = $this->usuarioModel->cargarPermisosRol($rolDb);
 
+            $this->setFlash('success', '¡Tu cuenta ha sido creada exitosamente! Bienvenido a VitalSenior.', '¡Registro Exitoso!');
             header('Location: ' . APP_URL . '/dashboard');
             exit;
-        } catch (\Exception $e) {
-            $db->rollBack();
-            $this->setFlash('danger', "Error interno al procesar el registro.");
-            header('Location: ' . APP_URL . '/login');
+        } catch (\Throwable $e) {
+            if ($db->inTransaction()) {
+                $db->rollBack();
+            }
+            error_log('[AuthController::register Error] ' . $e->getMessage());
+            $this->setFlash('danger', 'No se pudo completar el registro debido a un problema técnico. Por favor inténtalo de nuevo.', 'Error en el Registro');
+            header('Location: ' . APP_URL . '/register');
             exit;
         }
     }
@@ -79,41 +109,52 @@ class AuthController extends Controller {
         }
 
         if (!validateCsrfToken($_POST['csrf_token'] ?? null)) {
-            die('Error CSRF.');
-        }
-
-        // Rate Limiting Login
-        if (!isset($_SESSION['login_attempts'])) $_SESSION['login_attempts'] = 0;
-        if (!isset($_SESSION['login_last_attempt'])) $_SESSION['login_last_attempt'] = time();
-
-        if (time() - $_SESSION['login_last_attempt'] > 900) {
-            $_SESSION['login_attempts'] = 0;
-        }
-
-        if ($_SESSION['login_attempts'] >= 5) {
-            $this->setFlash('danger', "Demasiados intentos fallidos. Bloqueo temporal de 15 minutos.");
+            $this->setFlash('danger', 'La sesión ha caducado por motivos de seguridad. Por favor intenta iniciar sesión nuevamente.', 'Seguridad');
             header('Location: ' . APP_URL . '/login');
             exit;
         }
 
-        $_SESSION['login_last_attempt'] = time();
-
         $email = filter_var(trim($_POST['email'] ?? ''), FILTER_VALIDATE_EMAIL);
         $password = $_POST['password'] ?? '';
 
-        $user = $email ? $this->usuarioModel->findByEmail($email) : null;
-
-        if ($user && password_verify($password, $user['password_hash'])) {
-            $_SESSION['login_attempts'] = 0; // reset on success
-            session_regenerate_id(true);
-            $_SESSION['user_id'] = $user['id'];
-            $_SESSION['user_name'] = $user['nombre'];
-            header('Location: ' . APP_URL . '/dashboard');
+        if (!$email || empty($password)) {
+            $this->setFlash('warning', 'Por favor ingresa tanto tu correo electrónico como tu contraseña.', 'Datos Incompletos');
+            header('Location: ' . APP_URL . '/login');
             exit;
         }
 
-        $_SESSION['login_attempts']++;
-        $this->setFlash('danger', "Credenciales incorrectas.");
+        $ip = \App\Security\RateLimiter::getClientIp();
+
+        // Rate Limiting seguro: máximo 5 intentos por cada 10 minutos
+        if (!\App\Security\RateLimiter::check($ip, 'login', 5, 10)) {
+            $this->setFlash('danger', 'Has superado el límite de intentos de inicio de sesión. Por motivos de seguridad médica, por favor espera 10 minutos antes de reintentar.', 'Demasiados Intentos Fallidos');
+            header('Location: ' . APP_URL . '/login');
+            exit;
+        }
+
+        // Registrar intento
+        \App\Security\RateLimiter::hit($ip, 'login', 10);
+
+        try {
+            $user = $this->usuarioModel->findByEmail($email);
+
+            if ($user && !empty($user['password_hash']) && password_verify($password, $user['password_hash'])) {
+                \App\Security\RateLimiter::clear($ip, 'login'); // Restablecer contador al ingresar exitosamente
+                session_regenerate_id(true);
+                $_SESSION['user_id'] = $user['id'];
+                $_SESSION['user_name'] = $user['nombre'];
+                $_SESSION['user_role'] = $user['rol'];
+                $_SESSION['user_permissions'] = $this->usuarioModel->cargarPermisosRol($user['rol']);
+
+                $this->setFlash('success', '¡Hola de nuevo, ' . htmlspecialchars($user['nombre']) . '! Has iniciado sesión correctamente.', 'Bienvenido a VitalSenior');
+                header('Location: ' . APP_URL . '/dashboard');
+                exit;
+            }
+        } catch (\Throwable $e) {
+            error_log('[AuthController::login Error] ' . $e->getMessage());
+        }
+
+        $this->setFlash('danger', 'Correo electrónico o contraseña incorrectos. Por favor verifica tus credenciales o utiliza la opción "¿Olvidaste tu contraseña?".', 'Credenciales Incorrectas');
         header('Location: ' . APP_URL . '/login');
         exit;
     }
@@ -125,7 +166,11 @@ class AuthController extends Controller {
             setcookie(session_name(), '', time() - 42000, $params["path"], $params["domain"], $params["secure"], $params["httponly"]);
         }
         session_destroy();
+        
+        session_start();
+        $this->setFlash('info', 'Has cerrado tu sesión de forma segura. ¡Hasta pronto!', 'Sesión Finalizada');
         header('Location: ' . APP_URL . '/login');
         exit;
     }
 }
+

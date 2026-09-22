@@ -9,8 +9,10 @@ use App\Models\CitaLaboratorio;
 use App\Models\Doctor;
 use App\Models\ContactoEmergencia;
 use App\Models\Cuidador;
+use App\Core\Controller;
+use App\Middlewares\AuthMiddleware;
 
-class DashboardController {
+class DashboardController extends Controller {
     private Paciente $pacienteModel;
     private Medicamento $medicamentoModel;
     private CitaLaboratorio $citaModel;
@@ -28,12 +30,13 @@ class DashboardController {
     }
 
     public function index(): void {
+        AuthMiddleware::handle();
         $userId = (int)($_SESSION['user_id'] ?? 0);
 
         // Si se solicita cambio de paciente
         if (isset($_GET['seleccionar_paciente'])) {
             $nuevoId = (int)$_GET['seleccionar_paciente'];
-            if (\App\Middlewares\AuthMiddleware::autorizarAccesoPaciente($nuevoId, $userId)) {
+            if (AuthMiddleware::autorizarAccesoPaciente($nuevoId, $userId)) {
                 $_SESSION['paciente_activo_id'] = $nuevoId;
                 header('Location: ' . APP_URL . '/dashboard');
                 exit;
@@ -56,8 +59,15 @@ class DashboardController {
         }
 
         if (empty($todosLosPacientes)) {
-            $this->setFlash('danger', 'No se encontró un expediente asociado a esta cuenta.');
-            header('Location: ' . APP_URL . '/login');
+            $userRole = $_SESSION['user_role'] ?? 'familiar';
+            if ($userRole === 'familiar' || $userRole === 'cuidador') {
+                // Redirección obligatoria a la Vista 5 (Vinculación) para Familiares sin pacientes vinculados
+                header('Location: ' . APP_URL . '/vincular');
+                exit;
+            }
+
+            $this->setFlash('warning', 'Aún no tienes un perfil de salud asociado. Por favor vincúlalo.');
+            header('Location: ' . APP_URL . '/vincular');
             exit;
         }
 
@@ -93,6 +103,12 @@ class DashboardController {
         $contactosEmergencia = $this->contactoModel->getByPacienteId($pacienteId);
 
         // 3. Renderizar la vista pasando los datos
-        require_once __DIR__ . '/../Views/dashboard/index.php';
+        $userRole = $_SESSION['user_role'] ?? '';
+        
+        if ($userRole === 'adulto_mayor') {
+            require_once __DIR__ . '/../Views/dashboard/index.php';
+        } else {
+            require_once __DIR__ . '/../Views/dashboard/cuidador.php';
+        }
     }
 }

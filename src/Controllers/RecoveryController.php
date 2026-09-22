@@ -25,22 +25,15 @@ class RecoveryController extends Controller {
             die('Error CSRF.');
         }
 
-        // Rate Limiting (Máx 3 intentos por sesión en ventanas de 15 min)
-        if (!isset($_SESSION['recovery_attempts'])) $_SESSION['recovery_attempts'] = 0;
-        if (!isset($_SESSION['recovery_last_attempt'])) $_SESSION['recovery_last_attempt'] = time();
-
-        if (time() - $_SESSION['recovery_last_attempt'] > 900) {
-            $_SESSION['recovery_attempts'] = 0; // Reset
-        }
-
-        if ($_SESSION['recovery_attempts'] >= 3) {
-            $this->setFlash('warning', "Demasiados intentos. Por favor, espera 15 minutos.");
+        // Rate Limiting Recovery (DB-based)
+        $ip = getRealIp();
+        if (!\App\Core\RateLimiter::check($ip, 'recovery', 3, 60)) {
+            $this->setFlash('warning', "Demasiados intentos. Por favor, espera una hora.");
             header('Location: ' . APP_URL . '/recovery');
             exit;
         }
         
-        $_SESSION['recovery_attempts']++;
-        $_SESSION['recovery_last_attempt'] = time();
+        \App\Core\RateLimiter::hit($ip, 'recovery');
 
         $email = filter_var(trim($_POST['email'] ?? ''), FILTER_VALIDATE_EMAIL);
         $user = $email ? $this->usuarioModel->findByEmail($email) : null;
@@ -48,10 +41,12 @@ class RecoveryController extends Controller {
         if ($user) {
             $token = bin2hex(random_bytes(32));
             $expiresAt = date('Y-m-d H:i:s', strtotime('+15 minutes'));
-            $this->resetModel->createToken((int)$user['id'], $token, $expiresAt);
+            $this->resetModel->crearToken((int)$user['id'], $token, $expiresAt);
 
             // Simulación / Registro para testing local
             error_log("Enlace de recuperación: " . APP_URL . "/new-password?token=" . $token);
+            
+            \App\Services\EmailNotificationService::enviarCorreoRecuperacion($email, $user['nombre'], $token);
         }
 
         $this->setFlash('info', "Si el correo existe en nuestra base de datos, se ha enviado un enlace de recuperación.");
@@ -74,7 +69,7 @@ class RecoveryController extends Controller {
             exit;
         }
 
-        $reset = $this->resetModel->verifyToken($token);
+        $reset = $this->resetModel->validarToken($token);
         if (!$reset) {
             $this->setFlash('danger', "El token es inválido o ha expirado.");
             header('Location: ' . APP_URL . '/recovery');
@@ -82,7 +77,7 @@ class RecoveryController extends Controller {
         }
 
         $this->usuarioModel->updatePassword((int)$reset['usuario_id'], $newPassword);
-        $this->resetModel->markAsUsed((int)$reset['id']);
+        $this->resetModel->marcarComoUsado((int)$reset['id']);
 
         // Invalidar sesiones activas tras cambio de password crítico
         session_regenerate_id(true);
@@ -90,5 +85,13 @@ class RecoveryController extends Controller {
 
         header('Location: ' . APP_URL . '/password-updated');
         exit;
+    }
+    public function showNewPasswordForm(): void {
+        $token = $_GET['token'] ?? '';
+        $this->render('auth/new_password', ['token' => $token], false);
+    }
+
+    public function showPasswordUpdated(): void {
+        $this->render('auth/password_updated', [], false);
     }
 }

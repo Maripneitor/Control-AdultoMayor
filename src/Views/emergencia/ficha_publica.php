@@ -95,7 +95,8 @@
         
         <!-- Footer -->
         <div class="bg-slate-100 p-4 text-center border-t border-slate-200">
-            <p class="text-xs text-slate-500 font-semibold">Generado por VitalSenior. Los datos mostrados son referenciales y proporcionados por el paciente o tutor.</p>
+            <p class="text-xs text-slate-500 font-semibold mb-4">Generado por VitalSenior. Los datos mostrados son referenciales y proporcionados por el paciente o tutor.</p>
+            <a href="<?= APP_URL ?>/login" class="inline-block px-4 py-2 bg-slate-300 text-slate-800 rounded-lg font-bold hover:bg-slate-400 text-sm">Ver en VitalSenior</a>
         </div>
 
     </div>

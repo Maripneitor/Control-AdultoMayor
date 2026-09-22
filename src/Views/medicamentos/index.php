@@ -43,7 +43,15 @@
 
         <!-- Columna 1 y 2: Lista de Medicamentos -->
         <section class="lg:col-span-2 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-            <h2 class="text-lg font-bold text-slate-800 mb-4">Medicamentos Activos</h2>
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-lg font-bold text-slate-800">Medicamentos Activos</h2>
+                <div class="flex items-center bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100">
+                    <span class="text-xs font-semibold text-blue-800 mr-2">Adherencia General:</span>
+                    <span class="text-sm font-bold <?= ($adherencia ?? 100) >= 80 ? 'text-emerald-600' : 'text-rose-600' ?>">
+                        <?= e((string)($adherencia ?? 100)) ?>%
+                    </span>
+                </div>
+            </div>
             
             <div class="space-y-4">
                 <?php if (empty($medicamentos)): ?>
@@ -51,29 +59,48 @@
                 <?php else: ?>
                     <?php foreach ($medicamentos as $med): ?>
                         <div class="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-200 hover:border-blue-300 transition-colors">
-                            <div class="flex items-start gap-4">
+                            <div class="flex items-start gap-4 w-full sm:w-auto">
                                 <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 text-xl font-bold shrink-0">
                                     💊
                                 </div>
-                                <div>
+                                <div class="flex-1">
                                     <h3 class="font-bold text-slate-800"><?= e($med['nombre_comercial']) ?></h3>
                                     <p class="text-sm text-slate-600">Dosis: <?= e($med['dosis']) ?> (Cada <?= e((string)$med['frecuencia_horas']) ?> hrs)</p>
                                     <?php if (!empty($med['instrucciones'])): ?>
                                         <p class="text-xs text-slate-500 mt-1 italic">"<?= e($med['instrucciones']) ?>"</p>
                                     <?php endif; ?>
+                                    
+                                    <?php 
+                                        $dosisAlDia = floor(24 / max(1, $med['frecuencia_horas'])) * max(1, $med['dosis_por_toma']);
+                                        $diasRestantes = $dosisAlDia > 0 ? floor($med['stock_actual'] / $dosisAlDia) : 0;
+                                        $stockPct = min(100, max(0, ($diasRestantes / 30) * 100)); // asumiendo base de 30 dias
+                                        $barColor = $diasRestantes > 7 ? 'bg-emerald-500' : ($diasRestantes > 3 ? 'bg-amber-400' : 'bg-red-500');
+                                    ?>
+                                    <div class="mt-3">
+                                        <div class="flex justify-between text-xs mb-1">
+                                            <span class="font-semibold text-slate-600">Inventario (Stock: <?= e((string)$med['stock_actual']) ?>)</span>
+                                            <span class="font-bold <?= $diasRestantes < 4 ? 'text-red-600' : 'text-slate-600' ?>"><?= $diasRestantes ?> días restantes</span>
+                                        </div>
+                                        <div class="w-full bg-slate-200 rounded-full h-2">
+                                            <div class="<?= $barColor ?> h-2 rounded-full" style="width: <?= $stockPct ?>%"></div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
+                            <?php if (!empty($puedeEditar)): ?>
                             <div class="mt-4 sm:mt-0 flex gap-2">
                                 <button onclick="confirmarAccion('pausar', <?= e((string)$med['id']) ?>)" class="px-3 py-1.5 bg-amber-50 text-amber-600 text-xs font-semibold rounded-lg border border-amber-200 hover:bg-amber-100 transition">Pausar</button>
                                 <button onclick="confirmarAccion('eliminar', <?= e((string)$med['id']) ?>)" class="px-3 py-1.5 bg-red-50 text-red-600 text-xs font-semibold rounded-lg border border-red-200 hover:bg-red-100 transition">Eliminar</button>
                             </div>
+                            <?php endif; ?>
                         </div>
                     <?php endforeach; ?>
                 <?php endif; ?>
             </div>
         </section>
 
-        <!-- Columna 3: Formulario para añadir medicamento -->
+        <?php if (!empty($puedeEditar)): ?>
+        <!-- Columna 3: Formulario para añadir medicamento (Solo para perfiles con permiso de edición) -->
         <section class="bg-blue-50 p-6 rounded-2xl border border-blue-100 shadow-sm h-fit sticky top-24">
             <h2 class="text-md font-bold text-blue-900 mb-4">Añadir Nuevo Fármaco</h2>
             
@@ -105,6 +132,7 @@
                 </button>
             </form>
         </section>
+        <?php endif; ?>
     </main>
 
     <script>

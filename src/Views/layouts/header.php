@@ -10,19 +10,22 @@
     <script src="<?php echo APP_URL; ?>/assets/js/accessibility.js"></script>
     
     <!-- Fuentes Google -->
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&display=swap" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
     
     <style>
-        .material-symbols-outlined {
-            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        body {
+            font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-body, #f8fafc);
+            color: var(--text-body, #0f172a);
         }
         
         /* Animaciones para scroll (Fade In / Slide Up) */
         .animate-on-scroll {
             opacity: 0;
             transform: translateY(20px);
-            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+            transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
             will-change: opacity, transform;
         }
         .animate-on-scroll.is-visible {
@@ -48,10 +51,6 @@
             --btn-border: #ffff00;
         }
         
-        body {
-            background-color: var(--bg-body);
-            color: var(--text-body);
-        }
         .bg-white {
             background-color: var(--bg-card);
             border-color: var(--border-card);
@@ -62,55 +61,71 @@
         }
     </style>
 </head>
-<body class="font-body-md selection:bg-primary-container selection:text-on-primary-container transition-opacity duration-500 text-base">
+<body class="selection:bg-primary/20 selection:text-primary transition-opacity duration-500 text-base antialiased">
 
 <!-- 1. TopNavBar -->
-<nav class="bg-surface-container-lowest/80 backdrop-blur-xl dark:bg-inverse-surface/80 docked full-width top-0 sticky shadow-sm z-50">
-    <div class="flex justify-between items-center w-full px-margin-mobile md:px-gutter max-w-container-max mx-auto h-20">
+<?php 
+$isLoggedIn = !empty($_SESSION['user_id']);
+$userRole = $_SESSION['user_role'] ?? '';
+?>
+<nav class="bg-white/90 backdrop-blur-md sticky top-0 z-50 border-b border-slate-200/80 shadow-sm transition-all">
+    <div class="flex justify-between items-center w-full px-4 md:px-8 max-w-7xl mx-auto h-20">
         <!-- Brand Logo -->
-        <a class="text-headline-md font-headline-md font-bold text-primary dark:text-inverse-primary flex items-center gap-2" href="<?php echo APP_URL; ?>/">
-            VitalSenior
+        <a class="flex items-center gap-2.5 text-2xl font-bold text-[#004ac6] tracking-tight group" href="<?php echo APP_URL; ?>/<?= $isLoggedIn ? 'dashboard' : '' ?>">
+            <div class="w-10 h-10 rounded-xl bg-[#004ac6] flex items-center justify-center text-white shadow-md shadow-blue-500/20 group-hover:scale-105 transition-transform">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                </svg>
+            </div>
+            <span>Vital<span class="text-slate-800">Senior</span></span>
         </a>
+
         <!-- Navigation Links -->
-        <div class="hidden md:flex gap-gutter items-center Labels: font-label-md text-label-md. Body: font-body-md text-body-md">
-            <a class="text-on-surface-variant hover:text-primary transition-colors hover:opacity-90 transition-opacity" href="<?php echo APP_URL; ?>/#modulos">Módulos</a>
-            <a class="text-on-surface-variant hover:text-primary transition-colors hover:opacity-90 transition-opacity" href="<?php echo APP_URL; ?>/#emergencia">Ficha de Emergencia</a>
-            <a class="text-on-surface-variant hover:text-primary transition-colors hover:opacity-90 transition-opacity" href="<?php echo APP_URL; ?>/#como-funciona">Cómo Funciona</a>
-            <a class="text-on-surface-variant hover:text-primary transition-colors hover:opacity-90 transition-opacity" href="<?php echo APP_URL; ?>/#testimonios">Testimonios</a>
+        <div class="hidden md:flex items-center gap-8 text-[15px] font-semibold text-slate-600">
+            <?php if (!$isLoggedIn): ?>
+                <a class="hover:text-[#004ac6] transition-colors" href="<?php echo APP_URL; ?>/#modulos">Módulos</a>
+                <a class="hover:text-[#004ac6] transition-colors" href="<?php echo APP_URL; ?>/#emergencia">Ficha de Emergencia</a>
+                <a class="hover:text-[#004ac6] transition-colors" href="<?php echo APP_URL; ?>/#como-funciona">Cómo Funciona</a>
+                <a class="hover:text-[#004ac6] transition-colors" href="<?php echo APP_URL; ?>/#testimonios">Testimonios</a>
+            <?php else: ?>
+                <a class="hover:text-[#004ac6] transition-colors font-bold text-[#004ac6]" href="<?php echo APP_URL; ?>/dashboard">Panel de Control</a>
+                <?php if (in_array($userRole, ['cuidador_principal', 'medico', 'admin'])): ?>
+                    <a class="hover:text-[#004ac6] transition-colors" href="<?php echo APP_URL; ?>/medicamentos">Medicamentos</a>
+                    <a class="hover:text-[#004ac6] transition-colors" href="<?php echo APP_URL; ?>/citas">Citas</a>
+                <?php endif; ?>
+                <a class="hover:text-[#004ac6] transition-colors" href="<?php echo APP_URL; ?>/perfil">Mi Perfil</a>
+            <?php endif; ?>
             
             <!-- Controles de Accesibilidad -->
-            <div class="flex items-center gap-1 border-l border-slate-300 pl-4 ml-2">
-                <button onclick="Accessibility.changeFontSize(-1)" class="p-1 rounded-md hover:bg-slate-200 text-sm font-bold" aria-label="Reducir texto">A-</button>
-                <button onclick="Accessibility.changeFontSize(1)" class="p-1 rounded-md hover:bg-slate-200 text-lg font-bold" aria-label="Aumentar texto">A+</button>
-                <button onclick="Accessibility.toggleHighContrast()" class="p-1 rounded-md hover:bg-slate-200" title="Alto Contraste">
-                    <span class="material-symbols-outlined text-xl align-middle">contrast</span>
+            <div class="flex items-center gap-1.5 border-l border-slate-200 pl-4 py-1">
+                <button onclick="Accessibility.changeFontSize(-1)" class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center transition-colors" title="Disminuir tamaño de texto" aria-label="Disminuir tamaño de texto">A-</button>
+                <button onclick="Accessibility.changeFontSize(1)" class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm flex items-center justify-center transition-colors" title="Aumentar tamaño de texto" aria-label="Aumentar tamaño de texto">A+</button>
+                <button onclick="Accessibility.toggleHighContrast()" class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center transition-colors" title="Alternar alto contraste" aria-label="Alternar alto contraste">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                        <path d="M10 2a8 8 0 100 16 8 8 0 000-16zm0 14V4a6 6 0 010 12z" />
+                    </svg>
                 </button>
             </div>
         </div>
+
         <!-- Trailing Primary Action -->
-        <a href="<?php echo APP_URL; ?>/login" class="bg-primary hover:opacity-90 transition-opacity text-on-primary font-label-md text-label-md rounded-full px-6 h-[56px] flex items-center justify-center shadow-md hover:shadow-none hover:translate-y-px transition-all cursor-pointer">
-            Crear Expediente Gratis
-        </a>
+        <div class="flex items-center gap-3">
+            <?php if (!$isLoggedIn): ?>
+                <a href="<?php echo APP_URL; ?>/login" class="bg-[#004ac6] hover:bg-[#003ea8] text-white font-semibold text-sm rounded-full px-6 py-3.5 shadow-md shadow-blue-600/20 hover:shadow-lg hover:shadow-blue-600/30 hover:-translate-y-0.5 transition-all flex items-center justify-center">
+                    Crear Expediente Gratis
+                </a>
+            <?php else: ?>
+                <a href="<?php echo APP_URL; ?>/logout" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm rounded-full px-6 py-3.5 transition-all flex items-center justify-center">
+                    Cerrar Sesión
+                </a>
+            <?php endif; ?>
+        </div>
     </div>
 </nav>
 
 <!-- Main Content Area -->
 <main id="accessible-content">
 
-<?php if (!empty($flash)): ?>
-    <?php 
-        $colors = [
-            'success' => 'bg-emerald-100 border-emerald-500 text-emerald-800',
-            'warning' => 'bg-amber-100 border-amber-500 text-amber-800',
-            'danger'  => 'bg-rose-100 border-rose-500 text-rose-800',
-            'info'    => 'bg-blue-100 border-blue-500 text-blue-800'
-        ];
-        $alertStyle = $colors[$flash['type']] ?? $colors['info'];
-    ?>
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
-        <div class="border-l-4 p-4 rounded-r-lg shadow-sm flex items-center justify-between <?= $alertStyle; ?>" role="alert">
-            <span class="text-base font-medium"><?= htmlspecialchars($flash['message']); ?></span>
-            <button onclick="this.parentElement.remove()" class="text-lg font-bold ml-4 p-1 hover:opacity-75 focus:outline-none">&times;</button>
-        </div>
-    </div>
-<?php endif; ?>
+<?php require_once dirname(__DIR__) . '/components/toast.php'; ?>
+
+

@@ -20,7 +20,7 @@ class Cuidador extends Model {
 
     public function obtenerPacientesPorCuidador(int $usuarioId): array {
         $stmt = $this->db->prepare("
-            SELECT p.*, pc.parentesco, pc.nivel_acceso 
+            SELECT p.id, p.usuario_id, p.qr_token, p.qr_token AS uuid_publico, p.nombre, p.apellidos, p.fecha_nacimiento, p.tipo_sangre, p.codigo_vinculacion, pc.parentesco, pc.nivel_acceso 
             FROM pacientes p
             JOIN paciente_cuidador pc ON p.id = pc.paciente_id
             WHERE pc.usuario_cuidador_id = :uid
@@ -29,3 +29,4 @@ class Cuidador extends Model {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }
+

@@ -9,7 +9,7 @@ use PDO;
 class PasswordReset extends Model {
     protected $table = 'tokens_recuperacion';
 
-    public function createToken(int $userId, string $token, string $expiresAt): bool {
+    public function crearToken(int $userId, string $token, string $expiresAt): bool {
         $this->db->prepare("UPDATE tokens_recuperacion SET usado = TRUE WHERE usuario_id = :uid")->execute(['uid' => $userId]);
         $stmt = $this->db->prepare("
             INSERT INTO tokens_recuperacion (usuario_id, token, expira_en) 
@@ -22,9 +22,10 @@ class PasswordReset extends Model {
         ]);
     }
 
-    public function verifyToken(string $token): ?array {
+    public function validarToken(string $token): ?array {
         $stmt = $this->db->prepare("
-            SELECT * FROM tokens_recuperacion 
+            SELECT id, usuario_id, token, expira_en, usado, created_at 
+            FROM tokens_recuperacion 
             WHERE token = :token AND usado = FALSE AND expira_en > NOW() 
             LIMIT 1
         ");
@@ -33,7 +34,8 @@ class PasswordReset extends Model {
         return $res ?: null;
     }
 
-    public function markAsUsed(int $tokenId): bool {
+
+    public function marcarComoUsado(int $tokenId): bool {
         $stmt = $this->db->prepare("UPDATE tokens_recuperacion SET usado = TRUE WHERE id = :id");
         return $stmt->execute(['id' => $tokenId]);
     }

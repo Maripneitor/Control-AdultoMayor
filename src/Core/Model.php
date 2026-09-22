@@ -11,23 +11,43 @@ abstract class Model {
         $this->db = Database::getInstance()->getConnection();
     }
 
-    public function all() {
-        $stmt = $this->db->prepare("SELECT * FROM {$this->table}");
+    /**
+     * Sanitiza y proyecta columnas específicas para prevenir SELECT * indiscriminado
+     */
+    protected function buildColumnProjection(array $columns = []): string {
+        if (empty($columns)) {
+            // Si la clase hija define columnas por defecto, usarlas; caso contrario campos base
+            return property_exists($this, 'safeColumns') && !empty($this->safeColumns)
+                ? implode(', ', $this->safeColumns)
+                : 'id, created_at';
+        }
+        $sanitized = array_map(function(string $col): string {
+            return preg_replace('/[^a-zA-Z0-9_\.]/', '', trim($col));
+        }, $columns);
+        return implode(', ', array_filter($sanitized));
+    }
+
+    public function all(array $columns = []): array {
+        $cols = !empty($columns) ? $this->buildColumnProjection($columns) : '*';
+        $stmt = $this->db->prepare("SELECT {$cols} FROM {$this->table}");
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function find($id) {
-        $stmt = $this->db->prepare("SELECT * FROM {$this->table} WHERE id = :id");
-        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+    public function find($id, array $columns = []): ?array {
+        $cols = !empty($columns) ? $this->buildColumnProjection($columns) : '*';
+        $stmt = $this->db->prepare("SELECT {$cols} FROM {$this->table} WHERE id = :id");
+        $stmt->bindValue(':id', $id);
         $stmt->execute();
-        return $stmt->fetch(PDO::FETCH_ASSOC);
+        $res = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $res ?: null;
     }
 
-    public function where($column, $value) {
-        // Asume operador de igualdad simple para casos básicos
-        $stmt = $this->db->prepare("SELECT * FROM {$this->table} WHERE {$column} = :val");
-        $stmt->bindParam(':val', $value);
+    public function where(string $column, $value, array $columns = []): array {
+        $cols = !empty($columns) ? $this->buildColumnProjection($columns) : '*';
+        $cleanCol = preg_replace('/[^a-zA-Z0-9_]/', '', $column);
+        $stmt = $this->db->prepare("SELECT {$cols} FROM {$this->table} WHERE {$cleanCol} = :val");
+        $stmt->bindValue(':val', $value);
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }

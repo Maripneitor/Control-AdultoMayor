@@ -137,12 +137,33 @@
                 </div>
             </div>
 
+            <!-- PASO CONFIRMACIÓN (Intermedio) -->
+            <div class="step-container" id="step-confirm">
+                <div class="text-center">
+                    <div class="text-6xl mb-6">⚠️</div>
+                    <h2 class="text-3xl font-bold text-rose-700 mb-4">Revisión de Valores</h2>
+                    <p class="text-xl text-slate-700 mb-8" id="confirm-message">Tu valor registrado es alto.</p>
+                    
+                    <div class="flex flex-col gap-4 max-w-sm mx-auto">
+                        <button type="button" onclick="confirmAndProceed()" class="px-8 py-5 bg-green-600 text-white text-2xl font-bold rounded-xl hover:bg-green-700 shadow-md">
+                            Sí, es correcto
+                        </button>
+                        <button type="button" onclick="goBackToEdit()" class="px-8 py-4 bg-slate-200 text-slate-700 text-xl font-bold rounded-xl hover:bg-slate-300">
+                            Quiero corregir
+                        </button>
+                    </div>
+                </div>
+            </div>
+
         </form>
     </div>
 </div>
 
 <script>
     const totalSteps = 4;
+    let pendingStep = null;
+    let currentEditStep = null;
+
     function updateProgress(step) {
         document.getElementById('step-counter').innerText = `Paso ${step} de ${totalSteps}`;
         document.getElementById('progress-bar').style.width = `${(step / totalSteps) * 100}%`;
@@ -150,13 +171,45 @@
 
     function showStep(step) {
         document.querySelectorAll('.step-container').forEach(el => el.classList.remove('active'));
-        document.getElementById(`step-${step}`).classList.add('active');
-        updateProgress(step);
+        if (typeof step === 'number') {
+            document.getElementById(`step-${step}`).classList.add('active');
+            updateProgress(step);
+        } else {
+            document.getElementById(step).classList.add('active'); // Para step-confirm
+        }
     }
 
     function nextStep(step) {
-        // En una app real podríamos validar campos aquí antes de avanzar
+        // Validaciones personalizadas
+        if (step === 2) { // Viniendo de paso 1 (presión)
+            let presion = document.querySelector('input[name="presion"]').value;
+            let p_parts = presion.split('/');
+            if (p_parts.length === 2 && (parseInt(p_parts[0]) >= 180 || parseInt(p_parts[1]) >= 120)) {
+                pendingStep = step;
+                currentEditStep = 1;
+                document.getElementById('confirm-message').innerHTML = `Tu presión es <b>${presion}</b>. Esto es inusualmente alto. ¿Estás seguro?`;
+                showStep('step-confirm');
+                return;
+            }
+        }
+        
         showStep(step);
+    }
+
+    function confirmAndProceed() {
+        if (pendingStep) {
+            showStep(pendingStep);
+            pendingStep = null;
+            currentEditStep = null;
+        }
+    }
+
+    function goBackToEdit() {
+        if (currentEditStep) {
+            showStep(currentEditStep);
+            pendingStep = null;
+            currentEditStep = null;
+        }
     }
 
     function prevStep(step) {

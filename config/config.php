@@ -11,12 +11,23 @@ if (file_exists($envPath)) {
     }
 }
 
-// Configuración de la Base de Datos PostgreSQL (ahora leyendo desde el Entorno)
-define('DB_HOST', getenv('DB_HOST') ?: 'localhost');
-define('DB_PORT', getenv('DB_PORT') ?: '5432');
-define('DB_NAME', getenv('DB_NAME') ?: 'postgres'); 
-define('DB_USER', getenv('DB_USER') ?: 'postgres');
-define('DB_PASS', getenv('DB_PASS') ?: ''); 
+// Módulo 12: Extraer contraseñas hardcodeadas.
+// Configuración de la Base de Datos PostgreSQL (ahora leyendo estrictamente desde el Entorno)
+$dbHost = getenv('DB_HOST');
+$dbPort = getenv('DB_PORT');
+$dbName = getenv('DB_NAME');
+$dbUser = getenv('DB_USER');
+$dbPass = getenv('DB_PASS');
+
+if (!$dbHost || !$dbName || !$dbUser || !$dbPass) {
+    die('Error de Configuración (Módulo 12): Faltan variables críticas en el archivo .env.');
+}
+
+define('DB_HOST', $dbHost);
+define('DB_PORT', $dbPort ?: '5432');
+define('DB_NAME', $dbName); 
+define('DB_USER', $dbUser);
+define('DB_PASS', $dbPass); 
 
 // Otras configuraciones de la aplicación
 define('APP_URL', getenv('APP_URL') ?: 'http://localhost/Control-AdultoMayor/public');

@@ -3,7 +3,8 @@
     "description": "Control de Adulto Mayor",
     "type": "project",
     "require": {
-        "dompdf/dompdf": "^3.0"
+        "dompdf/dompdf": "^3.0",
+        "phpmailer/phpmailer": "^6.9"
     },
     "autoload": {
         "psr-4": {

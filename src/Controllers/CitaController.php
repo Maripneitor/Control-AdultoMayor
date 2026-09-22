@@ -20,9 +20,26 @@ class CitaController extends Controller {
     }
 
     public function index(): void {
-        $userId = (int)$_SESSION['user_id'];
-        $paciente = $this->pacienteModel->findByUserId($userId);
-        $pacienteId = (int)$paciente['id'];
+        \App\Middlewares\AuthMiddleware::handle();
+        $userId = (int)($_SESSION['user_id'] ?? 0);
+        
+        // 1. Obtener ID del paciente activo o de la sesión (persistente entre pestañas)
+        $pacienteId = (int)($_GET['paciente_id'] ?? ($_SESSION['paciente_activo_id'] ?? 0));
+        
+        if ($pacienteId > 0) {
+            $paciente = $this->pacienteModel->find($pacienteId);
+        } else {
+            $paciente = $this->pacienteModel->findByUserId($userId);
+            $pacienteId = $paciente ? (int)$paciente['id'] : 0;
+        }
+
+        if (!$paciente || $pacienteId === 0) {
+            $this->setFlash('warning', 'Debes seleccionar o vincular un paciente primero.');
+            header('Location: ' . APP_URL . '/dashboard');
+            exit;
+        }
+
+        $_SESSION['paciente_activo_id'] = $pacienteId;
 
         $citas = $this->citaModel->getAllByPacienteId($pacienteId);
         $doctores = $this->doctorModel->getByPacienteId($pacienteId);
@@ -35,12 +52,27 @@ class CitaController extends Controller {
     }
 
     public function store(): void {
+        \App\Middlewares\AuthMiddleware::requirePermission('gestionar_citas');
+
         if (!validateCsrfToken($_POST['csrf_token'] ?? null)) {
             die('Error CSRF.');
         }
 
-        $userId = (int)$_SESSION['user_id'];
-        $paciente = $this->pacienteModel->findByUserId($userId);
+        $userId = (int)($_SESSION['user_id'] ?? 0);
+        $pacienteId = (int)($_POST['paciente_id'] ?? ($_SESSION['paciente_activo_id'] ?? 0));
+
+        if ($pacienteId > 0) {
+            $paciente = $this->pacienteModel->find($pacienteId);
+        } else {
+            $paciente = $this->pacienteModel->findByUserId($userId);
+            $pacienteId = $paciente ? (int)$paciente['id'] : 0;
+        }
+
+        if (!$paciente || $pacienteId === 0) {
+            $this->setFlash('danger', 'Paciente no válido para agendar cita.');
+            header('Location: ' . APP_URL . '/citas');
+            exit;
+        }
 
         $tipo = $_POST['tipo_evento'] ?? 'cita_medica';
         $titulo = trim($_POST['titulo'] ?? '');
@@ -58,14 +90,14 @@ class CitaController extends Controller {
             }
 
             // Validar solapamiento (± 60 minutos)
-            if ($this->citaModel->checkOverlap((int)$paciente['id'], $fechaHora, 60)) {
+            if ($this->citaModel->checkOverlap($pacienteId, $fechaHora, 60)) {
                 $this->setFlash('danger', "Ya existe una cita programada muy cerca de este horario.");
                 header('Location: ' . APP_URL . '/citas');
                 exit;
             }
 
             $this->citaModel->agregar([
-                'paciente_id' => (int)$paciente['id'],
+                'paciente_id' => $pacienteId,
                 'tipo_evento' => $tipo,
                 'titulo' => $titulo,
                 'lugar' => $lugar,
@@ -74,6 +106,9 @@ class CitaController extends Controller {
                 'notas' => $notas
             ]);
             
+            $usuarioModel = new \App\Models\Usuario();
+            $usuarioModel->registrarAuditoria('CITA_PROGRAMADA', "Cita $titulo programada para el paciente {$pacienteId}.");
+
             $this->setFlash('success', 'La cita fue programada correctamente.');
         }
 

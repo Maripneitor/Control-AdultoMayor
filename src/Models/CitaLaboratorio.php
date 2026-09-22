@@ -11,7 +11,7 @@ class CitaLaboratorio extends Model {
 
     public function getUpcomingByPacienteId(int $pacienteId, int $limit = 5): array {
         $stmt = $this->db->prepare("
-            SELECT cl.*, d.nombre AS doctor_nombre 
+            SELECT cl.id, cl.paciente_id, cl.tipo_evento, cl.titulo, cl.lugar, cl.fecha_hora, cl.doctor_id, cl.notas, cl.realizado, d.nombre AS doctor_nombre 
             FROM citas_laboratorios cl
             LEFT JOIN doctores d ON cl.doctor_id = d.id
             WHERE cl.paciente_id = :pid AND cl.fecha_hora >= NOW() AND cl.realizado = FALSE
@@ -26,7 +26,7 @@ class CitaLaboratorio extends Model {
 
     public function getAllByPacienteId(int $pacienteId): array {
         $stmt = $this->db->prepare("
-            SELECT cl.*, d.nombre AS doctor_nombre 
+            SELECT cl.id, cl.paciente_id, cl.tipo_evento, cl.titulo, cl.lugar, cl.fecha_hora, cl.doctor_id, cl.notas, cl.realizado, d.nombre AS doctor_nombre 
             FROM citas_laboratorios cl
             LEFT JOIN doctores d ON cl.doctor_id = d.id
             WHERE cl.paciente_id = :pid

@@ -3,112 +3,77 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../config/Database.php';
-
-use Config\Database;
+require_once __DIR__ . '/../src/Services/EmailNotificationService.php';
 
 try {
-    $db = Database::getInstance()->getConnection();
+    $db = \Config\Database::getInstance()->getConnection();
 
-    // 1. Buscar tomas vencidas por más de 60 minutos
+    // 1. Inactividad: Marcar tomas no confirmadas como omitidas
+    $db->beginTransaction();
+    
+    // Buscar tomas pendientes cuya hora programada ya pasó por más de 60 min
     $stmt = $db->prepare("
-        SELECT rt.id as toma_id, rt.paciente_id, m.nombre_comercial, p.nombre as paciente_nombre, rt.fecha_hora_programada
-        FROM registro_tomas rt
-        JOIN medicamentos m ON rt.medicamento_id = m.id
-        JOIN pacientes p ON rt.paciente_id = p.id
-        WHERE rt.estado = 'pendiente'
-          AND rt.fecha_hora_programada < (NOW() - INTERVAL '60 minutes')
-          AND DATE(rt.fecha_hora_programada) = CURRENT_DATE
+        SELECT th.id, th.paciente_id, m.nombre_comercial, p.nombre, p.apellidos, th.fecha_programada, th.hora_programada
+        FROM tomas_historial th
+        JOIN medicamentos m ON th.medicamento_id = m.id
+        JOIN pacientes p ON th.paciente_id = p.id
+        WHERE th.estado = 'pendiente' 
+          AND th.fecha_programada = CURRENT_DATE
+          AND (th.hora_programada + interval '60 minutes') < CURRENT_TIME
+        FOR UPDATE SKIP LOCKED
     ");
     $stmt->execute();
-    $tomasVencidas = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $omitidas = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // 2. Buscar pacientes sin registro de constantes vitales en las últimas 24 horas
-    $stmtVitales = $db->prepare("
-        SELECT p.id as paciente_id, p.nombre as paciente_nombre
-        FROM pacientes p
-        WHERE p.id NOT IN (
-            SELECT paciente_id 
-            FROM registro_salud_diario 
-            WHERE created_at >= (NOW() - INTERVAL '24 hours')
-        )
+    // Aquí simplemente pasamos a procesar las omitidas, el servicio se encarga del correo.
+
+    if (count($omitidas) > 0) {
+        $updateStmt = $db->prepare("UPDATE tomas_historial SET estado = 'omitido', nota_incidencia = 'Marcado automáticamente por inactividad' WHERE id = :id");
+        
+        foreach ($omitidas as $toma) {
+            $updateStmt->execute(['id' => $toma['id']]);
+            // Simular notificación
+            $msg = "[CRON] ALERTA: Toma omitida de {$toma['nombre_comercial']} para el paciente {$toma['nombre']} {$toma['apellidos']} programada a las {$toma['hora_programada']}.";
+            error_log($msg);
+            echo $msg . "\n";
+            \App\Services\EmailNotificationService::enviarAlertaOmitida('cuidador@vitalsenior.com', $toma['nombre_comercial'], $toma['hora_programada']);
+        }
+    }
+    
+    $db->commit();
+
+    // 2. Desabastecimiento Predictivo
+    // (stock_actual / (24 / frecuencia_horas * dosis_por_toma)) < 4
+    $stmtStock = $db->query("
+        SELECT m.id, m.nombre_comercial, m.stock_actual, m.dosis_por_toma, m.frecuencia_horas, p.nombre, p.apellidos
+        FROM medicamentos m
+        JOIN pacientes p ON m.paciente_id = p.id
+        WHERE m.activo = TRUE AND m.stock_actual IS NOT NULL AND m.dosis_por_toma > 0 AND m.frecuencia_horas > 0
     ");
-    $stmtVitales->execute();
-    $pacientesSinVitales = $stmtVitales->fetchAll(PDO::FETCH_ASSOC);
-
-    // Procesar alertas por paciente
-    $alertasPorPaciente = [];
-
-    foreach ($tomasVencidas as $toma) {
-        $pid = $toma['paciente_id'];
-        if (!isset($alertasPorPaciente[$pid])) {
-            $alertasPorPaciente[$pid] = [
-                'nombre' => $toma['paciente_nombre'],
-                'tomas' => [],
-                'vitales_faltantes' => false
-            ];
-        }
-        $alertasPorPaciente[$pid]['tomas'][] = "Medicamento: {$toma['nombre_comercial']} (Programado: {$toma['fecha_hora_programada']})";
-    }
-
-    foreach ($pacientesSinVitales as $paciente) {
-        $pid = $paciente['paciente_id'];
-        if (!isset($alertasPorPaciente[$pid])) {
-            $alertasPorPaciente[$pid] = [
-                'nombre' => $paciente['paciente_nombre'],
-                'tomas' => [],
-                'vitales_faltantes' => true
-            ];
-        } else {
-            $alertasPorPaciente[$pid]['vitales_faltantes'] = true;
-        }
-    }
-
-    // 3. Notificar a Cuidadores
-    if (!empty($alertasPorPaciente)) {
-        foreach ($alertasPorPaciente as $pid => $data) {
-            // Obtener cuidadores del paciente
-            $stmtCuidadores = $db->prepare("
-                SELECT u.email, u.nombre
-                FROM paciente_cuidador pc
-                JOIN usuarios u ON pc.usuario_cuidador_id = u.id
-                WHERE pc.paciente_id = :pid
-            ");
-            $stmtCuidadores->execute(['pid' => $pid]);
-            $cuidadores = $stmtCuidadores->fetchAll(PDO::FETCH_ASSOC);
-
-            foreach ($cuidadores as $cuidador) {
-                $to = $cuidador['email'];
-                $subject = "Alerta de Inactividad - VitalSenior: " . $data['nombre'];
-                $message = "Hola {$cuidador['nombre']},\n\n";
-                $message .= "Hemos detectado inactividad reciente para el paciente: {$data['nombre']}.\n\n";
-                
-                if (!empty($data['tomas'])) {
-                    $message .= "Las siguientes tomas de medicamento están retrasadas:\n";
-                    foreach ($data['tomas'] as $t) {
-                        $message .= "- $t\n";
-                    }
-                    $message .= "\n";
-                }
-
-                if ($data['vitales_faltantes']) {
-                    $message .= "No se han registrado signos vitales en las últimas 24 horas.\n\n";
-                }
-
-                $message .= "Por favor, póngase en contacto con el paciente para verificar su bienestar.\n\n";
-                $message .= "Saludos,\nEl equipo de VitalSenior";
-
-                $headers = "From: noreply@vitalsenior.local\r\n";
-                $headers .= "Reply-To: noreply@vitalsenior.local\r\n";
-                $headers .= "X-Mailer: PHP/" . phpversion();
-
-                // Usamos mail() como fallback al no tener confirmación de PHPMailer
-                mail($to, $subject, $message, $headers);
+    
+    $medicamentos = $stmtStock->fetchAll(PDO::FETCH_ASSOC);
+    foreach ($medicamentos as $med) {
+        // dosis diarias estimadas = (24 / frecuencia) * dosis_por_toma
+        // Si frecuencia es 8 -> 3 tomas al día
+        $tomasAlDia = floor(24 / $med['frecuencia_horas']);
+        $consumoDiario = $tomasAlDia * $med['dosis_por_toma'];
+        
+        if ($consumoDiario > 0) {
+            $diasRestantes = $med['stock_actual'] / $consumoDiario;
+            if ($diasRestantes < 4) {
+                // Simular notificación
+                $msg = "[CRON] ALERTA DE STOCK: Quedan " . round($diasRestantes, 1) . " días de {$med['nombre_comercial']} para {$med['nombre']} {$med['apellidos']}. Stock actual: {$med['stock_actual']}.";
+                error_log($msg);
+                echo $msg . "\n";
             }
         }
     }
 
-    echo "Cron ejecutado correctamente. Se verificaron inactividades.\n";
+    echo "Cron ejecutado correctamente a las " . date('Y-m-d H:i:s') . "\n";
 
-} catch (Exception $e) {
-    echo "Error en cron_inactividad: " . $e->getMessage() . "\n";
+} catch (\Exception $e) {
+    if (isset($db) && $db->inTransaction()) {
+        $db->rollBack();
+    }
+    echo "Error en cron: " . $e->getMessage() . "\n";
 }
