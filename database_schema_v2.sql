@@ -106,7 +106,7 @@ CREATE TABLE IF NOT EXISTS tomas_historial (
     hora_programada TIME NOT NULL,
     fecha_programada_utc TIMESTAMP WITH TIME ZONE,
     pospuesto_hasta TIMESTAMP WITH TIME ZONE,
-    estado VARCHAR(20) DEFAULT 'pendiente' CHECK (estado IN ('pendiente', 'tomada', 'omitido', 'pospuesta', 'deshecha')),
+    estado VARCHAR(20) DEFAULT 'pendiente' CHECK (estado IN ('pendiente', 'tomado', 'omitido', 'pospuesto', 'deshecho')),
     tomado_at TIMESTAMP WITH TIME ZONE,
     deshecho_at TIMESTAMP WITH TIME ZONE,
     recordatorio_enviado BOOLEAN DEFAULT FALSE,

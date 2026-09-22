@@ -18,7 +18,7 @@ class MedicamentoController extends Controller {
 
     public function index(): void {
         \App\Middlewares\AuthMiddleware::handle();
-        $userId = $_SESSION['user_id'] ?? null;
+        $userId = (int)($_SESSION['user_id'] ?? 0);
         
         // 1. Obtener ID del paciente activo
         $pacienteId = $_GET['paciente_id'] ?? ($_SESSION['paciente_activo_id'] ?? null);
@@ -31,9 +31,10 @@ class MedicamentoController extends Controller {
 
         // 2. Aislamiento Multitenant con ofuscación 404
         $acceso = \App\Middlewares\AuthMiddleware::requirePatientAccess($pacienteId);
-        $puedeEditar = $acceso['puede_editar']; // true solo para familiar con 'edicion_completa' o admin
+        $puedeEditar = $acceso['puede_editar'];
         
-        $medicamentos = $this->medicamentoModel->getAllByPacienteId($pacienteId);
+        $medicamentos = $this->medicamentoModel->getAllByPacienteId((int)$pacienteId);
+        $todosLosPacientes = $this->pacienteModel->obtenerTodosVinculados($userId);
         
         // Calcular adherencia
         $db = \Config\Database::getInstance()->getConnection();
@@ -56,13 +57,14 @@ class MedicamentoController extends Controller {
             'medicamentos' => $medicamentos,
             'adherencia' => $adherencia,
             'puedeEditar' => $puedeEditar,
-            'nivelAcceso' => $acceso['nivel_acceso']
+            'nivelAcceso' => $acceso['nivel_acceso'],
+            'todosLosPacientes' => $todosLosPacientes
         ], false);
     }
 
     public function controlTomas(): void {
         \App\Middlewares\AuthMiddleware::handle();
-        $userId = $_SESSION['user_id'] ?? null;
+        $userId = (int)($_SESSION['user_id'] ?? 0);
         $pacienteId = $_GET['paciente_id'] ?? ($_SESSION['paciente_activo_id'] ?? null);
         
         if (!$pacienteId) {
@@ -75,11 +77,72 @@ class MedicamentoController extends Controller {
         // Aislamiento Multitenant con ofuscación 404
         $acceso = \App\Middlewares\AuthMiddleware::requirePatientAccess($pacienteId);
         $puedeEditar = $acceso['puede_editar'];
+        $todosLosPacientes = $this->pacienteModel->obtenerTodosVinculados($userId);
 
-        $this->medicamentoModel->generarTomasDiarias($pacienteId);
-        $tomasDelDia = $this->medicamentoModel->getTodayDoses($pacienteId);
+        $this->medicamentoModel->generarTomasDiarias((int)$pacienteId);
+        $tomasDelDia = $this->medicamentoModel->getTodayDoses((int)$pacienteId);
 
         require_once __DIR__ . '/../Views/medicamentos/control_tomas.php';
+    }
+
+    public function togglePausa(): void {
+        \App\Middlewares\AuthMiddleware::handle();
+
+        if (!validateCsrfToken($_POST['csrf_token'] ?? null)) {
+            $this->setFlash('danger', 'Token CSRF inválido.');
+            header('Location: ' . APP_URL . '/medicamentos');
+            exit;
+        }
+
+        $userId = (int)($_SESSION['user_id'] ?? 0);
+        $medId = (int)($_POST['medicamento_id'] ?? 0);
+        $pacienteId = (int)($_POST['paciente_id'] ?? ($_SESSION['paciente_activo_id'] ?? 0));
+
+        $acceso = \App\Middlewares\AuthMiddleware::requirePatientAccess($pacienteId);
+        if (empty($acceso['puede_editar'])) {
+            http_response_code(403);
+            die('Error 403: No tienes permisos para pausar o reactivar medicamentos.');
+        }
+
+        if ($medId > 0 && $pacienteId > 0) {
+            $this->medicamentoModel->togglePausa($medId, $pacienteId);
+            $usuarioModel = new \App\Models\Usuario();
+            $usuarioModel->registrarAuditoria('MEDICAMENTO_PAUSA_TOGGLED', "Estado de medicamento ID $medId alternado para paciente $pacienteId.");
+            $this->setFlash('success', 'Estado del medicamento actualizado correctamente.');
+        }
+
+        header('Location: ' . APP_URL . '/medicamentos');
+        exit;
+    }
+
+    public function destroy(): void {
+        \App\Middlewares\AuthMiddleware::handle();
+
+        if (!validateCsrfToken($_POST['csrf_token'] ?? null)) {
+            $this->setFlash('danger', 'Token CSRF inválido.');
+            header('Location: ' . APP_URL . '/medicamentos');
+            exit;
+        }
+
+        $userId = (int)($_SESSION['user_id'] ?? 0);
+        $medId = (int)($_POST['medicamento_id'] ?? 0);
+        $pacienteId = (int)($_POST['paciente_id'] ?? ($_SESSION['paciente_activo_id'] ?? 0));
+
+        $acceso = \App\Middlewares\AuthMiddleware::requirePatientAccess($pacienteId);
+        if (empty($acceso['puede_editar'])) {
+            http_response_code(403);
+            die('Error 403: No tienes permisos para eliminar medicamentos.');
+        }
+
+        if ($medId > 0 && $pacienteId > 0) {
+            $this->medicamentoModel->eliminar($medId, $pacienteId);
+            $usuarioModel = new \App\Models\Usuario();
+            $usuarioModel->registrarAuditoria('MEDICAMENTO_ELIMINADO', "Medicamento ID $medId eliminado para paciente $pacienteId.");
+            $this->setFlash('success', 'Medicamento eliminado del catálogo.');
+        }
+
+        header('Location: ' . APP_URL . '/medicamentos');
+        exit;
     }
 
     public function store(): void {
@@ -269,6 +332,12 @@ class MedicamentoController extends Controller {
 
                 // Validación Multitenant
                 $acceso = \App\Middlewares\AuthMiddleware::requirePatientAccess($toma['paciente_id']);
+                if (empty($acceso['puede_editar'])) {
+                    $db->rollBack();
+                    $this->setFlash('danger', 'Error 403: No tienes permisos para posponer tomas de este paciente.');
+                    header('Location: ' . $redirectUrl);
+                    exit;
+                }
 
                 if (!in_array($toma['estado'], ['pendiente', 'pospuesto'], true)) {
                     $db->rollBack();
@@ -322,7 +391,7 @@ class MedicamentoController extends Controller {
                         $horaProximaLegible = $siguienteHoraUtc->format('H:i');
                         $this->setFlash(
                             'danger', 
-                            "⚠️ Bloqueo de Seguridad Clínica: No es posible posponer la toma 30 minutos más. Quedaría a menos de 2 horas (margen de " . round(max(0, $margenMinutos)) . " min) de tu próxima dosis programada de las {$horaProximaLegible} UTC, existiendo riesgo de sobredosis o acumulación tóxica. Por favor marca la dosis como tomada o consulta a tu médico."
+                            "Bloqueo de Seguridad Clínica: No es posible posponer la toma 30 minutos más. Quedaría a menos de 2 horas (margen de " . round(max(0, $margenMinutos)) . " min) de tu próxima dosis programada de las {$horaProximaLegible} UTC, existiendo riesgo de sobredosis o acumulación tóxica. Por favor marca la dosis como tomada o consulta a tu médico."
                         );
                         header('Location: ' . $redirectUrl);
                         exit;
@@ -364,7 +433,7 @@ class MedicamentoController extends Controller {
 
     /**
      * POST /medicamentos/deshacer
-     * Deshace una toma registrada por error dentro de una ventana de 15 minutos (UTC)
+     * Deshace una toma registrada por error dentro de una ventana de 15 minutos (UTC/Timestamp absoluto)
      */
     public function deshacerToma(): void {
         \App\Middlewares\AuthMiddleware::handle();
@@ -400,6 +469,12 @@ class MedicamentoController extends Controller {
 
                 // Validación Multitenant
                 $acceso = \App\Middlewares\AuthMiddleware::requirePatientAccess($toma['paciente_id']);
+                if (empty($acceso['puede_editar'])) {
+                    $db->rollBack();
+                    $this->setFlash('danger', 'Error 403: No tienes permisos para anular tomas de este paciente.');
+                    header('Location: ' . $redirectUrl);
+                    exit;
+                }
 
                 if ($toma['estado'] !== 'tomado') {
                     $db->rollBack();
@@ -408,7 +483,7 @@ class MedicamentoController extends Controller {
                     exit;
                 }
 
-                // Evaluar ventana de 15 minutos estricta en UTC
+                // Evaluar ventana de 15 minutos usando timestamps absolutos
                 if (empty($toma['tomado_at'])) {
                     $db->rollBack();
                     $this->setFlash('danger', 'No se dispone del registro de tiempo de la toma.');
@@ -416,18 +491,17 @@ class MedicamentoController extends Controller {
                     exit;
                 }
 
-                $tomadoUtc = new \DateTime($toma['tomado_at'], new \DateTimeZone('UTC'));
-                $ahoraUtc = new \DateTime('now', new \DateTimeZone('UTC'));
-                $diferenciaMinutos = ($ahoraUtc->getTimestamp() - $tomadoUtc->getTimestamp()) / 60;
+                $tomadoTimestamp = strtotime($toma['tomado_at']);
+                $diferenciaMinutos = (time() - $tomadoTimestamp) / 60;
 
-                if ($diferenciaMinutos > 15) {
+                if ($diferenciaMinutos > 15 || $diferenciaMinutos < -1) {
                     $db->rollBack();
                     $this->setFlash('warning', 'La ventana de 15 minutos para deshacer la toma ha expirado.');
                     header('Location: ' . $redirectUrl);
                     exit;
                 }
 
-                // Actualizar estado a pendiente (o estado válido del enum)
+                // Actualizar estado a pendiente
                 $stmtUpdate = $db->prepare(
                     "UPDATE tomas_historial 
                      SET estado = 'pendiente', tomado_at = NULL, nota_incidencia = 'Toma deshecha por el usuario' 

@@ -11,8 +11,10 @@
     <div class="bg-white p-6 sm:p-8 rounded-3xl shadow-card border border-slate-200/80 text-center">
         
         <!-- Icono de Advertencia Clínica -->
-        <div class="w-16 h-16 bg-amber-50 text-amber-600 rounded-3xl flex items-center justify-center text-4xl mx-auto mb-4 shadow-sm">
-            ⚠️
+        <div class="w-16 h-16 bg-amber-50 text-amber-600 rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-sm border border-amber-200">
+            <svg class="w-8 h-8 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+            </svg>
         </div>
 
         <h1 class="text-2xl sm:text-3xl font-black text-slate-800 tracking-tight mb-2">
@@ -26,7 +28,11 @@
         <!-- Mensaje de Alerta -->
         <div class="bg-amber-50/80 border-2 border-amber-200 rounded-2xl p-4 sm:p-5 mb-6 text-left">
             <div class="flex items-start space-x-3">
-                <span class="text-xl">🩺</span>
+                <div class="w-6 h-6 shrink-0 text-amber-700 mt-0.5">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                </div>
                 <div>
                     <h3 class="text-sm font-bold text-amber-900 mb-1">Aviso Clínico Importante</h3>
                     <p class="text-xs sm:text-sm text-amber-800 leading-relaxed font-medium">

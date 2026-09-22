@@ -81,12 +81,12 @@
                        class="touch-target w-full rounded-2xl border-slate-300 px-4 py-3 text-sm focus:border-blue-500 focus:ring-blue-500 bg-slate-50/50 mb-2">
                 <!-- Chips de Lugares Frecuentes -->
                 <div class="flex flex-wrap gap-1.5">
-                    <button type="button" onclick="setLugar('Centro de Salud')" class="text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-xl transition">🏥 Centro de Salud</button>
-                    <button type="button" onclick="setLugar('IMSS / ISSSTE')" class="text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-xl transition">🏛️ IMSS / ISSSTE</button>
-                    <button type="button" onclick="setLugar('Clínica Familiar')" class="text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-xl transition">🩺 Clínica Familiar</button>
-                    <button type="button" onclick="setLugar('Consultorio Privado')" class="text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-xl transition">🏢 Consultorio Privado</button>
-                    <button type="button" onclick="setLugar('Hospital General')" class="text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-xl transition">🏨 Hospital General</button>
-                    <button type="button" onclick="setLugar('Cruz Roja')" class="text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-xl transition">🚑 Cruz Roja</button>
+                    <button type="button" onclick="setLugar('Centro de Salud')" class="text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-xl transition">Centro de Salud</button>
+                    <button type="button" onclick="setLugar('IMSS / ISSSTE')" class="text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-xl transition">IMSS / ISSSTE</button>
+                    <button type="button" onclick="setLugar('Clínica Familiar')" class="text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-xl transition">Clínica Familiar</button>
+                    <button type="button" onclick="setLugar('Consultorio Privado')" class="text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-xl transition">Consultorio Privado</button>
+                    <button type="button" onclick="setLugar('Hospital General')" class="text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-xl transition">Hospital General</button>
+                    <button type="button" onclick="setLugar('Cruz Roja')" class="text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-xl transition">Cruz Roja</button>
                 </div>
             </div>
 
@@ -99,12 +99,12 @@
                        class="touch-target w-full rounded-2xl border-slate-300 px-4 py-3 text-sm focus:border-blue-500 focus:ring-blue-500 bg-slate-50/50 mb-2">
                 <!-- Chips de Motivos Frecuentes -->
                 <div class="flex flex-wrap gap-1.5">
-                    <button type="button" onclick="setMotivo('Control Rutinario de Salud')" class="text-xs font-semibold bg-blue-50 hover:bg-blue-100 text-blue-700 px-3 py-1.5 rounded-xl transition">📋 Control Rutinario</button>
-                    <button type="button" onclick="setMotivo('Revisión de Presión y Glucosa')" class="text-xs font-semibold bg-blue-50 hover:bg-blue-100 text-blue-700 px-3 py-1.5 rounded-xl transition">💓 Presión / Glucosa</button>
-                    <button type="button" onclick="setMotivo('Dolor o Malestar Físico')" class="text-xs font-semibold bg-blue-50 hover:bg-blue-100 text-blue-700 px-3 py-1.5 rounded-xl transition">🤕 Dolor / Malestar</button>
-                    <button type="button" onclick="setMotivo('Revisión de Resultados de Laboratorio')" class="text-xs font-semibold bg-blue-50 hover:bg-blue-100 text-blue-700 px-3 py-1.5 rounded-xl transition">🧪 Entrega de Resultados</button>
-                    <button type="button" onclick="setMotivo('Ajuste de Dosis o Medicamentos')" class="text-xs font-semibold bg-blue-50 hover:bg-blue-100 text-blue-700 px-3 py-1.5 rounded-xl transition">💊 Ajuste de Medicación</button>
-                    <button type="button" onclick="setMotivo('Revisión por Caída o Golpe')" class="text-xs font-semibold bg-blue-50 hover:bg-blue-100 text-blue-700 px-3 py-1.5 rounded-xl transition">⚠️ Caída / Golpe</button>
+                    <button type="button" onclick="setMotivo('Control Rutinario de Salud')" class="text-xs font-semibold bg-blue-50 hover:bg-blue-100 text-blue-700 px-3 py-1.5 rounded-xl transition">Control Rutinario</button>
+                    <button type="button" onclick="setMotivo('Revisión de Presión y Glucosa')" class="text-xs font-semibold bg-blue-50 hover:bg-blue-100 text-blue-700 px-3 py-1.5 rounded-xl transition">Presión / Glucosa</button>
+                    <button type="button" onclick="setMotivo('Dolor o Malestar Físico')" class="text-xs font-semibold bg-blue-50 hover:bg-blue-100 text-blue-700 px-3 py-1.5 rounded-xl transition">Dolor / Malestar</button>
+                    <button type="button" onclick="setMotivo('Revisión de Resultados de Laboratorio')" class="text-xs font-semibold bg-blue-50 hover:bg-blue-100 text-blue-700 px-3 py-1.5 rounded-xl transition">Entrega de Resultados</button>
+                    <button type="button" onclick="setMotivo('Ajuste de Dosis o Medicamentos')" class="text-xs font-semibold bg-blue-50 hover:bg-blue-100 text-blue-700 px-3 py-1.5 rounded-xl transition">Ajuste de Medicación</button>
+                    <button type="button" onclick="setMotivo('Revisión por Caída o Golpe')" class="text-xs font-semibold bg-blue-50 hover:bg-blue-100 text-blue-700 px-3 py-1.5 rounded-xl transition">Caída / Golpe</button>
                 </div>
             </div>
 
@@ -121,7 +121,9 @@
             <div class="p-5 bg-slate-50 rounded-2xl border border-slate-200">
                 <div class="flex items-center justify-between mb-3">
                     <div class="flex items-center gap-2">
-                        <span class="text-xl">📸</span>
+                        <div class="w-7 h-7 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z"/><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z"/></svg>
+                        </div>
                         <div>
                             <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Adjuntar Fotos de Recetas u Órdenes</h3>
                             <p class="text-[11px] text-slate-500">Toma una foto clara o sube imágenes/PDF (máx 5MB c/u)</p>
@@ -149,7 +151,9 @@
             <div class="p-5 bg-gradient-to-r from-blue-50/60 to-indigo-50/60 rounded-2xl border border-blue-100 space-y-4">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-2.5">
-                        <span class="text-xl">📅</span>
+                        <div class="w-7 h-7 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"/></svg>
+                        </div>
                         <div>
                             <h3 class="text-xs font-bold text-blue-950 uppercase tracking-wider">¿Requiere Consulta de Seguimiento?</h3>
                             <p class="text-[11px] text-blue-700">Crea automáticamente la cita en la agenda de VitalSenior</p>
@@ -184,7 +188,7 @@
                     Cancelar
                 </a>
                 <button type="submit" class="tap-bounce touch-target w-full sm:w-auto px-8 py-3 rounded-2xl text-xs sm:text-sm font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-500/20 transition cursor-pointer flex items-center justify-center gap-2">
-                    <span>💾</span>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z"/></svg>
                     <span>Guardar Bitácora Médica</span>
                 </button>
             </div>

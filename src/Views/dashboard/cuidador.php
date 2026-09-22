@@ -311,7 +311,7 @@ $roleLabel = match($userRole) {
             <div class="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200/80 shadow-card space-y-3">
                 <div class="flex items-center justify-between pb-2 border-b border-slate-100">
                     <h2 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Contactos SOS</h2>
-                    <a href="<?= APP_URL ?>/expediente#contactos" class="text-xs font-bold text-blue-600 hover:text-blue-700">+ Gestionar</a>
+                    <a href="<?= APP_URL ?>/expediente#tab-contactos" class="text-xs font-bold text-blue-600 hover:text-blue-700">+ Gestionar</a>
                 </div>
 
                 <?php if (empty($contactosEmergencia)): ?>

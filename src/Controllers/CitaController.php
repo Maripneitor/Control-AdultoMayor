@@ -77,8 +77,11 @@ class CitaController extends Controller {
             ];
         }
 
+        $todosLosPacientes = $this->pacienteModel->obtenerTodosVinculados($userId);
+
         $this->render('citas/index', [
             'paciente' => $paciente,
+            'todosLosPacientes' => $todosLosPacientes,
             'citas' => $citas,
             'doctores' => $doctores,
             'cuidadores' => $cuidadores,

@@ -46,6 +46,8 @@ class SaludController extends Controller {
 
         $registroHoy = $this->saludModel->getTodayByPacienteId($pacienteId);
         $ultimoRegistro = $this->saludModel->getUltimoRegistro($pacienteId);
+        $userId = (int)($_SESSION['user_id'] ?? 0);
+        $todosLosPacientes = $this->pacienteModel->obtenerTodosVinculados($userId);
 
         require_once dirname(__DIR__) . '/Views/salud/stepper.php';
     }

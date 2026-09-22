@@ -117,5 +117,22 @@ class Paciente extends Model {
             'id' => $id
         ]);
     }
+
+    public function obtenerTodosVinculados(int $userId): array {
+        $cuidadorModel = new Cuidador();
+        $pacientePropio = $this->findByUserId($userId);
+        $pacientesComoCuidador = $cuidadorModel->obtenerPacientesPorCuidador($userId);
+
+        $todosLosPacientes = [];
+        if ($pacientePropio) {
+            $todosLosPacientes[] = $pacientePropio;
+        }
+        foreach ($pacientesComoCuidador as $pc) {
+            if (!in_array($pc['id'], array_column($todosLosPacientes, 'id'))) {
+                $todosLosPacientes[] = $pc;
+            }
+        }
+        return $todosLosPacientes;
+    }
 }
 

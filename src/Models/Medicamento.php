@@ -50,9 +50,9 @@ class Medicamento extends Model {
             FROM tomas_historial th
             JOIN medicamentos m ON th.medicamento_id = m.id
             WHERE th.paciente_id = :pid 
-              AND th.fecha_programada = CURRENT_DATE 
+              AND th.fecha_programada >= (CURRENT_DATE - INTERVAL '1 day')
               AND th.estado = 'omitido'
-            ORDER BY th.hora_programada ASC
+            ORDER BY th.fecha_programada DESC, th.hora_programada ASC
         ");
         $stmt->execute(['pid' => $pacienteId]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -61,12 +61,12 @@ class Medicamento extends Model {
     public function getBajoInventario(int $pacienteId): array {
         $stmt = $this->db->prepare("
             SELECT id, nombre_comercial, stock_actual, stock_minimo_alerta, dosis_por_toma, frecuencia_horas,
-                   FLOOR(stock_actual / NULLIF(FLOOR(24 / GREATEST(frecuencia_horas, 1)) * GREATEST(dosis_por_toma, 1), 0)) AS dias_restantes
+                   FLOOR(stock_actual / NULLIF((24.0 / GREATEST(frecuencia_horas, 1)) * GREATEST(dosis_por_toma, 1), 0)) AS dias_restantes
             FROM medicamentos
             WHERE paciente_id = :pid AND activo = TRUE 
               AND (
                   stock_actual <= stock_minimo_alerta 
-                  OR stock_actual / NULLIF(FLOOR(24 / GREATEST(frecuencia_horas, 1)) * GREATEST(dosis_por_toma, 1), 0) < 4
+                  OR (stock_actual / NULLIF((24.0 / GREATEST(frecuencia_horas, 1)) * GREATEST(dosis_por_toma, 1), 0)) < 4
               )
             ORDER BY dias_restantes ASC, stock_actual ASC
         ");
@@ -99,11 +99,28 @@ class Medicamento extends Model {
         return (int)$stmt->fetchColumn();
     }
 
+    public function togglePausa(int $id, int $pacienteId): bool {
+        $stmt = $this->db->prepare("
+            UPDATE medicamentos 
+            SET activo = NOT activo 
+            WHERE id = :id AND paciente_id = :pid
+        ");
+        return $stmt->execute(['id' => $id, 'pid' => $pacienteId]);
+    }
+
+    public function eliminar(int $id, int $pacienteId): bool {
+        $stmt = $this->db->prepare("
+            DELETE FROM medicamentos 
+            WHERE id = :id AND paciente_id = :pid
+        ");
+        return $stmt->execute(['id' => $id, 'pid' => $pacienteId]);
+    }
+
     public function actualizarEstadoToma(int $registroId, int $pacienteId, string $estado, int $usuarioId, ?string $nota = null): bool {
         $esTomado = in_array($estado, ['tomado', 'pospuesto'], true) ? 1 : 0;
         $stmt = $this->db->prepare("
             UPDATE tomas_historial 
-            SET estado = :estado::text::enum_estado_toma, 
+            SET estado = :estado, 
                 tomado_at = CASE WHEN :es_tomado = 1 THEN NOW() ELSE tomado_at END,
                 registrado_por_usuario_id = :usuario_id,
                 nota_incidencia = :nota

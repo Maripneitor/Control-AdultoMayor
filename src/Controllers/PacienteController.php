@@ -60,8 +60,11 @@ class PacienteController extends Controller {
         $visitaModel = new \App\Models\VisitaMedica();
         $visitasMedicas = $visitaModel->getByPacienteId($pacienteId);
 
+        $todosLosPacientes = $pacienteModel->obtenerTodosVinculados($userId);
+
         $this->render('pacientes/expediente', [
             'paciente' => $paciente,
+            'todosLosPacientes' => $todosLosPacientes,
             'doctores' => $doctores,
             'contactosEmergencia' => $contactosEmergencia,
             'ultimoSalud' => $ultimoSalud,

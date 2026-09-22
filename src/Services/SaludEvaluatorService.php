@@ -132,17 +132,17 @@ class SaludEvaluatorService {
             $peso = (float)$datos['peso'];
             $alturaRaw = (float)$datos['altura'];
 
-            // Normalizar altura a metros si viene en centímetros (ej: 165 -> 1.65)
-            $alturaM = $alturaRaw > 3.0 ? ($alturaRaw / 100.0) : $alturaRaw;
+            // Normalizar altura a metros si viene en centímetros (ej: 165 -> 1.65, 90 -> 0.90)
+            $alturaM = $alturaRaw >= 30.0 ? ($alturaRaw / 100.0) : $alturaRaw;
 
             if ($peso > 0 && $alturaM > 0.4) {
                 $resultado['peso'] = round($peso, 2);
                 $resultado['altura_m'] = round($alturaM, 2);
 
-                // Plausibilidad extrema
-                if (($peso > 280 || $peso < 20 || $alturaM > 2.4 || $alturaM < 0.9) && !$confirmado) {
+                // Plausibilidad extrema / Límites anatómicos (0.90m a 2.30m / 90cm a 230cm)
+                if (($peso > 280 || $peso < 20 || $alturaM > 2.30 || $alturaM < 0.90) && !$confirmado) {
                     $resultado['requiere_confirmacion'] = true;
-                    $resultado['mensaje_confirmacion'] = "Peso: {$peso} kg y Altura: {$alturaM} m parecen atípicos. ¿Deseas confirmar?";
+                    $resultado['mensaje_confirmacion'] = "Peso: {$peso} kg y Altura: {$alturaM} m están fuera del rango anatómico típico (0.90m - 2.30m). ¿Deseas confirmar?";
                     return $resultado;
                 }
 

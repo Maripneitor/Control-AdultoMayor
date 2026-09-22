@@ -58,22 +58,31 @@
                     <p class="text-sm text-slate-500 text-center py-8">No tienes medicamentos registrados.</p>
                 <?php else: ?>
                     <?php foreach ($medicamentos as $med): ?>
-                        <div class="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-200 hover:border-blue-300 transition-colors">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-slate-50 rounded-xl border <?= !empty($med['activo']) ? 'border-slate-200 hover:border-blue-300' : 'border-slate-300 opacity-75 bg-slate-100' ?> transition-colors">
                             <div class="flex items-start gap-4 w-full sm:w-auto">
-                                <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 text-xl font-bold shrink-0">
-                                    💊
+                                <div class="w-12 h-12 rounded-full <?= !empty($med['activo']) ? 'bg-blue-100 text-blue-600' : 'bg-slate-200 text-slate-500' ?> flex items-center justify-center shrink-0">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.5 6a4.5 4.5 0 119 9l-9 9a4.5 4.5 0 11-9-9l9-9zM7.5 13.5l9-9" />
+                                    </svg>
                                 </div>
                                 <div class="flex-1">
-                                    <h3 class="font-bold text-slate-800"><?= e($med['nombre_comercial']) ?></h3>
+                                    <div class="flex items-center gap-2">
+                                        <h3 class="font-bold text-slate-800"><?= e($med['nombre_comercial']) ?></h3>
+                                        <?php if (empty($med['activo'])): ?>
+                                            <span class="px-2 py-0.5 text-[10px] font-semibold bg-amber-100 text-amber-800 rounded-full">Pausado</span>
+                                        <?php endif; ?>
+                                    </div>
                                     <p class="text-sm text-slate-600">Dosis: <?= e($med['dosis']) ?> (Cada <?= e((string)$med['frecuencia_horas']) ?> hrs)</p>
                                     <?php if (!empty($med['instrucciones'])): ?>
                                         <p class="text-xs text-slate-500 mt-1 italic">"<?= e($med['instrucciones']) ?>"</p>
                                     <?php endif; ?>
                                     
                                     <?php 
-                                        $dosisAlDia = floor(24 / max(1, $med['frecuencia_horas'])) * max(1, $med['dosis_por_toma']);
-                                        $diasRestantes = $dosisAlDia > 0 ? floor($med['stock_actual'] / $dosisAlDia) : 0;
-                                        $stockPct = min(100, max(0, ($diasRestantes / 30) * 100)); // asumiendo base de 30 dias
+                                        $frecuencia = max(1.0, (float)($med['frecuencia_horas'] ?? 8));
+                                        $dosisToma = max(1.0, (float)($med['dosis_por_toma'] ?? 1));
+                                        $consumoDiario = (24.0 / $frecuencia) * $dosisToma;
+                                        $diasRestantes = $consumoDiario > 0 ? (int)floor((float)$med['stock_actual'] / $consumoDiario) : 0;
+                                        $stockPct = min(100, max(0, ($diasRestantes / 30) * 100)); // base 30 dias
                                         $barColor = $diasRestantes > 7 ? 'bg-emerald-500' : ($diasRestantes > 3 ? 'bg-amber-400' : 'bg-red-500');
                                     ?>
                                     <div class="mt-3">
@@ -89,8 +98,22 @@
                             </div>
                             <?php if (!empty($puedeEditar)): ?>
                             <div class="mt-4 sm:mt-0 flex gap-2">
-                                <button onclick="confirmarAccion('pausar', <?= e((string)$med['id']) ?>)" class="px-3 py-1.5 bg-amber-50 text-amber-600 text-xs font-semibold rounded-lg border border-amber-200 hover:bg-amber-100 transition">Pausar</button>
-                                <button onclick="confirmarAccion('eliminar', <?= e((string)$med['id']) ?>)" class="px-3 py-1.5 bg-red-50 text-red-600 text-xs font-semibold rounded-lg border border-red-200 hover:bg-red-100 transition">Eliminar</button>
+                                <form id="form-pausar-<?= e((string)$med['id']) ?>" action="<?= APP_URL ?>/medicamentos/pausar" method="POST" class="inline">
+                                    <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
+                                    <input type="hidden" name="paciente_id" value="<?= e((string)($paciente['id'] ?? '')) ?>">
+                                    <input type="hidden" name="medicamento_id" value="<?= e((string)$med['id']) ?>">
+                                    <button type="button" onclick="confirmarAccion('pausar', <?= e((string)$med['id']) ?>, '<?= !empty($med['activo']) ? 'pausar' : 'reanudar' ?>')" class="px-3 py-1.5 <?= !empty($med['activo']) ? 'bg-amber-50 text-amber-600 border-amber-200 hover:bg-amber-100' : 'bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100' ?> text-xs font-semibold rounded-lg border transition">
+                                        <?= !empty($med['activo']) ? 'Pausar' : 'Reanudar' ?>
+                                    </button>
+                                </form>
+                                <form id="form-eliminar-<?= e((string)$med['id']) ?>" action="<?= APP_URL ?>/medicamentos/eliminar" method="POST" class="inline">
+                                    <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
+                                    <input type="hidden" name="paciente_id" value="<?= e((string)($paciente['id'] ?? '')) ?>">
+                                    <input type="hidden" name="medicamento_id" value="<?= e((string)$med['id']) ?>">
+                                    <button type="button" onclick="confirmarAccion('eliminar', <?= e((string)$med['id']) ?>)" class="px-3 py-1.5 bg-red-50 text-red-600 text-xs font-semibold rounded-lg border border-red-200 hover:bg-red-100 transition">
+                                        Eliminar
+                                    </button>
+                                </form>
                             </div>
                             <?php endif; ?>
                         </div>
@@ -154,15 +177,23 @@
     </main>
 
     <script>
-        function confirmarAccion(accion, id) {
+        function confirmarAccion(accion, id, subTipo = '') {
             const mensajes = {
-                pausar: { title: '¿Pausar tratamiento?', text: 'El medicamento dejará de generar recordatorios diarios.' },
-                eliminar: { title: '¿Eliminar medicamento?', text: 'Esta acción no se puede deshacer y borrará el historial.' }
+                pausar: { 
+                    title: subTipo === 'reanudar' ? '¿Reanudar tratamiento?' : '¿Pausar tratamiento?', 
+                    text: subTipo === 'reanudar' ? 'El medicamento volverá a generar recordatorios de tomas.' : 'El medicamento dejará de generar recordatorios diarios.' 
+                },
+                eliminar: { 
+                    title: '¿Eliminar medicamento?', 
+                    text: 'Esta acción no se puede deshacer y borrará el historial de tomas.' 
+                }
             };
 
+            const config = mensajes[accion] || { title: '¿Confirmar acción?', text: '' };
+
             Swal.fire({
-                title: mensajes[accion].title,
-                text: mensajes[accion].text,
+                title: config.title,
+                text: config.text,
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: accion === 'eliminar' ? '#ef4444' : '#f59e0b',
@@ -171,8 +202,10 @@
                 cancelButtonText: 'Cancelar'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    // Aquí iría el submit de un form oculto o fetch request
-                    Swal.fire('Completado', 'La acción se realizó con éxito.', 'success');
+                    const form = document.getElementById(`form-${accion}-${id}`);
+                    if (form) {
+                        form.submit();
+                    }
                 }
             });
         }

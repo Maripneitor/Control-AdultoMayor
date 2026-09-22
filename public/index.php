@@ -73,6 +73,8 @@ $router->post('/medicamentos/crear', 'MedicamentoController@store', [AuthMiddlew
 $router->post('/medicamentos/toma', 'MedicamentoController@marcarToma', [AuthMiddleware::class]);
 $router->post('/medicamentos/posponer', 'MedicamentoController@posponerToma', [AuthMiddleware::class]);
 $router->post('/medicamentos/deshacer', 'MedicamentoController@deshacerToma', [AuthMiddleware::class]);
+$router->post('/medicamentos/pausar', 'MedicamentoController@togglePausa', [AuthMiddleware::class]);
+$router->post('/medicamentos/eliminar', 'MedicamentoController@destroy', [AuthMiddleware::class]);
 
 // Citas y Laboratorios
 $router->get('/citas', 'CitaController@index', [AuthMiddleware::class]);

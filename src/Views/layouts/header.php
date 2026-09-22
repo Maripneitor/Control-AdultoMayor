@@ -150,7 +150,7 @@ $roleLabel = match($userRole) {
                                 title="Cambiar paciente">
                             <?php foreach ($todosLosPacientes as $p): ?>
                                 <option value="<?= e((string)$p['id']) ?>" <?= ($p['id'] == $pacienteActivoId) ? 'selected' : '' ?>>
-                                    👤 <?= e($p['nombre']) ?>
+                                    <?= e($p['nombre']) ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>
@@ -343,8 +343,9 @@ $roleLabel = match($userRole) {
                         <span class="text-[10px] text-slate-400 font-semibold block px-1">Cambiar paciente activo:</span>
                         <?php foreach ($todosLosPacientes as $p): ?>
                             <a href="<?php echo APP_URL; ?>/dashboard?seleccionar_paciente=<?= e((string)$p['id']) ?>" 
-                               class="p-2.5 rounded-xl block font-bold transition text-xs <?= $p['id'] == $pacienteActivoId ? 'bg-blue-600 text-white shadow-xs' : 'bg-slate-50 hover:bg-slate-100 text-slate-700' ?>">
-                                👤 <?= e($p['nombre'] . ' ' . ($p['apellidos'] ?? '')) ?>
+                               class="p-2.5 rounded-xl flex items-center gap-2 font-bold transition text-xs <?= $p['id'] == $pacienteActivoId ? 'bg-blue-600 text-white shadow-xs' : 'bg-slate-50 hover:bg-slate-100 text-slate-700' ?>">
+                                <svg class="w-3.5 h-3.5 shrink-0 <?= $p['id'] == $pacienteActivoId ? 'text-white' : 'text-slate-500' ?>" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                                <span class="truncate"><?= e($p['nombre'] . ' ' . ($p['apellidos'] ?? '')) ?></span>
                             </a>
                         <?php endforeach; ?>
                     </div>
@@ -539,8 +540,8 @@ $roleLabel = match($userRole) {
         if (enlaceMedicoGenerado) {
             navigator.clipboard.writeText(enlaceMedicoGenerado).then(() => {
                 const btn = document.getElementById('btn-copiar-enlace');
-                btn.innerText = '✓ ¡Enlace Copiado al Portapapeles!';
-                setTimeout(() => { btn.innerText = '📋 Copiar Enlace Directo'; }, 3000);
+                btn.innerText = '✓ ¡Enlace Copiado!';
+                setTimeout(() => { btn.innerText = 'Copiar Enlace Directo'; }, 3000);
             });
         }
     }

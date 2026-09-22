@@ -311,7 +311,6 @@
                 <span class="text-xs text-slate-500 mt-0.5">Credencial digital</span>
             </a>
         </section>
-        </section>
 
         <!-- VINCULACIÓN FAMILIAR -->
         <section class="bg-slate-100/80 p-5 sm:p-6 rounded-3xl border border-slate-200 text-center">

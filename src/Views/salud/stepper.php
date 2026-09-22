@@ -28,7 +28,9 @@
             <div class="flex justify-between items-center mb-3">
                 <div class="flex items-center space-x-2">
                     <span class="w-8 h-8 rounded-xl bg-blue-600 text-white font-black text-sm flex items-center justify-center shadow-xs">
-                        🩺
+                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
                     </span>
                     <div>
                         <h1 class="text-lg sm:text-xl font-black text-slate-800 tracking-tight">Registro de Signos</h1>
@@ -57,8 +59,10 @@
             <!-- PASO 1: Presión Arterial -->
             <div class="step-container active" id="step-1">
                 <div class="text-center mb-6">
-                    <div class="w-14 h-14 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-3 shadow-xs">
-                        💓
+                    <div class="w-14 h-14 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-xs border border-rose-100">
+                        <svg class="w-7 h-7 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"/>
+                        </svg>
                     </div>
                     <h2 class="text-2xl sm:text-3xl font-black text-slate-800 tracking-tight">Presión Arterial</h2>
                     <p class="text-sm text-slate-500 mt-1 max-w-sm mx-auto">
@@ -91,8 +95,10 @@
             <!-- PASO 2: Glucosa en Sangre -->
             <div class="step-container" id="step-2">
                 <div class="text-center mb-6">
-                    <div class="w-14 h-14 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-3 shadow-xs">
-                        🩸
+                    <div class="w-14 h-14 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-xs border border-amber-100">
+                        <svg class="w-7 h-7 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 2.25c-3.75 5.25-6.75 9.75-6.75 13.5a6.75 6.75 0 0013.5 0c0-3.75-3-8.25-6.75-13.5z"/>
+                        </svg>
                     </div>
                     <h2 class="text-2xl sm:text-3xl font-black text-slate-800 tracking-tight">Nivel de Glucosa</h2>
                     <p class="text-sm text-slate-500 mt-1 max-w-sm mx-auto">
@@ -104,11 +110,11 @@
                     <div class="relative w-full max-w-xs">
                         <input type="number" 
                                step="1" 
-                               id="input-glucosa"
+                               id="input-glucosa" 
                                name="glucosa" 
                                inputmode="numeric" 
                                placeholder="100" 
-                               autocomplete="off"
+                               autocomplete="off" 
                                class="text-4xl sm:text-5xl font-mono font-black text-center p-4 sm:p-5 border-2 border-slate-300 rounded-2xl w-full focus:border-amber-500 focus:ring-4 focus:ring-amber-100 transition-all text-slate-900 placeholder:text-slate-300">
                         <span class="block text-center text-xs font-bold text-slate-400 mt-2">mg/dL</span>
                     </div>
@@ -146,8 +152,10 @@
             <!-- PASO 3: Frecuencia Cardíaca, Sueño y Dolor -->
             <div class="step-container" id="step-3">
                 <div class="text-center mb-6">
-                    <div class="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-3 shadow-xs">
-                        ❤️
+                    <div class="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-xs border border-emerald-100">
+                        <svg class="w-7 h-7 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/>
+                        </svg>
                     </div>
                     <h2 class="text-2xl sm:text-3xl font-black text-slate-800 tracking-tight">Pulso, Sueño y Dolor</h2>
                     <p class="text-sm text-slate-500 mt-1 max-w-sm mx-auto">
@@ -180,45 +188,60 @@
                 <!-- Nivel de Dolor -->
                 <div class="mb-8">
                     <p class="text-center text-xs font-bold uppercase tracking-wider text-slate-600 mb-3">Nivel de Dolor / Malestar</p>
-                    <div class="grid grid-cols-5 gap-1.5 sm:gap-2 max-w-md mx-auto">
+                    <div class="grid grid-cols-5 gap-1 sm:gap-2 max-w-md mx-auto">
                         <!-- 0: Sin Dolor -->
                         <div>
                             <input type="radio" name="nivel_dolor" value="0" id="dolor-0" class="hidden emoji-radio" checked>
-                            <label for="dolor-0" class="tap-bounce touch-min flex flex-col items-center justify-center p-2 sm:p-3 border-2 border-slate-200 rounded-2xl cursor-pointer hover:bg-slate-50 transition-all text-center">
-                                <span class="text-2xl sm:text-3xl">😀</span>
-                                <span class="text-[10px] font-bold text-slate-600 mt-1">Cero</span>
+                            <label for="dolor-0" class="tap-bounce touch-min flex flex-col items-center justify-center p-1.5 sm:p-2.5 border-2 border-slate-200 rounded-xl sm:rounded-2xl cursor-pointer hover:bg-slate-50 transition-all text-center">
+                                <svg class="w-7 h-7 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
+                                    <circle cx="12" cy="12" r="9"/>
+                                    <path stroke-linecap="round" d="M9 10h.01M15 10h.01M9.5 15a3.5 3.5 0 005 0"/>
+                                </svg>
+                                <span class="text-[9px] sm:text-[10px] font-bold text-slate-700 mt-1 truncate w-full">Cero</span>
                             </label>
                         </div>
                         <!-- 1: Leve -->
                         <div>
                             <input type="radio" name="nivel_dolor" value="1" id="dolor-1" class="hidden emoji-radio">
-                            <label for="dolor-1" class="tap-bounce touch-min flex flex-col items-center justify-center p-2 sm:p-3 border-2 border-slate-200 rounded-2xl cursor-pointer hover:bg-slate-50 transition-all text-center">
-                                <span class="text-2xl sm:text-3xl">🙂</span>
-                                <span class="text-[10px] font-bold text-slate-600 mt-1">Leve</span>
+                            <label for="dolor-1" class="tap-bounce touch-min flex flex-col items-center justify-center p-1.5 sm:p-2.5 border-2 border-slate-200 rounded-xl sm:rounded-2xl cursor-pointer hover:bg-slate-50 transition-all text-center">
+                                <svg class="w-7 h-7 text-teal-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
+                                    <circle cx="12" cy="12" r="9"/>
+                                    <path stroke-linecap="round" d="M9 10h.01M15 10h.01M10 15h4"/>
+                                </svg>
+                                <span class="text-[9px] sm:text-[10px] font-bold text-slate-700 mt-1 truncate w-full">Leve</span>
                             </label>
                         </div>
                         <!-- 2: Moderado -->
                         <div>
                             <input type="radio" name="nivel_dolor" value="2" id="dolor-2" class="hidden emoji-radio">
-                            <label for="dolor-2" class="tap-bounce touch-min flex flex-col items-center justify-center p-2 sm:p-3 border-2 border-slate-200 rounded-2xl cursor-pointer hover:bg-slate-50 transition-all text-center">
-                                <span class="text-2xl sm:text-3xl">😐</span>
-                                <span class="text-[10px] font-bold text-slate-600 mt-1">Medio</span>
+                            <label for="dolor-2" class="tap-bounce touch-min flex flex-col items-center justify-center p-1.5 sm:p-2.5 border-2 border-slate-200 rounded-xl sm:rounded-2xl cursor-pointer hover:bg-slate-50 transition-all text-center">
+                                <svg class="w-7 h-7 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
+                                    <circle cx="12" cy="12" r="9"/>
+                                    <path stroke-linecap="round" d="M9 10h.01M15 10h.01M9 15h6"/>
+                                </svg>
+                                <span class="text-[9px] sm:text-[10px] font-bold text-slate-700 mt-1 truncate w-full">Medio</span>
                             </label>
                         </div>
                         <!-- 3: Fuerte -->
                         <div>
                             <input type="radio" name="nivel_dolor" value="3" id="dolor-3" class="hidden emoji-radio">
-                            <label for="dolor-3" class="tap-bounce touch-min flex flex-col items-center justify-center p-2 sm:p-3 border-2 border-slate-200 rounded-2xl cursor-pointer hover:bg-slate-50 transition-all text-center">
-                                <span class="text-2xl sm:text-3xl">🙁</span>
-                                <span class="text-[10px] font-bold text-slate-600 mt-1">Fuerte</span>
+                            <label for="dolor-3" class="tap-bounce touch-min flex flex-col items-center justify-center p-1.5 sm:p-2.5 border-2 border-slate-200 rounded-xl sm:rounded-2xl cursor-pointer hover:bg-slate-50 transition-all text-center">
+                                <svg class="w-7 h-7 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
+                                    <circle cx="12" cy="12" r="9"/>
+                                    <path stroke-linecap="round" d="M9 10h.01M15 10h.01M14.5 15.5a3.5 3.5 0 00-5 0"/>
+                                </svg>
+                                <span class="text-[9px] sm:text-[10px] font-bold text-slate-700 mt-1 truncate w-full">Fuerte</span>
                             </label>
                         </div>
                         <!-- 4: Intenso -->
                         <div>
                             <input type="radio" name="nivel_dolor" value="4" id="dolor-4" class="hidden emoji-radio">
-                            <label for="dolor-4" class="tap-bounce touch-min flex flex-col items-center justify-center p-2 sm:p-3 border-2 border-slate-200 rounded-2xl cursor-pointer hover:bg-slate-50 transition-all text-center">
-                                <span class="text-2xl sm:text-3xl">😣</span>
-                                <span class="text-[10px] font-bold text-slate-600 mt-1">Severo</span>
+                            <label for="dolor-4" class="tap-bounce touch-min flex flex-col items-center justify-center p-1.5 sm:p-2.5 border-2 border-slate-200 rounded-xl sm:rounded-2xl cursor-pointer hover:bg-slate-50 transition-all text-center">
+                                <svg class="w-7 h-7 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
+                                    <circle cx="12" cy="12" r="9"/>
+                                    <path stroke-linecap="round" d="M8.5 9.5l2 1m3-1l-2 1M14.5 16a3.5 3.5 0 00-5 0"/>
+                                </svg>
+                                <span class="text-[9px] sm:text-[10px] font-bold text-slate-700 mt-1 truncate w-full">Severo</span>
                             </label>
                         </div>
                     </div>
@@ -238,12 +261,16 @@
             <!-- PASO 4: Peso, Altura e IMC (Cálculo Inmediato) -->
             <div class="step-container" id="step-4">
                 <div class="text-center mb-6">
-                    <div class="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-3 shadow-xs">
-                        ⚖️
+                    <div class="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-xs border border-indigo-100">
+                        <svg class="w-7 h-7 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v17.25m0 0c-1.472 0-2.882.265-4.185.75M12 20.25c1.472 0 2.882.265 4.185.75M18.75 4.97A48.416 48.416 0 0012 4.5c-2.291 0-4.545.16-6.75.47m13.5 0c1.01.143 2.01.317 3 .52m-16.5-.52c-1.01.143-2.01.317-3 .52m16.5.52l-2.25 6.75a4.5 4.5 0 01-4.26 3.08h-.02a4.5 4.5 0 01-4.26-3.08L6 5.49"/>
+                        </svg>
                     </div>
                     <h2 class="text-2xl sm:text-3xl font-black text-slate-800 tracking-tight">Peso, Altura e IMC</h2>
                     <p class="text-sm text-slate-500 mt-1 max-w-sm mx-auto">
                         Calculamos automáticamente el Índice de Masa Corporal (IMC).
+                    </p>
+                </div>Corporal (IMC).
                     </p>
                 </div>
 
@@ -299,8 +326,10 @@
             <!-- PASO INTERMEDIO DE CONFIRMACIÓN EN EL CLIENTE -->
             <div class="step-container" id="step-confirm">
                 <div class="text-center py-4">
-                    <div class="w-16 h-16 bg-amber-50 text-amber-600 rounded-3xl flex items-center justify-center text-4xl mx-auto mb-4 shadow-sm">
-                        ⚠️
+                    <div class="w-16 h-16 bg-amber-50 text-amber-600 rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-sm border border-amber-200">
+                        <svg class="w-8 h-8 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                        </svg>
                     </div>
                     <h2 class="text-2xl sm:text-3xl font-black text-slate-800 mb-2">Revisión de Lectura</h2>
                     <p class="text-base text-slate-600 mb-6 max-w-md mx-auto" id="confirm-message">

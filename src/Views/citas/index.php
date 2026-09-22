@@ -26,21 +26,21 @@ function getTipoBadge(string $tipo): array {
         case 'laboratorio':
             return [
                 'label' => 'Laboratorio / Estudio',
-                'icon' => '🧪',
+                'icon' => '<svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m3.75 9v6m3-3H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>',
                 'bg' => 'bg-purple-50 text-purple-700 border-purple-200/80',
                 'dot' => 'bg-purple-500'
             ];
         case 'terapia':
             return [
                 'label' => 'Terapia / Rehabilitación',
-                'icon' => '🏃‍♂️',
+                'icon' => '<svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/></svg>',
                 'bg' => 'bg-emerald-50 text-emerald-700 border-emerald-200/80',
                 'dot' => 'bg-emerald-500'
             ];
         case 'resurtido_receta':
             return [
                 'label' => 'Resurtido de Receta',
-                'icon' => '💊',
+                'icon' => '<svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6a4.5 4.5 0 119 9l-9 9a4.5 4.5 0 11-9-9l9-9zM7.5 13.5l9-9"/></svg>',
                 'bg' => 'bg-amber-50 text-amber-700 border-amber-200/80',
                 'dot' => 'bg-amber-500'
             ];
@@ -49,7 +49,7 @@ function getTipoBadge(string $tipo): array {
         default:
             return [
                 'label' => 'Consulta Médica',
-                'icon' => '🩺',
+                'icon' => '<svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>',
                 'bg' => 'bg-blue-50 text-blue-700 border-blue-200/80',
                 'dot' => 'bg-blue-500'
             ];
@@ -192,7 +192,7 @@ function getTipoBadge(string $tipo): array {
                                 <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
                                     <div class="flex items-center gap-2">
                                         <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold border <?= $tipoInfo['bg'] ?>">
-                                            <span><?= $tipoInfo['icon'] ?></span>
+                                            <?= $tipoInfo['icon'] ?>
                                             <span><?= $tipoInfo['label'] ?></span>
                                         </span>
                                         
@@ -213,7 +213,8 @@ function getTipoBadge(string $tipo): array {
 
                                     <!-- Fecha y Hora Tabular Destacada -->
                                     <div class="flex items-center gap-1.5 font-mono text-xs sm:text-sm font-bold text-slate-700 bg-slate-100 px-3 py-1 rounded-xl">
-                                        <span>📅 <?= $f['dia_semana'] ?> <?= $f['dia_numero'] ?> <?= $f['mes'] ?></span>
+                                        <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"/></svg>
+                                        <span><?= $f['dia_semana'] ?> <?= $f['dia_numero'] ?> <?= $f['mes'] ?></span>
                                         <span class="text-slate-400">|</span>
                                         <span class="text-blue-600 font-extrabold text-sm sm:text-base"><?= $f['hora'] ?></span>
                                     </div>
@@ -224,10 +225,10 @@ function getTipoBadge(string $tipo): array {
                                     <?= e($cita['titulo']) ?>
                                 </h3>
 
-                                <!-- Indicación de Preparación Previa / Ayuno (Anti-slop notice) -->
+                                <!-- Indicación de Preparación Previa / Ayuno -->
                                 <?php if (!empty($cita['preparacion_previa']) || $cita['tipo_evento'] === 'laboratorio' || $cita['tipo_evento'] === 'laboratorio_estudio'): ?>
                                     <div class="mt-3 p-3 bg-amber-50/90 border-l-4 border-amber-400 rounded-r-2xl flex items-start gap-2.5">
-                                        <span class="text-base leading-none">⚠️</span>
+                                        <svg class="w-4 h-4 text-amber-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
                                         <div>
                                             <p class="text-xs font-bold text-amber-900">Indicaciones de Preparación:</p>
                                             <p class="text-xs text-amber-800 font-medium mt-0.5">
@@ -240,20 +241,20 @@ function getTipoBadge(string $tipo): array {
                                 <!-- Detalles Clínicos: Lugar, Doctor, Acompañante -->
                                 <div class="mt-3.5 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs sm:text-sm text-slate-600">
                                     <div class="flex items-center gap-2">
-                                        <span class="text-slate-400 text-sm">📍</span>
+                                        <svg class="w-4 h-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
                                         <span class="font-medium truncate"><?= e($cita['lugar']) ?></span>
                                     </div>
                                     
                                     <?php if (!empty($cita['doctor_nombre'])): ?>
                                         <div class="flex items-center gap-2">
-                                            <span class="text-slate-400 text-sm">👨‍⚕️</span>
+                                            <svg class="w-4 h-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
                                             <span class="font-medium">Dr(a). <?= e($cita['doctor_nombre']) ?></span>
                                         </div>
                                     <?php endif; ?>
 
                                     <?php if (!empty($cita['familiar_nombre'])): ?>
                                         <div class="flex items-center gap-2">
-                                            <span class="text-slate-400 text-sm">👤</span>
+                                            <svg class="w-4 h-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"/></svg>
                                             <span class="font-medium text-slate-500">Acompañante: <?= e($cita['familiar_nombre']) ?></span>
                                         </div>
                                     <?php endif; ?>
@@ -266,24 +267,24 @@ function getTipoBadge(string $tipo): array {
                                     </p>
                                 <?php endif; ?>
 
-                                <!-- Acciones Táctiles Inferiores (Design Engineering) -->
+                                <!-- Acciones Táctiles Inferiores -->
                                 <div class="mt-5 pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
                                     
                                     <!-- Botones de Calendario y Mapa -->
                                     <div class="flex flex-wrap items-center gap-2">
                                         <a href="<?= e($mapQuery) ?>" target="_blank" rel="noopener noreferrer" class="tap-bounce touch-target inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 transition">
-                                            <span>🗺️</span>
+                                            <svg class="w-3.5 h-3.5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.688A1.125 1.125 0 003 6.694v11.366c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0z"/></svg>
                                             <span>Abrir en Mapa</span>
                                         </a>
 
                                         <!-- Menú Calendario (Google Cal + .ICS) -->
                                         <a href="<?= $gCalUrl ?>" target="_blank" rel="noopener noreferrer" class="tap-bounce touch-target inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-blue-50 hover:bg-blue-100 text-blue-700 transition" title="Agregar a Google Calendar">
-                                            <span>📅</span>
+                                            <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"/></svg>
                                             <span>Google Cal</span>
                                         </a>
 
                                         <a href="<?= APP_URL ?>/citas/ics?id=<?= $cita['id'] ?>" class="tap-bounce touch-target inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-600 transition" title="Descargar archivo iCalendar (.ics)">
-                                            <span>📥</span>
+                                            <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
                                             <span>.ICS</span>
                                         </a>
                                     </div>
@@ -328,8 +329,8 @@ function getTipoBadge(string $tipo): array {
             <!-- Tarjeta Informativa de Preparación Médica -->
             <div class="bg-gradient-to-br from-blue-900 to-indigo-900 rounded-3xl p-6 text-white shadow-card">
                 <div class="flex items-center gap-3 mb-3">
-                    <div class="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center text-xl">
-                        💡
+                    <div class="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center">
+                        <svg class="w-5 h-5 text-amber-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 001.5-.189m-1.5.189a6.01 6.01 0 01-1.5-.189m3.75 7.478a12.06 12.06 0 01-4.5 0m3.75 2.383a14.406 14.406 0 01-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 10-7.516 0c.85.493 1.509 1.333 1.509 2.316V18"/></svg>
                     </div>
                     <div>
                         <h3 class="font-bold text-sm sm:text-base">Guía para el Cuidador</h3>
@@ -347,7 +348,7 @@ function getTipoBadge(string $tipo): array {
             <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-card">
                 <div class="flex items-center justify-between mb-4">
                     <h3 class="font-bold text-slate-800 text-sm sm:text-base">Médicos Registrados</h3>
-                    <a href="<?= APP_URL ?>/expediente#doctores" class="text-xs font-bold text-blue-600 hover:text-blue-700">Ver todos →</a>
+                    <a href="<?= APP_URL ?>/expediente#tab-doctores" class="text-xs font-bold text-blue-600 hover:text-blue-700">Ver todos →</a>
                 </div>
 
                 <?php if (empty($doctores)): ?>
@@ -362,7 +363,7 @@ function getTipoBadge(string $tipo): array {
                                 </div>
                                 <?php if (!empty($doc['telefono_contacto'])): ?>
                                     <a href="tel:<?= e($doc['telefono_contacto']) ?>" class="tap-bounce touch-target w-9 h-9 rounded-xl bg-blue-100 hover:bg-blue-200 text-blue-700 flex items-center justify-center text-xs font-bold transition flex-shrink-0" title="Llamar al médico">
-                                        📞
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z"/></svg>
                                     </a>
                                 <?php endif; ?>
                             </div>
@@ -384,8 +385,8 @@ function getTipoBadge(string $tipo): array {
         
         <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-6">
             <div class="flex items-center gap-2.5">
-                <div class="w-10 h-10 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center text-xl font-bold">
-                    📅
+                <div class="w-10 h-10 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"/></svg>
                 </div>
                 <div>
                     <h2 class="text-lg font-bold text-slate-800">Agendar Evento Médico</h2>
@@ -407,19 +408,31 @@ function getTipoBadge(string $tipo): array {
                 <div class="grid grid-cols-2 gap-2">
                     <label class="tap-bounce flex items-center gap-2 p-3 bg-slate-50 border border-slate-200 rounded-2xl cursor-pointer hover:bg-blue-50/50 has-checked:border-blue-500 has-checked:bg-blue-50/70">
                         <input type="radio" name="tipo_evento" value="consulta" checked class="text-blue-600 focus:ring-blue-500">
-                        <span class="text-xs font-bold text-slate-800">🩺 Consulta</span>
+                        <span class="text-xs font-bold text-slate-800 inline-flex items-center gap-1.5">
+                            <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                            Consulta
+                        </span>
                     </label>
                     <label class="tap-bounce flex items-center gap-2 p-3 bg-slate-50 border border-slate-200 rounded-2xl cursor-pointer hover:bg-purple-50/50 has-checked:border-purple-500 has-checked:bg-purple-50/70">
                         <input type="radio" name="tipo_evento" value="laboratorio_estudio" class="text-purple-600 focus:ring-purple-500">
-                        <span class="text-xs font-bold text-slate-800">🧪 Laboratorio</span>
+                        <span class="text-xs font-bold text-slate-800 inline-flex items-center gap-1.5">
+                            <svg class="w-3.5 h-3.5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m3.75 9v6m3-3H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
+                            Laboratorio
+                        </span>
                     </label>
                     <label class="tap-bounce flex items-center gap-2 p-3 bg-slate-50 border border-slate-200 rounded-2xl cursor-pointer hover:bg-emerald-50/50 has-checked:border-emerald-500 has-checked:bg-emerald-50/70">
                         <input type="radio" name="tipo_evento" value="terapia" class="text-emerald-600 focus:ring-emerald-500">
-                        <span class="text-xs font-bold text-slate-800">🏃‍♂️ Terapia</span>
+                        <span class="text-xs font-bold text-slate-800 inline-flex items-center gap-1.5">
+                            <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/></svg>
+                            Terapia
+                        </span>
                     </label>
                     <label class="tap-bounce flex items-center gap-2 p-3 bg-slate-50 border border-slate-200 rounded-2xl cursor-pointer hover:bg-amber-50/50 has-checked:border-amber-500 has-checked:bg-amber-50/70">
                         <input type="radio" name="tipo_evento" value="resurtido_receta" class="text-amber-600 focus:ring-amber-500">
-                        <span class="text-xs font-bold text-slate-800">💊 Resurtido</span>
+                        <span class="text-xs font-bold text-slate-800 inline-flex items-center gap-1.5">
+                            <svg class="w-3.5 h-3.5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6a4.5 4.5 0 119 9l-9 9a4.5 4.5 0 11-9-9l9-9zM7.5 13.5l9-9"/></svg>
+                            Resurtido
+                        </span>
                     </label>
                 </div>
             </div>
