@@ -68,6 +68,26 @@ class TwilioService {
     }
 
     /**
+     * Envía alerta prioritaria de dosis omitida por WhatsApp con fallback a SMS
+     */
+    public function sendDosisOmitidaAlert(string $toPhone, string $pacienteNombre, string $medicamentoNombre, string $hora): array {
+        $mensajeWhatsApp = "⚠️ *ALERTA MÉDICA - VITALSENIOR*\n\n"
+            . "Se ha detectado una *dosis omitida* para el adulto mayor *{$pacienteNombre}*.\n\n"
+            . "💊 Medicamento: *{$medicamentoNombre}*\n"
+            . "⏰ Hora programada: *{$hora}*\n\n"
+            . "Por favor comunícate con el paciente o verifica su estado a la brevedad.";
+
+        $resp = $this->sendWhatsAppMessage($toPhone, $mensajeWhatsApp);
+        if ($resp['success']) {
+            return $resp;
+        }
+
+        // Fallback inmediato a SMS
+        $mensajeSMS = "ALERTA VitalSenior: Dosis omitida de {$medicamentoNombre} para {$pacienteNombre} (programada {$hora}). Por favor verifique.";
+        return $this->sendSMSMessage($toPhone, $mensajeSMS);
+    }
+
+    /**
      * Petición HTTP POST autenticada con cURL nativo a Twilio
      */
     private function dispatchTwilioRequest(array $params): array {

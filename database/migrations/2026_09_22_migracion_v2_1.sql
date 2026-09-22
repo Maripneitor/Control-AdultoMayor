@@ -122,3 +122,15 @@ BEGIN
         ALTER TABLE registro_salud_diario ADD COLUMN registrado_por_usuario_id INT REFERENCES usuarios(id) ON DELETE SET NULL;
     END IF;
 END $$;
+
+-- 8. Automatización de Alertas y Notificaciones Externas
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'tomas_historial' AND column_name = 'notificacion_enviada_at') THEN
+        ALTER TABLE tomas_historial ADD COLUMN notificacion_enviada_at TIMESTAMP WITH TIME ZONE;
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'contactos_emergencia' AND column_name = 'email') THEN
+        ALTER TABLE contactos_emergencia ADD COLUMN email VARCHAR(255);
+    END IF;
+END $$;

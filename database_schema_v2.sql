@@ -65,6 +65,7 @@ CREATE TABLE IF NOT EXISTS contactos_emergencia (
     nombre VARCHAR(150) NOT NULL,
     parentesco VARCHAR(50) DEFAULT 'Familiar',
     telefono VARCHAR(25) NOT NULL,
+    email VARCHAR(255),
     es_prioritario BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -110,6 +111,7 @@ CREATE TABLE IF NOT EXISTS tomas_historial (
     deshecho_at TIMESTAMP WITH TIME ZONE,
     recordatorio_enviado BOOLEAN DEFAULT FALSE,
     nota_incidencia TEXT,
+    notificacion_enviada_at TIMESTAMP WITH TIME ZONE,
     registrado_por_usuario_id INT REFERENCES usuarios(id) ON DELETE SET NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );

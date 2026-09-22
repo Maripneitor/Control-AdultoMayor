@@ -151,13 +151,13 @@ class TwilioController extends Controller {
         try {
             // Resolver paciente: si no viene paciente_id, buscar el paciente asociado al usuario en sesión
             if (empty($pacienteId)) {
-                $stmtPac = $this->db->prepare("SELECT id, nombre_completo, uuid_publico FROM pacientes WHERE usuario_id = :uid LIMIT 1");
+                $stmtPac = $this->db->prepare("SELECT id, nombre, apellidos, qr_token FROM pacientes WHERE usuario_id = :uid LIMIT 1");
                 $stmtPac->execute([':uid' => $usuarioSesionId]);
-                $paciente = $stmtPac->fetch();
+                $paciente = $stmtPac->fetch(PDO::FETCH_ASSOC);
             } else {
-                $stmtPac = $this->db->prepare("SELECT id, nombre_completo, uuid_publico FROM pacientes WHERE id = :pid LIMIT 1");
+                $stmtPac = $this->db->prepare("SELECT id, nombre, apellidos, qr_token FROM pacientes WHERE id = :pid LIMIT 1");
                 $stmtPac->execute([':pid' => $pacienteId]);
-                $paciente = $stmtPac->fetch();
+                $paciente = $stmtPac->fetch(PDO::FETCH_ASSOC);
             }
 
             if (!$paciente) {
@@ -165,25 +165,37 @@ class TwilioController extends Controller {
                 return;
             }
 
-            $pacienteNombre = $paciente['nombre_completo'];
-            $pacienteUUID = $paciente['uuid_publico'];
+            $pacienteNombre = trim("{$paciente['nombre']} {$paciente['apellidos']}");
+            $pacienteToken = (string)($paciente['qr_token'] ?? '');
 
-            // Obtener familiares vinculados con teléfono registrado
+            // Obtener contactos de emergencia prioritarios
             $stmtFam = $this->db->prepare(
-                "SELECT u.nombre_completo, u.telefono 
-                 FROM vinculaciones v 
-                 JOIN usuarios u ON v.familiar_id = u.id 
-                 WHERE v.paciente_id = :pid AND u.telefono IS NOT NULL"
+                "SELECT nombre, telefono 
+                 FROM contactos_emergencia 
+                 WHERE paciente_id = :pid AND telefono IS NOT NULL AND telefono != ''
+                 ORDER BY es_prioritario DESC, id ASC"
             );
             $stmtFam->execute([':pid' => $paciente['id']]);
-            $contactos = $stmtFam->fetchAll();
+            $contactos = $stmtFam->fetchAll(PDO::FETCH_ASSOC);
 
-            $appUrl = getenv('APP_URL') ?: 'http://localhost/Control-AdultoMayor/public';
-            $fichaUrl = "{$appUrl}/emergencia?id={$pacienteUUID}";
+            // Si no hay en contactos_emergencia, buscar en paciente_cuidador
+            if (empty($contactos)) {
+                $stmtCuid = $this->db->prepare(
+                    "SELECT u.nombre, NULL as telefono 
+                     FROM paciente_cuidador pc 
+                     JOIN usuarios u ON pc.usuario_cuidador_id = u.id 
+                     WHERE pc.paciente_id = :pid"
+                );
+                $stmtCuid->execute([':pid' => $paciente['id']]);
+                $contactos = $stmtCuid->fetchAll(PDO::FETCH_ASSOC);
+            }
+
+            $appUrl = defined('APP_URL') ? APP_URL : (getenv('APP_URL') ?: 'http://localhost/Control-AdultoMayor/public');
+            $fichaUrl = "{$appUrl}/emergencia?token={$pacienteToken}";
 
             $mensajeAlerta = "🚨 *ALERTA DE EMERGENCIA - VITALSENIOR*\n\n"
                            . "El paciente *{$pacienteNombre}* ha presionado el *Botón SOS*.\n"
-                           . "Por favor comunícate inmediatamente o consulta su Ficha de Emergencia aquí:\n"
+                           . "Por favor comunícate inmediatamente o consulta su Ficha Médica de Emergencia aquí:\n"
                            . "👉 {$fichaUrl}\n\n"
                            . "Hora de emisión (UTC): " . gmdate('Y-m-d H:i:s');
 
@@ -191,7 +203,7 @@ class TwilioController extends Controller {
             $errores = [];
 
             if (empty($contactos)) {
-                // Fallback a teléfono de emergencia configurado en .env si no hay familiar directo
+                // Fallback a teléfono de emergencia configurado en .env si no hay contacto directo
                 $adminPhone = getenv('EMERGENCY_BACKUP_PHONE');
                 if ($adminPhone) {
                     $this->twilioService->sendWhatsAppMessage($adminPhone, $mensajeAlerta);
@@ -199,32 +211,30 @@ class TwilioController extends Controller {
                 }
             } else {
                 foreach ($contactos as $familiar) {
-                    $res = $this->twilioService->sendWhatsAppMessage($familiar['telefono'], $mensajeAlerta);
+                    $tel = trim((string)($familiar['telefono'] ?? ''));
+                    if (empty($tel)) continue;
+
+                    $res = $this->twilioService->sendWhatsAppMessage($tel, $mensajeAlerta);
                     if ($res['success']) {
                         $enviados++;
                     } else {
                         // Reintento por SMS tradicional
-                        $smsRes = $this->twilioService->sendSMSMessage($familiar['telefono'], "ALERTA SOS VitalSenior: $pacienteNombre activo el boton SOS. Ficha: $fichaUrl");
+                        $smsRes = $this->twilioService->sendSMSMessage($tel, "ALERTA SOS VitalSenior: $pacienteNombre activo el boton SOS. Ficha: $fichaUrl");
                         if ($smsRes['success']) {
                             $enviados++;
                         } else {
-                            $errores[] = "Fallo al notificar a {$familiar['nombre_completo']}";
+                            $errores[] = "Fallo al notificar a {$familiar['nombre']}";
                         }
                     }
                 }
             }
 
             // Registrar en logs de auditoría
-            $stmtLog = $this->db->prepare(
-                "INSERT INTO logs_auditoria (usuario_id, paciente_id, evento, descripcion, ip_origen) 
-                 VALUES (:uid, :pid, 'SOS_TRIGGERED', :desc, :ip)"
+            \App\Security\AuditLogger::log(
+                'SOS_TRIGGERED', 
+                (int)$paciente['id'], 
+                "Alerta SOS detonada. Notificaciones enviadas: {$enviados}."
             );
-            $stmtLog->execute([
-                ':uid' => $usuarioSesionId,
-                ':pid' => $paciente['id'],
-                ':desc' => "Alerta SOS detonada. Notificaciones enviadas: {$enviados}.",
-                ':ip' => $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1'
-            ]);
 
             $this->jsonResponse([
                 'success' => true,
