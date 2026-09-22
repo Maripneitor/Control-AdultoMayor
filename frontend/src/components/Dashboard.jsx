@@ -87,9 +87,9 @@ export default function Dashboard({ user, navigate }) {
           <button onClick={() => navigate('/perfil')} className="hover:underline focus:outline-none focus:ring-2 focus:ring-white rounded p-1 text-left">
             Mi Perfil
           </button>
-          <a href="tel:911" className="bg-red-500 hover:bg-red-600 px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-white font-bold transition-colors text-center shadow-sm">
-            Emergencia 911
-          </a>
+          <button onClick={() => navigate('/expediente#contactos')} className="bg-rose-500 hover:bg-rose-600 px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-white font-bold transition-colors text-center shadow-sm">
+            🚨 Red SOS
+          </button>
         </nav>
       </header>
 

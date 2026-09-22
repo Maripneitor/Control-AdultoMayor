@@ -98,27 +98,29 @@
                 <?php endif; ?>
             </div>
 
-            <!-- Contactos Familiares de Auxilio Inmediato -->
+            <!-- Contactos Familiares de Auxilio Inmediato (Red Designada) -->
             <?php if (!empty($contactos)): ?>
                 <div>
-                    <h3 class="text-xs font-bold text-slate-600 uppercase tracking-wider mb-3">
-                        Llamar a Familiares / Cuidadores
+                    <h3 class="text-xs font-bold text-slate-600 uppercase tracking-wider mb-3 flex items-center justify-between">
+                        <span>Red de Auxilio Inmediato</span>
+                        <span class="text-[10px] text-emerald-600 font-extrabold uppercase">Contactos Directos</span>
                     </h3>
                     <div class="space-y-3">
                         <?php foreach ($contactos as $c): ?>
-                            <div class="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border <?= !empty($c['es_prioritario']) ? 'border-amber-300 bg-amber-50/30' : 'border-slate-200' ?>">
-                                <div>
+                            <?php $isPrioritario = !empty($c['es_prioritario']); ?>
+                            <div class="flex items-center justify-between p-4 sm:p-5 rounded-2xl border transition-all <?= $isPrioritario ? 'border-emerald-300 bg-emerald-50/50 shadow-sm' : 'border-slate-200 bg-slate-50' ?>">
+                                <div class="pr-2">
                                     <div class="flex items-center space-x-2">
                                         <h4 class="font-black text-slate-900 text-sm sm:text-base"><?= e($c['nombre']) ?></h4>
-                                        <?php if (!empty($c['es_prioritario'])): ?>
-                                            <span class="px-2 py-0.5 text-[9px] font-black rounded-full bg-amber-500 text-white">PRIORITARIO</span>
+                                        <?php if ($isPrioritario): ?>
+                                            <span class="px-2 py-0.5 text-[9px] font-black rounded-full bg-emerald-600 text-white tracking-wider">PRINCIPAL</span>
                                         <?php endif; ?>
                                     </div>
-                                    <p class="text-xs text-slate-600 font-semibold"><?= e($c['parentesco'] ?? 'Familiar') ?></p>
-                                    <p class="text-xs font-mono font-bold text-slate-700 mt-1"><?= e($c['telefono']) ?></p>
+                                    <p class="text-xs text-slate-600 font-semibold mt-0.5"><?= e($c['parentesco'] ?? 'Familiar / Cuidador') ?></p>
+                                    <p class="text-xs font-mono font-bold text-slate-700 mt-1 tracking-wide"><?= e($c['telefono']) ?></p>
                                 </div>
-                                <a href="tel:<?= e($c['telefono']) ?>" class="px-5 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-black text-xs uppercase tracking-wider shadow-md shadow-emerald-600/20 transition flex items-center space-x-1.5 whitespace-nowrap">
-                                    <span>📞</span>
+                                <a href="tel:<?= e($c['telefono']) ?>" class="min-h-[48px] min-w-[48px] px-5 py-3 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white rounded-2xl font-black text-xs uppercase tracking-wider shadow-md shadow-emerald-600/25 transition-all flex items-center justify-center space-x-2 whitespace-nowrap active:scale-95">
+                                    <span class="text-base">📞</span>
                                     <span>Llamar</span>
                                 </a>
                             </div>
@@ -143,14 +145,6 @@
                     </div>
                 </div>
             <?php endif; ?>
-
-            <!-- Botón 911 Directo -->
-            <div class="pt-2">
-                <a href="tel:911" class="w-full py-3.5 bg-rose-600 hover:bg-rose-700 text-white font-black text-sm uppercase tracking-wider rounded-2xl shadow-md text-center flex items-center justify-center space-x-2 transition">
-                    <span>🚨</span>
-                    <span>Llamar al 911 (Emergencias Nacionales)</span>
-                </a>
-            </div>
         </main>
 
         <footer class="bg-slate-50 p-4 text-center border-t border-slate-100 text-[11px] text-slate-600">

@@ -72,7 +72,7 @@ class EmergenciaController {
                 <h1 class="text-2xl font-black text-slate-800 mb-2">Ficha de Emergencia Inaccesible</h1>
                 <p class="text-slate-600 text-sm mb-6 leading-relaxed">{$mensaje}</p>
                 <div class="bg-amber-50 rounded-xl p-3 border border-amber-200 text-xs text-amber-800 font-medium">
-                    En caso de emergencia médica inmediata, comunícate directamente con el servicio de auxilio local (911).
+                    En caso de requerir asistencia urgente, comunícate directamente con la red de cuidadores o familiares del paciente.
                 </div>
             </div>
         </body>

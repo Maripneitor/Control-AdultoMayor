@@ -146,7 +146,7 @@
                             <div class="min-w-0">
                                 <p class="text-xs font-bold text-slate-900">Sangre: <span class="text-red-600">O+</span></p>
                                 <p class="text-[11px] text-slate-600 truncate">Alergias: Penicilina</p>
-                                <p class="text-[11px] text-slate-500">SOS: 911 / Familia</p>
+                                <p class="text-[11px] text-slate-500 font-semibold">SOS: Red Directa Familiar</p>
                             </div>
                         </div>
                     </div>

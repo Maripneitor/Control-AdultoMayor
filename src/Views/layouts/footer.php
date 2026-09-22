@@ -30,7 +30,7 @@
             <h4 class="font-bold text-white text-xs uppercase tracking-wider mb-1">Soporte y Contacto</h4>
             <a class="text-xs text-slate-400 hover:text-white transition-colors" href="#">Centro de Ayuda</a>
             <a class="text-xs text-slate-400 hover:text-white transition-colors" href="#">Atención a Cuidadores</a>
-            <a class="text-xs text-slate-400 hover:text-white transition-colors" href="tel:911">Línea de Emergencia (911)</a>
+            <a class="text-xs text-slate-400 hover:text-white transition-colors" href="<?php echo APP_URL; ?>/expediente#contactos">Red de Contactos SOS</a>
         </div>
     </div>
     <!-- Copyright -->

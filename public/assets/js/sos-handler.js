@@ -47,12 +47,12 @@ document.addEventListener('DOMContentLoaded', () => {
             if (response.ok && data.success) {
                 mostrarToast('success', '🚨 Alerta SOS enviada. Tus contactos de emergencia han sido notificados por WhatsApp.');
             } else {
-                const errorMsg = data.error || 'No se pudo enviar la alerta. Por favor llama directo al 911.';
+                const errorMsg = data.error || 'No se pudo enviar la alerta. Por favor llama directamente a tus contactos de emergencia.';
                 mostrarToast('error', errorMsg);
             }
         } catch (error) {
             console.error('[SOS Error]', error);
-            mostrarToast('error', 'Fallo de conexión. Llama directamente a emergencias (911).');
+            mostrarToast('error', 'Fallo de conexión. Llama directamente a tus contactos de emergencia.');
         } finally {
             // 4. Restaurar estado del botón tras una breve pausa de seguridad
             setTimeout(() => {

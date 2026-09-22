@@ -51,11 +51,9 @@ $homeUrl = defined('APP_URL') ? APP_URL . '/' : '/';
             </a>
 
             <div class="flex items-center gap-4">
-                <a href="tel:911" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-red-50 text-red-700 hover:bg-red-100 text-sm font-bold border border-red-200 transition focus:outline-none focus:ring-2 focus:ring-red-500">
-                    <svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
-                    </svg>
-                    SOS 911
+                <a href="<?= htmlspecialchars($dashboardUrl) ?>#btn-sos" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100 text-sm font-bold border border-rose-200 transition focus:outline-none focus:ring-2 focus:ring-rose-500">
+                    <span class="text-base">🆘</span>
+                    <span>Alerta SOS</span>
                 </a>
             </div>
         </div>

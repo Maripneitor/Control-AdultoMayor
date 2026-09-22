@@ -15,7 +15,7 @@
 * **Descripción rápida:** Página de inicio institucional y presentación de beneficios del sistema VitalSenior. Sin textos de relleno ("Lorem Ipsum").
 * **Estándares UI/UX:** Logo del header con redirección asegurada al inicio (`/`), enlaces telefónicos con protocolo nativo `href="tel:..."` y correos con `href="mailto:..."`.
 * **Elementos de Interfaz:**
-  - Encabezado con logo, menú responsive y llamada directa a emergencias (`tel:911`).
+  - Encabezado con logo, menú responsive y acceso a la red de soporte.
   - Sección interactiva de beneficios y cómo funciona la plataforma.
 * **Botones, Acciones y Redirecciones:**
   - `[Comenzar ahora sin costo]` ➔ Redirige a: **2. Login / Registro**.
@@ -206,7 +206,7 @@
   - Cero scroll horizontal con clase `overflow-x-hidden` en el elemento raíz.
   - Diseño responsivo y contrastes limpios con Tailwind CSS.
   - Botón prioritario de **Retorno Seguro al Dashboard** (`/dashboard` o `/` si no hay sesión).
-  - Enlaces de soporte con `href="mailto:..."` y acceso rápido a emergencias `href="tel:911"`.
+  - Enlaces de soporte con `href="mailto:..."` y acceso rápido a la red de contactos SOS del sistema.
 
 ---
 

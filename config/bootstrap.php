@@ -140,8 +140,8 @@ set_exception_handler(function (\Throwable $exception) use ($isProduction): void
                     <a href="/Control-AdultoMayor/public/dashboard" class="w-full py-3 px-6 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition shadow">
                         Regresar al Dashboard
                     </a>
-                    <a href="tel:911" class="w-full py-3 px-6 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl transition text-xs">
-                        Llamar a Emergencias (911)
+                    <a href="/Control-AdultoMayor/public/expediente#contactos" class="w-full py-3 px-6 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl transition text-xs">
+                        Ver Red de Contactos de Emergencia
                     </a>
                 </div>
             </div>
