@@ -34,26 +34,30 @@
         html { font-size: 17px; }
         @media (min-width: 768px) { html { font-size: 18px; } }
         
-        /* Micro-animación suave */
         .tap-bounce {
             transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.15s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .tap-bounce:active {
             transform: scale(0.98);
         }
+
+        .touch-min {
+            min-height: 48px;
+            min-width: 48px;
+        }
     </style>
 </head>
-<body id="dashboard-body" class="bg-slate-50 text-slate-900 font-sans min-h-full flex flex-col justify-between transition-opacity duration-500 opacity-0">
+<body id="dashboard-body" class="bg-slate-50 text-slate-900 font-sans min-h-full flex flex-col justify-between transition-opacity duration-500 opacity-0 pb-20 md:pb-0">
     
     <!-- Encabezado de Alto Contraste -->
-    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 px-6 py-4 shadow-xs">
-        <div class="max-w-4xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
-            <div class="flex items-center space-x-3 w-full sm:w-auto justify-between sm:justify-start">
-                <div class="w-12 h-12 bg-blue-600 text-white rounded-2xl flex items-center justify-center font-extrabold text-2xl shadow-md shadow-blue-500/20">
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 px-4 sm:px-6 py-3.5 shadow-xs">
+        <div class="max-w-5xl mx-auto flex justify-between items-center gap-4">
+            <div class="flex items-center space-x-3">
+                <div class="w-11 h-11 sm:w-12 sm:h-12 bg-blue-600 text-white rounded-2xl flex items-center justify-center font-extrabold text-xl sm:text-2xl shadow-md shadow-blue-500/20">
                     ✚
                 </div>
                 <div>
-                    <h1 class="text-xl sm:text-2xl font-black text-slate-900 leading-tight tracking-tight">
+                    <h1 class="text-lg sm:text-2xl font-black text-slate-900 leading-tight tracking-tight">
                         Hola, <?= e($paciente['nombre'] ?? 'Bienvenido') ?>
                     </h1>
                     <p class="text-xs sm:text-sm font-semibold text-slate-500">
@@ -62,15 +66,29 @@
                 </div>
             </div>
 
-            <div class="flex items-center space-x-2 w-full sm:w-auto justify-end">
-                <a href="<?= APP_URL ?>/logout" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-700 text-xs font-bold rounded-xl border border-slate-200 transition-all">
+            <!-- Navegación de Escritorio (md+) -->
+            <div class="hidden md:flex items-center space-x-3">
+                <a href="<?= APP_URL ?>/medicamentos" class="tap-bounce px-4 py-2.5 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-bold rounded-xl border border-slate-200 transition">
+                    Medicamentos
+                </a>
+                <a href="<?= APP_URL ?>/expediente" class="tap-bounce px-4 py-2.5 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-bold rounded-xl border border-slate-200 transition">
+                    Expediente
+                </a>
+                <a href="<?= APP_URL ?>/logout" class="tap-bounce touch-min px-4 py-2.5 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-700 text-xs font-bold rounded-xl border border-slate-200 transition-all flex items-center justify-center">
                     Cerrar Sesión
+                </a>
+            </div>
+
+            <!-- Botón Cerrar Sesión Móvil -->
+            <div class="md:hidden flex items-center">
+                <a href="<?= APP_URL ?>/logout" class="tap-bounce touch-min px-3 py-2 bg-slate-100 text-slate-700 text-xs font-bold rounded-xl border border-slate-200 flex items-center justify-center">
+                    Salir
                 </a>
             </div>
         </div>
     </header>
 
-    <main class="max-w-4xl mx-auto p-4 sm:p-6 w-full space-y-6">
+    <main class="max-w-5xl mx-auto p-4 sm:p-6 md:p-8 w-full space-y-6">
         <?php require_once dirname(__DIR__) . '/components/toast.php'; ?>
 
         <?php
@@ -98,7 +116,7 @@
         <!-- HERO: Tarjeta de Próximo Medicamento -->
         <section class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-card-glow relative overflow-hidden">
             <div class="flex items-center justify-between mb-4">
-                <span class="text-xs font-bold uppercase tracking-wider text-blue-700 bg-blue-50 px-3 py-1 rounded-full border border-blue-100">
+                <span class="text-xs font-bold uppercase tracking-wider text-blue-700 bg-blue-50 px-3.5 py-1.5 rounded-full border border-blue-100">
                     Horario de Medicación
                 </span>
                 <span class="text-xs font-semibold text-slate-500 tabular-nums">
@@ -108,27 +126,27 @@
 
             <?php if ($proximaMedicina): ?>
                 <div class="text-center py-4">
-                    <p class="text-sm font-bold text-slate-500 uppercase tracking-wide">Tu próxima medicina es</p>
-                    <h2 class="text-3xl sm:text-5xl font-black text-slate-900 my-2 tracking-tight">
+                    <p class="text-xs sm:text-sm font-bold text-slate-500 uppercase tracking-wide">Tu próxima medicina es</p>
+                    <h2 class="text-3xl sm:text-5xl font-black text-slate-900 my-2.5 tracking-tight leading-tight">
                         <?= e($proximaMedicina['medicamento_nombre'] ?? $proximaMedicina['nombre_comercial']) ?>
                     </h2>
-                    <div class="inline-flex items-center space-x-2 bg-blue-50 text-blue-800 px-4 py-1.5 rounded-2xl border border-blue-200 font-bold text-lg my-2">
+                    <div class="inline-flex items-center space-x-2 bg-blue-50 text-blue-800 px-5 py-2 rounded-2xl border border-blue-200 font-bold text-base sm:text-lg my-2">
                         <span>⏰</span>
                         <span class="tabular-nums">Programada a las <?= date('H:i', strtotime($proximaMedicina['hora_programada'])) ?></span>
                     </div>
                 </div>
 
-                <div class="mt-6 flex flex-col sm:flex-row gap-3 justify-center items-center">
+                <div class="mt-6 flex flex-col sm:flex-row gap-3.5 justify-center items-center">
                     <form action="<?= APP_URL ?>/medicamentos/toma" method="POST" class="w-full sm:w-auto">
                         <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
                         <input type="hidden" name="registro_id" value="<?= e((string)$proximaMedicina['registro_id']) ?>">
-                        <button type="submit" class="tap-bounce w-full sm:w-auto px-8 py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-lg rounded-2xl shadow-lg shadow-emerald-600/20 flex items-center justify-center space-x-2 cursor-pointer">
-                            <span>✓</span>
+                        <button type="submit" class="tap-bounce touch-min w-full sm:w-auto px-8 py-4 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-black text-base sm:text-lg rounded-2xl shadow-lg shadow-emerald-600/25 flex items-center justify-center space-x-2 cursor-pointer">
+                            <span class="text-xl">✓</span>
                             <span>Marcar como Tomada</span>
                         </button>
                     </form>
 
-                    <a href="<?= APP_URL ?>/medicamentos/control" class="w-full sm:w-auto px-6 py-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm rounded-2xl text-center transition">
+                    <a href="<?= APP_URL ?>/medicamentos/control" class="tap-bounce touch-min w-full sm:w-auto px-6 py-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm rounded-2xl text-center transition flex items-center justify-center border border-slate-200">
                         Ver Lista del Día
                     </a>
                 </div>
@@ -142,50 +160,50 @@
                     <p class="text-sm text-slate-500 max-w-md mx-auto">
                         No tienes tomas pendientes por el momento. Tus cuidadores pueden revisar tu historial en cualquier momento.
                     </p>
-                    <a href="<?= APP_URL ?>/medicamentos" class="inline-block mt-4 text-xs font-bold text-blue-600 hover:underline">
+                    <a href="<?= APP_URL ?>/medicamentos" class="tap-bounce inline-block mt-4 text-xs font-bold text-blue-600 hover:underline py-2">
                         Consultar catálogo completo de fármacos →
                     </a>
                 </div>
             <?php endif; ?>
         </section>
 
-        <!-- BOTÓN SOS DE EMERGENCIA TÁCTIL -->
+        <!-- BOTÓN SOS DE EMERGENCIA TÁCTIL (Touch target gigante) -->
         <section>
             <button id="btn-sos" 
                     type="button"
                     data-paciente-id="<?= e((string)$paciente['id']) ?>"
-                    class="tap-bounce w-full py-6 sm:py-8 bg-rose-600 text-white rounded-3xl shadow-tactile hover:bg-rose-500 active:shadow-tactile-active active:translate-y-1.5 transition-all flex flex-col items-center justify-center cursor-pointer focus:outline-none focus:ring-4 focus:ring-rose-300">
+                    class="tap-bounce touch-min w-full py-6 sm:py-8 px-4 bg-rose-600 text-white rounded-3xl shadow-tactile hover:bg-rose-500 active:shadow-tactile-active active:translate-y-1.5 transition-all flex flex-col items-center justify-center cursor-pointer focus:outline-none focus:ring-4 focus:ring-rose-300">
                 <span class="text-5xl sm:text-6xl mb-1">🆘</span>
                 <span class="text-2xl sm:text-3xl font-black tracking-wider uppercase">Botón SOS de Auxilio</span>
-                <span class="text-xs sm:text-sm font-semibold text-rose-100 mt-1">
+                <span class="text-xs sm:text-sm font-semibold text-rose-100 mt-1 text-center">
                     Avisar a mis familiares y cuidadores inmediatamente
                 </span>
             </button>
         </section>
 
-        <!-- ACCIONES RÁPIDAS DEL PACIENTE -->
+        <!-- ACCIONES RÁPIDAS DEL PACIENTE (Grid adaptativo: 1 col móvil, 3 cols md+) -->
         <section class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <a href="<?= APP_URL ?>/expediente" class="tap-bounce p-5 bg-white rounded-2xl border border-slate-200/80 shadow-xs hover:border-blue-300 hover:shadow-md transition-all text-center flex flex-col items-center justify-center">
-                <span class="text-3xl mb-2">📋</span>
+            <a href="<?= APP_URL ?>/expediente" class="tap-bounce touch-min p-5 sm:p-6 bg-white rounded-2xl border border-slate-200/80 shadow-xs hover:border-blue-300 hover:shadow-md transition-all text-center flex flex-col items-center justify-center">
+                <span class="text-3xl sm:text-4xl mb-2">📋</span>
                 <span class="text-base font-bold text-slate-800">Mi Expediente</span>
                 <span class="text-xs text-slate-500 mt-0.5">Alergias y contactos</span>
             </a>
 
-            <a href="<?= APP_URL ?>/medicamentos" class="tap-bounce p-5 bg-white rounded-2xl border border-slate-200/80 shadow-xs hover:border-teal-300 hover:shadow-md transition-all text-center flex flex-col items-center justify-center">
-                <span class="text-3xl mb-2">💊</span>
+            <a href="<?= APP_URL ?>/medicamentos" class="tap-bounce touch-min p-5 sm:p-6 bg-white rounded-2xl border border-slate-200/80 shadow-xs hover:border-teal-300 hover:shadow-md transition-all text-center flex flex-col items-center justify-center">
+                <span class="text-3xl sm:text-4xl mb-2">💊</span>
                 <span class="text-base font-bold text-slate-800">Medicinas</span>
                 <span class="text-xs text-slate-500 mt-0.5">Horarios y tomas</span>
             </a>
 
-            <a href="<?= APP_URL ?>/emergencia?token=<?= e((string)($paciente['qr_token'] ?? $paciente['uuid_publico'])) ?>" target="_blank" class="tap-bounce p-5 bg-white rounded-2xl border border-slate-200/80 shadow-xs hover:border-indigo-300 hover:shadow-md transition-all text-center flex flex-col items-center justify-center">
-                <span class="text-3xl mb-2">📱</span>
+            <a href="<?= APP_URL ?>/emergencia?token=<?= e((string)($paciente['qr_token'] ?? $paciente['uuid_publico'])) ?>" target="_blank" class="tap-bounce touch-min p-5 sm:p-6 bg-white rounded-2xl border border-slate-200/80 shadow-xs hover:border-indigo-300 hover:shadow-md transition-all text-center flex flex-col items-center justify-center">
+                <span class="text-3xl sm:text-4xl mb-2">📱</span>
                 <span class="text-base font-bold text-slate-800">Ficha QR SOS</span>
                 <span class="text-xs text-slate-500 mt-0.5">Credencial digital</span>
             </a>
         </section>
 
         <!-- VINCULACIÓN FAMILIAR -->
-        <section class="bg-slate-100/80 p-5 rounded-2xl border border-slate-200 text-center">
+        <section class="bg-slate-100/80 p-5 sm:p-6 rounded-3xl border border-slate-200 text-center">
             <h3 class="text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">
                 Código de Vinculación Familiar
             </h3>
@@ -194,14 +212,17 @@
                     <?= e($paciente['codigo_vinculacion'] ?? 'NO-GEN') ?>
                 </span>
             </div>
-            <p class="text-xs text-slate-500 mt-2">
+            <p class="text-xs text-slate-500 mt-2 max-w-md mx-auto">
                 Comparte este código con tus familiares para que puedan gestionar tus recordatorios y expedientes.
             </p>
         </section>
     </main>
 
+    <!-- Barra de Navegación Móvil Fija -->
+    <?php require_once dirname(__DIR__) . '/components/bottom_nav.php'; ?>
+
     <!-- Footer Simple -->
-    <footer class="text-center py-6 text-xs text-slate-400">
+    <footer class="text-center py-6 pb-24 md:pb-6 text-xs text-slate-400">
         VitalSenior • Asistencia Médica Geriátrica Segura
     </footer>
 

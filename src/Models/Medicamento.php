@@ -100,16 +100,18 @@ class Medicamento extends Model {
     }
 
     public function actualizarEstadoToma(int $registroId, int $pacienteId, string $estado, int $usuarioId, ?string $nota = null): bool {
+        $esTomado = in_array($estado, ['tomado', 'pospuesto'], true) ? 1 : 0;
         $stmt = $this->db->prepare("
             UPDATE tomas_historial 
-            SET estado = :estado, 
-                tomado_at = CASE WHEN :estado IN ('tomado', 'pospuesto') THEN NOW() ELSE tomado_at END,
+            SET estado = :estado::text::enum_estado_toma, 
+                tomado_at = CASE WHEN :es_tomado = 1 THEN NOW() ELSE tomado_at END,
                 registrado_por_usuario_id = :usuario_id,
                 nota_incidencia = :nota
             WHERE id = :id AND medicamento_id IN (SELECT id FROM medicamentos WHERE paciente_id = :paciente_id)
         ");
         return $stmt->execute([
             'estado' => $estado,
+            'es_tomado' => $esTomado,
             'usuario_id' => $usuarioId,
             'nota' => $nota,
             'id' => $registroId,

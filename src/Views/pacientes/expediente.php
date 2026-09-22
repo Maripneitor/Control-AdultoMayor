@@ -58,15 +58,27 @@
         .tap-bounce:active {
             transform: scale(0.98);
         }
+        .touch-min {
+            min-height: 48px;
+            min-width: 48px;
+        }
+        /* Ocultar barra de scroll en carrusel móvil */
+        .scrollbar-none::-webkit-scrollbar {
+            display: none;
+        }
+        .scrollbar-none {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-900 font-sans min-h-full flex flex-col justify-between">
+<body class="bg-slate-50 text-slate-900 font-sans min-h-full flex flex-col justify-between pb-20 md:pb-0">
     
     <!-- Barra Superior de Navegación -->
     <header class="bg-white border-b border-slate-200 sticky top-0 z-30 px-4 sm:px-8 py-3.5 shadow-xs">
         <div class="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
             <div class="flex items-center space-x-3.5">
-                <a href="<?= APP_URL ?>/dashboard" class="tap-bounce w-9 h-9 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl flex items-center justify-center font-bold text-sm border border-slate-200 transition">
+                <a href="<?= APP_URL ?>/dashboard" class="tap-bounce touch-min w-10 h-10 sm:w-9 sm:h-9 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl flex items-center justify-center font-bold text-base sm:text-sm border border-slate-200 transition">
                     ←
                 </a>
                 <div>
@@ -94,7 +106,7 @@
                             } catch (\Exception $e) {}
                         }
                     ?>
-                    <p class="text-xs text-slate-500 font-medium">
+                    <p class="text-xs text-slate-500 font-medium mt-0.5">
                         Paciente: <strong class="text-slate-800"><?= e($nombreCompleto) ?></strong>
                         <?php if ($edad !== null): ?>
                             • <span class="text-blue-700 font-bold"><?= $edad ?> años</span>
@@ -107,7 +119,7 @@
             <div class="flex flex-wrap items-center gap-2 no-print w-full sm:w-auto justify-end">
                 <a href="<?= APP_URL ?>/paciente/pdf?id=<?= e((string)$paciente['id']) ?>" 
                    target="_blank"
-                   class="tap-bounce px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl border border-slate-200 shadow-xs transition flex items-center space-x-1.5 cursor-pointer">
+                   class="tap-bounce touch-min px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl border border-slate-200 shadow-xs transition flex items-center space-x-1.5 cursor-pointer">
                     <span>📄</span>
                     <span>Descargar PDF</span>
                 </a>
@@ -115,7 +127,7 @@
                 <button type="button" 
                         id="btn-abrir-qr"
                         onclick="abrirModalQR('<?= e($uuidPublico) ?>', '<?= e($nombreCompleto) ?>')" 
-                        class="tap-bounce px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-xs shadow-blue-500/20 transition flex items-center space-x-1.5 cursor-pointer">
+                        class="tap-bounce touch-min px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-xs shadow-blue-500/20 transition flex items-center space-x-1.5 cursor-pointer">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path>
                     </svg>
@@ -125,37 +137,37 @@
         </div>
     </header>
 
-    <main class="max-w-6xl mx-auto p-4 sm:p-8 w-full space-y-6">
+    <main class="max-w-6xl mx-auto p-4 sm:p-6 md:p-8 w-full space-y-6">
         <?php require_once dirname(__DIR__) . '/components/toast.php'; ?>
 
         <!-- Tarjeta Principal con Pestañas -->
         <div class="bg-white rounded-3xl border border-slate-200/80 shadow-card overflow-hidden">
-            <!-- Barra de Pestañas Estilo Píldora -->
-            <div class="flex overflow-x-auto border-b border-slate-200 bg-slate-50/50 px-4 sm:px-6">
-                <button id="btn-tab-datos" onclick="switchTab('tab-datos')" class="tab-btn py-3.5 px-4 font-bold text-xs sm:text-sm border-b-2 border-blue-600 text-blue-600 bg-blue-50/70 whitespace-nowrap focus:outline-none transition-all flex items-center space-x-2 cursor-pointer">
-                    <span>👤</span>
+            <!-- Barra de Pestañas Estilo Carrusel Deslizable Táctil (overflow-x-auto whitespace-nowrap) -->
+            <div class="overflow-x-auto scrollbar-none snap-x snap-mandatory border-b border-slate-200 bg-slate-50/70 p-2 sm:px-6 flex gap-1.5 sm:gap-2">
+                <button id="btn-tab-datos" onclick="switchTab('tab-datos')" class="tab-btn snap-start touch-min py-3 px-4 rounded-xl font-bold text-xs sm:text-sm border-b-2 border-blue-600 text-blue-600 bg-blue-50/80 whitespace-nowrap focus:outline-none transition-all flex items-center space-x-2 cursor-pointer shrink-0">
+                    <span class="text-base">👤</span>
                     <span>Ficha General</span>
                 </button>
-                <button id="btn-tab-padecimientos" onclick="switchTab('tab-padecimientos')" class="tab-btn py-3.5 px-4 font-semibold text-xs sm:text-sm border-b-2 border-transparent text-slate-500 hover:text-slate-800 whitespace-nowrap focus:outline-none transition-all flex items-center space-x-2 cursor-pointer">
-                    <span>🩺</span>
+                <button id="btn-tab-padecimientos" onclick="switchTab('tab-padecimientos')" class="tab-btn snap-start touch-min py-3 px-4 rounded-xl font-semibold text-xs sm:text-sm border-b-2 border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-100/80 whitespace-nowrap focus:outline-none transition-all flex items-center space-x-2 cursor-pointer shrink-0">
+                    <span class="text-base">🩺</span>
                     <span>Antecedentes & Clínica</span>
                 </button>
-                <button id="btn-tab-contactos" onclick="switchTab('tab-contactos')" class="tab-btn py-3.5 px-4 font-semibold text-xs sm:text-sm border-b-2 border-transparent text-slate-500 hover:text-slate-800 whitespace-nowrap focus:outline-none transition-all flex items-center space-x-2 cursor-pointer">
-                    <span>📞</span>
-                    <span>Contactos de Emergencia (<?= count($contactosEmergencia ?? []) ?>)</span>
+                <button id="btn-tab-contactos" onclick="switchTab('tab-contactos')" class="tab-btn snap-start touch-min py-3 px-4 rounded-xl font-semibold text-xs sm:text-sm border-b-2 border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-100/80 whitespace-nowrap focus:outline-none transition-all flex items-center space-x-2 cursor-pointer shrink-0">
+                    <span class="text-base">📞</span>
+                    <span>Contactos SOS (<?= count($contactosEmergencia ?? []) ?>)</span>
                 </button>
-                <button id="btn-tab-doctores" onclick="switchTab('tab-doctores')" class="tab-btn py-3.5 px-4 font-semibold text-xs sm:text-sm border-b-2 border-transparent text-slate-500 hover:text-slate-800 whitespace-nowrap focus:outline-none transition-all flex items-center space-x-2 cursor-pointer">
-                    <span>👨‍⚕️</span>
-                    <span>Médicos Tratantes (<?= count($doctores ?? []) ?>)</span>
+                <button id="btn-tab-doctores" onclick="switchTab('tab-doctores')" class="tab-btn snap-start touch-min py-3 px-4 rounded-xl font-semibold text-xs sm:text-sm border-b-2 border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-100/80 whitespace-nowrap focus:outline-none transition-all flex items-center space-x-2 cursor-pointer shrink-0">
+                    <span class="text-base">👨‍⚕️</span>
+                    <span>Médicos (<?= count($doctores ?? []) ?>)</span>
                 </button>
             </div>
 
-            <div class="p-6 sm:p-8">
+            <div class="p-4 sm:p-6 md:p-8">
                 <!-- ============================================================== -->
                 <!-- PESTAÑA 1: FICHA GENERAL & IDENTIFICACIÓN                      -->
                 <!-- ============================================================== -->
                 <div id="tab-datos" class="tab-content space-y-6">
-                    <div class="bg-blue-50/60 p-4 rounded-2xl border border-blue-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+                    <div class="bg-blue-50/60 p-4 sm:p-5 rounded-2xl border border-blue-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
                         <div>
                             <h2 class="font-bold text-blue-950 text-xs sm:text-sm">Identificación y Código de Vinculación Familiar</h2>
                             <p class="text-xs text-blue-700">Comparte este código con familiares o médicos para concederles acceso al expediente.</p>
@@ -517,9 +529,14 @@
         }
     </style>
 
-    <footer class="text-center py-6 text-xs text-slate-400">
+    <footer class="text-center py-6 pb-24 md:pb-8 text-xs text-slate-400 no-print">
         VitalSenior • Sistema de Expediente Clínico Geriátrico
     </footer>
+
+    <!-- Barra de Navegación Móvil Fija -->
+    <div class="no-print">
+        <?php require_once dirname(__DIR__) . '/components/bottom_nav.php'; ?>
+    </div>
 
     <!-- Script del Generador QR -->
     <script src="<?= APP_URL ?>/assets/js/qr-modal.js"></script>

@@ -45,7 +45,7 @@
         </div>
     </header>
 
-    <main id="accessible-content" class="max-w-7xl mx-auto p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <main id="accessible-content" class="max-w-7xl mx-auto p-4 sm:p-6 pb-24 md:pb-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
         <?php require_once dirname(__DIR__) . '/components/toast.php'; ?>
 
 
@@ -211,6 +211,12 @@
             </div>
         </section>
     </main>
+
+    <!-- Barra de Navegación Móvil Fija -->
+    <div class="no-print">
+        <?php require_once dirname(__DIR__) . '/components/bottom_nav.php'; ?>
+    </div>
+
     <script>
         // Transición de Login: Fade in effect al cargar el dashboard
         window.addEventListener('DOMContentLoaded', () => {
