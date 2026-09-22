@@ -97,6 +97,10 @@ $router->post('/expediente/eliminar_contacto', 'PacienteController@eliminarConta
 $router->post('/expediente/archivos/subir', 'ExpedienteArchivosController@subirArchivo', [AuthMiddleware::class]);
 $router->get('/expediente/archivos/descargar', 'ExpedienteArchivosController@descargarArchivo', [AuthMiddleware::class]);
 
+// Visitas Médicas y Bitácora Post-Consulta
+$router->get('/visitas/nueva', 'VisitaMedicaController@create', [AuthMiddleware::class]);
+$router->post('/visitas/guardar', 'VisitaMedicaController@store', [AuthMiddleware::class]);
+
 // Perfil y Ajustes
 $router->get('/perfil', 'PerfilController@index', [AuthMiddleware::class]);
 $router->post('/perfil/actualizar', 'PerfilController@actualizar', [AuthMiddleware::class]);

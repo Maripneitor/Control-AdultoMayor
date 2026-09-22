@@ -159,7 +159,45 @@ CREATE INDEX IF NOT EXISTS idx_citas_laboratorios_paciente_fecha
 ON citas_laboratorios(paciente_id, estado, fecha_hora ASC);
 
 -- ==========================================
--- 7. Seguridad: Rate Limiting & Auditoría Clínica
+-- 7. Visitas Médicas & Expediente Digital
+-- ==========================================
+CREATE TABLE IF NOT EXISTS visitas_medicas (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    paciente_id INT NOT NULL REFERENCES pacientes(id) ON DELETE CASCADE,
+    usuario_registra_id INT REFERENCES usuarios(id) ON DELETE SET NULL,
+    fecha_visita TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    lugar_atencion VARCHAR(150),
+    motivo_consulta TEXT NOT NULL,
+    diagnostico_notas TEXT,
+    doctor_nombre VARCHAR(150),
+    requiere_seguimiento BOOLEAN DEFAULT FALSE,
+    fecha_seguimiento DATE,
+    instrucciones_seguimiento TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_visitas_medicas_paciente_fecha 
+ON visitas_medicas(paciente_id, fecha_visita DESC);
+
+CREATE TABLE IF NOT EXISTS expediente_archivos (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    paciente_id INT NOT NULL REFERENCES pacientes(id) ON DELETE CASCADE,
+    visita_medica_id UUID REFERENCES visitas_medicas(id) ON DELETE SET NULL,
+    nombre_original VARCHAR(255) NOT NULL,
+    nombre_archivo_almacenado VARCHAR(255) NOT NULL,
+    ruta_almacenamiento VARCHAR(500) NOT NULL,
+    mime_type VARCHAR(100) NOT NULL,
+    tamano_bytes BIGINT NOT NULL,
+    tipo_documento VARCHAR(50) DEFAULT 'receta',
+    subido_por_usuario_id INT REFERENCES usuarios(id) ON DELETE SET NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_expediente_archivos_paciente ON expediente_archivos(paciente_id);
+CREATE INDEX IF NOT EXISTS idx_expediente_archivos_visita ON expediente_archivos(visita_medica_id);
+
+-- ==========================================
+-- 8. Seguridad: Rate Limiting & Auditoría Clínica
 -- ==========================================
 CREATE TABLE IF NOT EXISTS rate_limits (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

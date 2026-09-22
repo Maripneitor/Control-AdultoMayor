@@ -160,6 +160,10 @@
                     <span class="text-base">👨‍⚕️</span>
                     <span>Médicos (<?= count($doctores ?? []) ?>)</span>
                 </button>
+                <button id="btn-tab-visitas" onclick="switchTab('tab-visitas')" class="tab-btn snap-start touch-min py-3 px-4 rounded-xl font-semibold text-xs sm:text-sm border-b-2 border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-100/80 whitespace-nowrap focus:outline-none transition-all flex items-center space-x-2 cursor-pointer shrink-0">
+                    <span class="text-base">📋</span>
+                    <span>Historial de Visitas (<?= count($visitasMedicas ?? []) ?>)</span>
+                </button>
             </div>
 
             <div class="p-4 sm:p-6 md:p-8">
@@ -457,9 +461,189 @@
                         <?php endif; ?>
                     </div>
                 </div>
+
+                <!-- ============================================================== -->
+                <!-- PESTAÑA 5: HISTORIAL DE VISITAS MÉDICAS Y BITÁCORA CLÍNICA      -->
+                <!-- ============================================================== -->
+                <div id="tab-visitas" class="tab-content hidden space-y-6">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-slate-100">
+                        <div>
+                            <h2 class="text-sm sm:text-base font-bold text-slate-800">Bitácora de Visitas y Consultas Médicas</h2>
+                            <p class="text-xs text-slate-500">Registro cronológico de diagnósticos, indicaciones y recetas post-consulta.</p>
+                        </div>
+                        <?php if ($puedeEditar): ?>
+                            <a href="<?= APP_URL ?>/visitas/nueva?paciente_id=<?= e((string)$paciente['id']) ?>" 
+                               class="tap-bounce touch-min inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl shadow-xs shadow-blue-500/20 transition cursor-pointer shrink-0">
+                                <span>+ Registrar Visita</span>
+                            </a>
+                        <?php endif; ?>
+                    </div>
+
+                    <?php if (empty($visitasMedicas)): ?>
+                        <div class="p-8 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                            <span class="text-3xl">📋</span>
+                            <h3 class="text-sm font-bold text-slate-700 mt-2">No hay visitas médicas registradas</h3>
+                            <p class="text-xs text-slate-400 max-w-sm mx-auto mt-1 mb-4">
+                                Registra los diagnósticos y toma foto a las recetas al salir de cada consulta médica.
+                            </p>
+                            <?php if ($puedeEditar): ?>
+                                <a href="<?= APP_URL ?>/visitas/nueva?paciente_id=<?= e((string)$paciente['id']) ?>" 
+                                   class="tap-bounce touch-min inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-xs transition">
+                                    + Registrar Primera Visita
+                                </a>
+                            <?php endif; ?>
+                        </div>
+                    <?php else: ?>
+                        <div class="relative pl-4 sm:pl-6 space-y-6 before:absolute before:left-[19px] sm:before:left-[27px] before:top-3 before:bottom-3 before:w-0.5 before:bg-slate-200">
+                            <?php foreach ($visitasMedicas as $visita): 
+                                $ts = strtotime($visita['fecha_visita']);
+                                $fechaFormat = date('d M Y', $ts);
+                                $horaFormat = date('H:i', $ts);
+                            ?>
+                                <div class="relative flex items-start gap-4 sm:gap-6 group">
+                                    <!-- Timeline Node -->
+                                    <div class="relative z-10 flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 rounded-2xl flex items-center justify-center font-bold text-sm bg-white border-2 border-blue-500 text-blue-600 shadow-xs group-hover:scale-105 transition-transform">
+                                        🩺
+                                    </div>
+
+                                    <!-- Card de Visita Médica -->
+                                    <div class="flex-1 bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/80 shadow-card hover:shadow-md transition-all space-y-3">
+                                        
+                                        <!-- Top Bar: Fecha/Hora Tabular + Lugar + Doctor -->
+                                        <div class="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-100">
+                                            <div class="flex items-center gap-2 font-mono text-xs font-bold text-slate-700 bg-slate-100 px-3 py-1 rounded-xl">
+                                                <span>📅 <?= $fechaFormat ?></span>
+                                                <span class="text-slate-400">|</span>
+                                                <span class="text-blue-600"><?= $horaFormat ?></span>
+                                            </div>
+
+                                            <?php if (!empty($visita['lugar_atencion'])): ?>
+                                                <span class="inline-flex items-center gap-1 text-xs font-semibold text-slate-600 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-200">
+                                                    <span>🏥</span>
+                                                    <span><?= e($visita['lugar_atencion']) ?></span>
+                                                </span>
+                                            <?php endif; ?>
+                                        </div>
+
+                                        <!-- Motivo de Consulta Destacado -->
+                                        <div>
+                                            <h3 class="text-base font-bold text-slate-900 tracking-tight">
+                                                <?= e($visita['motivo_consulta']) ?>
+                                            </h3>
+                                            <?php if (!empty($visita['doctor_nombre'])): ?>
+                                                <p class="text-xs text-slate-500 font-medium mt-0.5">
+                                                    Atendido por: <span class="text-slate-800 font-bold">Dr(a). <?= e($visita['doctor_nombre']) ?></span>
+                                                </p>
+                                            <?php endif; ?>
+                                        </div>
+
+                                        <!-- Diagnóstico e Indicaciones Clínicas -->
+                                        <?php if (!empty($visita['diagnostico_notas'])): ?>
+                                            <div class="p-3.5 bg-blue-50/50 rounded-xl border border-blue-100/80 text-xs sm:text-sm text-slate-700 leading-relaxed">
+                                                <p class="font-bold text-blue-950 text-xs uppercase tracking-wider mb-1">Diagnóstico e Indicaciones:</p>
+                                                <p class="whitespace-pre-line"><?= e($visita['diagnostico_notas']) ?></p>
+                                            </div>
+                                        <?php endif; ?>
+
+                                        <!-- Badge de Seguimiento / Próxima Cita -->
+                                        <?php if (!empty($visita['requiere_seguimiento'])): ?>
+                                            <div class="p-3 bg-amber-50 rounded-xl border border-amber-200 flex items-start gap-2.5 text-xs">
+                                                <span class="text-base leading-none">📅</span>
+                                                <div>
+                                                    <span class="font-bold text-amber-900">Seguimiento Requerido:</span>
+                                                    <span class="font-bold text-amber-800 ml-1"><?= !empty($visita['fecha_seguimiento']) ? date('d/m/Y', strtotime($visita['fecha_seguimiento'])) : 'Fecha pendiente' ?></span>
+                                                    <?php if (!empty($visita['instrucciones_seguimiento'])): ?>
+                                                        <p class="text-[11px] text-amber-700 mt-0.5"><?= e($visita['instrucciones_seguimiento']) ?></p>
+                                                    <?php endif; ?>
+                                                </div>
+                                            </div>
+                                        <?php endif; ?>
+
+                                        <!-- Miniaturas Expandibles de Recetas / Fotos Adjuntas -->
+                                        <?php if (!empty($visita['archivos'])): ?>
+                                            <div class="pt-2">
+                                                <p class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                                                    📸 Recetas y Documentos Adjuntos (<?= count($visita['archivos']) ?>):
+                                                </p>
+                                                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                                                    <?php foreach ($visita['archivos'] as $archivo): 
+                                                        $isImage = strpos($archivo['mime_type'], 'image/') === 0;
+                                                        $urlDescarga = APP_URL . '/expediente/archivos/descargar?id=' . $archivo['id'];
+                                                    ?>
+                                                        <div class="group/thumb relative p-2 bg-slate-50 rounded-xl border border-slate-200 hover:border-blue-300 transition">
+                                                            <?php if ($isImage): ?>
+                                                                <button type="button" onclick="abrirLightbox('<?= $urlDescarga ?>', '<?= e($archivo['nombre_original']) ?>')" class="w-full text-left cursor-pointer">
+                                                                    <img src="<?= $urlDescarga ?>" alt="<?= e($archivo['nombre_original']) ?>" class="w-full h-20 object-cover rounded-lg mb-1 shadow-2xs group-hover/thumb:opacity-90">
+                                                                    <span class="block text-[10px] font-semibold text-slate-700 truncate"><?= e($archivo['nombre_original']) ?></span>
+                                                                </button>
+                                                            <?php else: ?>
+                                                                <a href="<?= $urlDescarga ?>" target="_blank" class="block text-center py-2">
+                                                                    <div class="w-full h-14 bg-rose-50 text-rose-600 font-black text-xs flex items-center justify-center rounded-lg mb-1">
+                                                                        PDF
+                                                                    </div>
+                                                                    <span class="block text-[10px] font-semibold text-slate-700 truncate"><?= e($archivo['nombre_original']) ?></span>
+                                                                </a>
+                                                            <?php endif; ?>
+                                                        </div>
+                                                    <?php endforeach; ?>
+                                                </div>
+                                            </div>
+                                        <?php endif; ?>
+
+                                        <!-- Footer Info -->
+                                        <?php if (!empty($visita['registrado_por_nombre'])): ?>
+                                            <div class="pt-2 text-[11px] text-slate-400">
+                                                Registrado por: <?= e($visita['registrado_por_nombre']) ?>
+                                            </div>
+                                        <?php endif; ?>
+
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
+                </div>
+
             </div>
         </div>
     </main>
+
+    <!-- Modal Lightbox para Visualizar Receta / Foto en Grande -->
+    <div id="modal-lightbox" class="fixed inset-0 bg-slate-900/80 backdrop-blur-xs z-50 hidden items-center justify-center p-4" onclick="cerrarLightbox()">
+        <div class="relative max-w-2xl w-full max-h-[90vh] bg-white rounded-3xl p-4 shadow-2xl flex flex-col items-center" onclick="event.stopPropagation()">
+            <div class="w-full flex justify-between items-center pb-2 border-b border-slate-100 mb-3">
+                <span id="lightbox-titulo" class="text-xs font-bold text-slate-700 truncate max-w-xs">Receta Adjunta</span>
+                <button type="button" onclick="cerrarLightbox()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-600 font-bold flex items-center justify-center hover:bg-slate-200 transition cursor-pointer">
+                    &times;
+                </button>
+            </div>
+            <div class="w-full max-h-[70vh] overflow-auto flex items-center justify-center">
+                <img id="lightbox-img" src="" alt="Receta" class="max-w-full max-h-[68vh] object-contain rounded-xl">
+            </div>
+            <div class="w-full pt-3 flex justify-end">
+                <a id="lightbox-download" href="#" target="_blank" download class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-xs transition">
+                    Descargar Original
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    function abrirLightbox(url, titulo) {
+        document.getElementById('lightbox-img').src = url;
+        document.getElementById('lightbox-titulo').innerText = titulo;
+        document.getElementById('lightbox-download').href = url;
+        const modal = document.getElementById('modal-lightbox');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+
+    function cerrarLightbox() {
+        const modal = document.getElementById('modal-lightbox');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+    </script>
 
     <!-- Modal de Código QR de Emergencia (Carnet Digital) -->
     <div id="modal-qr-emergencia" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden items-center justify-center p-4">

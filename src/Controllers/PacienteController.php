@@ -57,11 +57,15 @@ class PacienteController extends Controller {
         $saludModel = new \App\Models\RegistroSaludDiario();
         $ultimoSalud = $saludModel->getTodayByPacienteId($pacienteId);
 
+        $visitaModel = new \App\Models\VisitaMedica();
+        $visitasMedicas = $visitaModel->getByPacienteId($pacienteId);
+
         $this->render('pacientes/expediente', [
             'paciente' => $paciente,
             'doctores' => $doctores,
             'contactosEmergencia' => $contactosEmergencia,
             'ultimoSalud' => $ultimoSalud,
+            'visitasMedicas' => $visitasMedicas,
             'puedeEditar' => $puedeEditar,
             'nivelAcceso' => $acceso['nivel_acceso']
         ], false);
