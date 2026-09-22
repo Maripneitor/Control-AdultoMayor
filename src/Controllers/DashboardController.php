@@ -90,6 +90,9 @@ class DashboardController extends Controller {
             $_SESSION['paciente_activo_id'] = $pacienteActivoId;
         }
 
+        $_SESSION['paciente_activo_nombre'] = trim(($paciente['nombre'] ?? '') . ' ' . ($paciente['apellidos'] ?? ''));
+        $_SESSION['paciente_qr_token'] = $paciente['qr_token'] ?? '';
+
         $pacienteId = $pacienteActivoId;
         $acceso = AuthMiddleware::requirePatientAccess($pacienteId);
         $puedeEditar = $acceso['puede_editar'] ?? false;

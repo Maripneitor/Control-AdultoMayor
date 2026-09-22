@@ -50,70 +50,152 @@
 </head>
 <body id="dashboard-body" class="bg-slate-50 text-slate-900 font-sans min-h-screen transition-opacity duration-500 opacity-0 flex flex-col justify-between selection:bg-blue-600/20 selection:text-blue-700">
 
-    <!-- 1. Encabezado Móvil Limpio y Adaptativo Desktop -->
-    <header class="bg-white/95 backdrop-blur-md border-b border-slate-200/90 sticky top-0 z-30 shadow-xs px-4 sm:px-6 lg:px-8 py-3 no-print">
-        <div class="max-w-7xl mx-auto flex items-center justify-between gap-3">
+<?php 
+$userRole = $_SESSION['user_role'] ?? 'familiar_admin';
+$userNameDisplay = $_SESSION['user_name'] ?? 'Usuario';
+$pacienteNombreDisplay = trim(($paciente['nombre'] ?? '') . ' ' . ($paciente['apellidos'] ?? ''));
+$pacienteQrToken = $paciente['qr_token'] ?? '';
+
+$roleLabel = match($userRole) {
+    'familiar_admin' => 'Familiar Admin',
+    'cuidador_auxiliar', 'cuidador' => 'Cuidador',
+    'medico' => 'Médico',
+    'paciente', 'adulto_mayor' => 'Paciente',
+    'admin', 'administrador' => 'Administrador',
+    default => 'Familiar'
+};
+?>
+
+    <!-- 1. Top Bar / Navbar Sólida y Unificada (Desktop + Móvil) -->
+    <header class="bg-white/90 backdrop-blur-md border-b border-slate-200/90 sticky top-0 z-40 shadow-xs px-4 sm:px-6 lg:px-8 py-3 transition-all no-print">
+        <div class="max-w-7xl mx-auto flex items-center justify-between gap-3 sm:gap-4">
             
-            <!-- Identidad: Brand + Paciente Activo -->
-            <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
-                <a href="<?= APP_URL ?>/dashboard" class="tap-bounce flex items-center gap-2 group shrink-0">
-                    <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-md shadow-blue-500/20 text-base sm:text-lg font-black group-hover:scale-105 transition-transform">
+            <!-- LADO IZQUIERDO: Logo 'VitalSenior' con badge sutil de rol (Desktop) -->
+            <div class="hidden md:flex items-center gap-3 shrink-0">
+                <a class="tap-bounce flex items-center gap-2.5 group" href="<?= APP_URL ?>/dashboard">
+                    <div class="w-10 h-10 rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-md shadow-blue-500/20 group-hover:scale-105 transition-transform text-lg font-black">
                         ✚
                     </div>
-                    <span class="hidden sm:inline text-base sm:text-lg font-black tracking-tight text-slate-900">Vital<span class="text-blue-600">Senior</span></span>
+                    <span class="text-lg font-black tracking-tight text-slate-900">Vital<span class="text-blue-600">Senior</span></span>
                 </a>
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold tracking-wide bg-slate-100 text-slate-600 border border-slate-200">
+                    <?= $roleLabel ?>
+                </span>
+            </div>
 
-                <!-- Paciente Activo (Limpio en Móvil) -->
-                <div class="flex items-center gap-1.5 bg-blue-50/90 border border-blue-200/80 px-3 py-1.5 rounded-2xl min-w-0 truncate">
-                    <span class="text-xs shrink-0">👤</span>
-                    <span class="text-xs sm:text-sm font-extrabold text-blue-950 truncate">
-                        <?= e($paciente['nombre'] . ' ' . $paciente['apellidos']) ?>
+            <!-- CENTRO: Chip selector del paciente activo con avatar compacto, nombre y '+ Vincular' -->
+            <div class="hidden md:flex items-center gap-2 bg-slate-50/90 border border-slate-200/80 rounded-2xl px-3 py-1.5 shadow-xs max-w-md">
+                <div class="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-black shrink-0 shadow-xs">
+                    <?= mb_strtoupper(mb_substr($pacienteNombreDisplay, 0, 1)) ?>
+                </div>
+                
+                <div class="min-w-0 flex items-center gap-1.5 truncate">
+                    <span class="text-xs text-slate-400 font-semibold hidden lg:inline">Paciente:</span>
+                    <span class="text-xs sm:text-sm font-extrabold text-slate-900 truncate" title="<?= e($pacienteNombreDisplay) ?>">
+                        <?= e($pacienteNombreDisplay) ?>
                     </span>
                 </div>
 
-                <!-- Selector Desktop si hay múltiples pacientes -->
                 <?php if (!empty($todosLosPacientes) && count($todosLosPacientes) > 1): ?>
-                    <form action="<?= APP_URL ?>/dashboard" method="GET" class="hidden md:inline-block m-0 shrink-0">
+                    <form action="<?= APP_URL ?>/dashboard" method="GET" class="m-0 shrink-0">
                         <select name="seleccionar_paciente" onchange="this.form.submit()" 
-                                class="text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl py-1.5 px-2.5 cursor-pointer outline-none transition">
+                                class="text-[11px] font-bold text-slate-700 bg-white hover:bg-slate-100 border border-slate-200 rounded-lg py-1 px-2 cursor-pointer outline-none transition"
+                                title="Cambiar paciente">
                             <?php foreach ($todosLosPacientes as $p): ?>
-                                <option value="<?= e((string)$p['id']) ?>" <?= $p['id'] == $pacienteActivoId ? 'selected' : '' ?>>
-                                    Cambiar: <?= e($p['nombre']) ?>
+                                <option value="<?= e((string)$p['id']) ?>" <?= ($p['id'] == $pacienteActivoId) ? 'selected' : '' ?>>
+                                    👤 <?= e($p['nombre']) ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>
                     </form>
                 <?php endif; ?>
+
+                <a href="<?= APP_URL ?>/vincular" 
+                   class="tap-bounce text-[11px] font-bold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100/80 px-2 py-1 rounded-lg transition shrink-0 flex items-center gap-0.5"
+                   title="Vincular otro adulto mayor">
+                    <span>+</span>
+                    <span class="hidden xl:inline">Vincular</span>
+                </a>
             </div>
 
-            <!-- Acciones Desktop (md+) -->
-            <div class="hidden md:flex items-center gap-2 shrink-0">
-                <button type="button" onclick="abrirModalPinMedico()" class="tap-bounce px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-xs transition flex items-center gap-1.5 cursor-pointer">
+            <!-- LADO DERECHO: Grupo de acciones ordenadas en una sola fila (Desktop) -->
+            <div class="hidden md:flex items-center gap-2.5 shrink-0">
+                <!-- Botón primario: PIN Médico -->
+                <button type="button" onclick="abrirModalPinMedico()" 
+                        class="tap-bounce px-3.5 py-2 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs font-bold rounded-xl shadow-xs transition flex items-center gap-1.5 cursor-pointer">
                     <span>🔑</span>
                     <span>PIN Médico</span>
                 </button>
-                <a href="<?= APP_URL ?>/paciente/pdf?id=<?= e((string)$paciente['id']) ?>" target="_blank" class="tap-bounce px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl border border-slate-200 transition flex items-center gap-1.5 shadow-xs">
-                    <span>📄</span>
-                    <span>PDF</span>
-                </a>
-                <a href="<?= APP_URL ?>/emergencia?token=<?= e((string)($paciente['qr_token'] ?? '')) ?>" target="_blank" class="tap-bounce px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold rounded-xl border border-blue-200 transition flex items-center gap-1.5 shadow-xs">
+
+                <!-- Botón secundario: Ficha QR -->
+                <a href="<?= APP_URL ?>/emergencia?token=<?= e((string)$pacienteQrToken) ?>" target="_blank" 
+                   class="tap-bounce px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl border border-slate-200 transition flex items-center gap-1.5 shadow-xs">
                     <span>📱</span>
-                    <span>QR SOS</span>
+                    <span>Ficha QR</span>
                 </a>
-                <a href="<?= APP_URL ?>/vincular" class="tap-bounce px-2.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl border border-slate-200 transition flex items-center gap-1" title="Vincular Adulto Mayor">
-                    <span>+ Vincular</span>
-                </a>
-                <a href="<?= APP_URL ?>/logout" class="tap-bounce px-3 py-2 bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-bold rounded-xl border border-rose-200 transition">
-                    Cerrar Sesión
-                </a>
+
+                <!-- Botón secundario: Imprimir -->
+                <button type="button" onclick="window.print()" 
+                        class="tap-bounce px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl border border-slate-200 transition flex items-center gap-1.5 shadow-xs cursor-pointer">
+                    <span>🖨️</span>
+                    <span>Imprimir</span>
+                </button>
+
+                <!-- Menú Usuario Dropdown -->
+                <div class="relative" id="user-menu-wrapper">
+                    <button type="button" onclick="toggleUserDropdownMenu()" id="user-menu-toggle-btn"
+                            class="tap-bounce flex items-center gap-2 p-1.5 rounded-xl hover:bg-slate-100 border border-slate-200 transition cursor-pointer">
+                        <div class="w-7 h-7 rounded-lg bg-slate-800 text-white flex items-center justify-center text-xs font-bold">
+                            <?= mb_strtoupper(mb_substr($userNameDisplay, 0, 1)) ?>
+                        </div>
+                        <span class="text-xs font-bold text-slate-700 hidden lg:inline max-w-[110px] truncate">
+                            <?= e($userNameDisplay) ?>
+                        </span>
+                        <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+
+                    <div id="user-dropdown-popover" 
+                         class="hidden absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-slate-100 py-1.5 z-50 text-xs font-medium">
+                        <div class="px-3 py-2 border-b border-slate-100">
+                            <p class="font-bold text-slate-800 truncate"><?= e($userNameDisplay) ?></p>
+                            <p class="text-[10px] text-slate-400"><?= $roleLabel ?></p>
+                        </div>
+                        <a href="<?= APP_URL ?>/perfil" class="flex items-center gap-2 px-3 py-2 text-slate-700 hover:bg-slate-50 transition">
+                            <span>⚙️</span>
+                            <span>Mi Perfil</span>
+                        </a>
+                        <a href="<?= APP_URL ?>/logout" class="flex items-center gap-2 px-3 py-2 text-rose-600 hover:bg-rose-50 transition border-t border-slate-100 font-bold">
+                            <span>🚪</span>
+                            <span>Cerrar Sesión</span>
+                        </a>
+                    </div>
+                </div>
             </div>
 
-            <!-- Botón de Menú Hamburguesa Móvil (< md) -->
-            <div class="md:hidden">
+            <!-- ENCABEZADO EN MÓVIL (< md): Ultra-limpio en una sola barra fija -->
+            <div class="flex md:hidden items-center justify-between w-full">
+                <!-- Izquierda: Isotipo + Nombre del paciente activo -->
+                <div class="flex items-center gap-2 min-w-0 pr-2">
+                    <a href="<?= APP_URL ?>/dashboard" class="tap-bounce shrink-0">
+                        <div class="w-8 h-8 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-xs text-sm font-black">
+                            ✚
+                        </div>
+                    </a>
+                    <div class="flex items-center gap-1.5 bg-blue-50 border border-blue-200/80 px-2.5 py-1 rounded-xl min-w-0 truncate">
+                        <div class="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center text-[10px] font-black shrink-0">
+                            <?= mb_strtoupper(mb_substr($pacienteNombreDisplay, 0, 1)) ?>
+                        </div>
+                        <span class="text-xs font-bold text-blue-950 truncate">
+                            <?= e($pacienteNombreDisplay) ?>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Derecha: Botón de Menú 3 Puntos / Hamburguesa de 48x48px -->
                 <button type="button" onclick="abrirDrawerLateral()" 
-                        class="tap-bounce touch-min w-11 h-11 rounded-2xl bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-800 font-bold flex items-center justify-center text-xl border border-slate-200 shadow-xs cursor-pointer"
+                        class="tap-bounce touch-min w-11 h-11 rounded-2xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-800 font-bold flex items-center justify-center text-lg border border-slate-200 shadow-xs cursor-pointer shrink-0"
                         aria-label="Abrir menú de opciones">
-                    ☰
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
                 </button>
             </div>
 
@@ -366,102 +448,120 @@
 
         <!-- Panel Lateral Animado desde la Derecha -->
         <div id="drawer-panel" 
-             class="fixed top-0 right-0 bottom-0 w-80 max-w-[85vw] bg-white h-full shadow-2xl z-10 flex flex-col justify-between transition-transform duration-300 transform translate-x-full">
+             class="fixed top-0 right-0 bottom-0 w-[85%] max-w-sm bg-white shadow-2xl flex flex-col translate-x-full transition-transform duration-300 ease-out z-10 border-l border-slate-100">
             
-            <!-- Encabezado del Drawer -->
-            <div class="p-5 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+            <!-- Header del Drawer -->
+            <div class="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/80">
                 <div class="flex items-center gap-2.5 min-w-0">
-                    <div class="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center font-black text-base shadow-xs shrink-0">
+                    <div class="w-9 h-9 rounded-2xl bg-blue-600 text-white flex items-center justify-center text-base font-black shadow-xs shrink-0">
                         ✚
                     </div>
                     <div class="min-w-0">
-                        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Opciones Clínicas</h3>
-                        <p class="text-xs font-bold text-slate-800 truncate"><?= e($paciente['nombre']) ?></p>
+                        <h3 class="text-sm font-extrabold text-slate-900 truncate">VitalSenior</h3>
+                        <p class="text-[11px] text-slate-500 font-medium truncate"><?= e($userNameDisplay) ?> • <?= $roleLabel ?></p>
                     </div>
                 </div>
                 <button type="button" onclick="cerrarDrawerLateral()" 
-                        class="w-8 h-8 rounded-full bg-slate-200/80 hover:bg-slate-300 text-slate-600 font-bold flex items-center justify-center text-sm transition cursor-pointer">
-                    &times;
+                        class="tap-bounce touch-min w-10 h-10 rounded-2xl bg-slate-200/80 hover:bg-slate-300 text-slate-600 font-bold flex items-center justify-center text-base transition cursor-pointer"
+                        aria-label="Cerrar menú">
+                    ✕
                 </button>
             </div>
 
             <!-- Cuerpo del Drawer con Acciones Agrupadas -->
-            <div class="p-5 space-y-6 overflow-y-auto flex-1 text-xs">
+            <div class="p-4 space-y-5 overflow-y-auto flex-1 text-xs">
                 
+                <!-- Paciente Activo -->
+                <div class="p-3 bg-blue-50/70 border border-blue-100 rounded-2xl">
+                    <span class="text-[10px] font-bold text-blue-600 uppercase tracking-widest block mb-1">Paciente Activo</span>
+                    <div class="flex items-center gap-2">
+                        <div class="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-black">
+                            <?= mb_strtoupper(mb_substr($pacienteNombreDisplay, 0, 1)) ?>
+                        </div>
+                        <span class="font-bold text-slate-900 truncate"><?= e($pacienteNombreDisplay) ?></span>
+                    </div>
+                </div>
+
                 <!-- Grupo 1: Acciones Clínicas -->
-                <div class="space-y-2">
-                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Acciones Clínicas</span>
+                <div class="space-y-1.5">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block px-1">Acciones Clínicas</span>
                     
+                    <!-- 1. Generar PIN Médico -->
                     <button type="button" onclick="cerrarDrawerLateral(); abrirModalPinMedico();" 
                             class="tap-bounce touch-min w-full p-3 bg-blue-50 hover:bg-blue-100 text-blue-900 rounded-2xl font-bold flex items-center gap-3 transition">
                         <span class="text-base">🔑</span>
-                        <span>Generar PIN Médico Temporal</span>
+                        <span class="text-left flex-1 font-bold">Generar PIN Médico</span>
                     </button>
 
-                    <a href="<?= APP_URL ?>/emergencia?token=<?= e((string)($paciente['qr_token'] ?? '')) ?>" target="_blank"
-                       class="tap-bounce touch-min w-full p-3 bg-slate-50 hover:bg-slate-100 text-slate-800 rounded-2xl font-bold flex items-center gap-3 border border-slate-100 transition">
-                        <span class="text-base">📱</span>
-                        <span>Ver Ficha QR SOS</span>
-                    </a>
-
-                    <a href="<?= APP_URL ?>/paciente/pdf?id=<?= e((string)$paciente['id']) ?>" target="_blank"
-                       class="tap-bounce touch-min w-full p-3 bg-slate-50 hover:bg-slate-100 text-slate-800 rounded-2xl font-bold flex items-center gap-3 border border-slate-100 transition">
-                        <span class="text-base">📄</span>
-                        <span>Descargar Expediente PDF</span>
-                    </a>
-
+                    <!-- 2. Imprimir Expediente -->
                     <button type="button" onclick="cerrarDrawerLateral(); window.print();" 
                             class="tap-bounce touch-min w-full p-3 bg-slate-50 hover:bg-slate-100 text-slate-800 rounded-2xl font-bold flex items-center gap-3 border border-slate-100 transition">
                         <span class="text-base">🖨️</span>
-                        <span>Imprimir Resumen</span>
+                        <span class="text-left flex-1">Imprimir Expediente</span>
                     </button>
+
+                    <!-- 3. Ver Ficha QR -->
+                    <a href="<?= APP_URL ?>/emergencia?token=<?= e((string)$pacienteQrToken) ?>" target="_blank"
+                       class="tap-bounce touch-min w-full p-3 bg-slate-50 hover:bg-slate-100 text-slate-800 rounded-2xl font-bold flex items-center gap-3 border border-slate-100 transition">
+                        <span class="text-base">📱</span>
+                        <span class="text-left flex-1">Ver Ficha QR</span>
+                    </a>
+
+                    <!-- 4. Descargar Expediente PDF -->
+                    <a href="<?= APP_URL ?>/paciente/pdf?id=<?= e((string)$paciente['id']) ?>" target="_blank"
+                       class="tap-bounce touch-min w-full p-3 bg-slate-50 hover:bg-slate-100 text-slate-800 rounded-2xl font-bold flex items-center gap-3 border border-slate-100 transition">
+                        <span class="text-base">📄</span>
+                        <span class="text-left flex-1">Descargar Expediente PDF</span>
+                    </a>
                 </div>
 
                 <!-- Grupo 2: Gestión de Pacientes -->
-                <div class="space-y-2 pt-2 border-t border-slate-100">
-                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Gestión Familiar</span>
+                <div class="space-y-1.5 pt-2 border-t border-slate-100">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block px-1">Gestión Familiar</span>
+
+                    <!-- 4. Vincular Otro Paciente -->
+                    <a href="<?= APP_URL ?>/vincular" 
+                       class="tap-bounce touch-min w-full p-3 bg-slate-50 hover:bg-slate-100 text-slate-800 rounded-2xl font-bold flex items-center gap-3 border border-slate-100 transition">
+                        <span class="text-base">➕</span>
+                        <span class="text-left flex-1">Vincular Otro Paciente</span>
+                    </a>
 
                     <?php if (!empty($todosLosPacientes) && count($todosLosPacientes) > 1): ?>
-                        <div class="space-y-1.5">
-                            <span class="text-[11px] text-slate-500 font-semibold block">Cambiar paciente activo:</span>
+                        <div class="space-y-1 pt-1">
+                            <span class="text-[10px] text-slate-400 font-semibold block px-1">Cambiar paciente activo:</span>
                             <?php foreach ($todosLosPacientes as $p): ?>
                                 <a href="<?= APP_URL ?>/dashboard?seleccionar_paciente=<?= e((string)$p['id']) ?>" 
-                                   class="p-2.5 rounded-xl block font-bold transition <?= $p['id'] == $pacienteActivoId ? 'bg-blue-600 text-white shadow-xs' : 'bg-slate-50 hover:bg-slate-100 text-slate-700' ?>">
-                                    👤 <?= e($p['nombre'] . ' ' . $p['apellidos']) ?>
+                                   class="p-2.5 rounded-xl block font-bold transition text-xs <?= $p['id'] == $pacienteActivoId ? 'bg-blue-600 text-white shadow-xs' : 'bg-slate-50 hover:bg-slate-100 text-slate-700' ?>">
+                                    👤 <?= e($p['nombre'] . ' ' . ($p['apellidos'] ?? '')) ?>
                                 </a>
                             <?php endforeach; ?>
                         </div>
                     <?php endif; ?>
-
-                    <a href="<?= APP_URL ?>/vincular" 
-                       class="tap-bounce touch-min w-full p-3 bg-slate-50 hover:bg-slate-100 text-slate-800 rounded-2xl font-bold flex items-center gap-3 border border-slate-100 transition">
-                        <span class="text-base">➕</span>
-                        <span>Vincular Nuevo Adulto Mayor</span>
-                    </a>
                 </div>
 
                 <!-- Grupo 3: Sesión -->
-                <div class="space-y-2 pt-2 border-t border-slate-100">
-                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Cuenta</span>
+                <div class="space-y-1.5 pt-2 border-t border-slate-100">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block px-1">Cuenta</span>
                     
                     <a href="<?= APP_URL ?>/perfil" 
                        class="tap-bounce touch-min w-full p-3 bg-slate-50 hover:bg-slate-100 text-slate-800 rounded-2xl font-bold flex items-center gap-3 border border-slate-100 transition">
                         <span class="text-base">⚙️</span>
-                        <span>Mi Perfil y Ajustes</span>
+                        <span class="text-left flex-1">Mi Perfil y Ajustes</span>
                     </a>
 
+                    <!-- 5. Cerrar Sesión en rojo suave -->
                     <a href="<?= APP_URL ?>/logout" 
                        class="tap-bounce touch-min w-full p-3 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-2xl font-bold flex items-center gap-3 border border-rose-100 transition">
                         <span class="text-base">🚪</span>
-                        <span>Cerrar Sesión</span>
+                        <span class="text-left flex-1">Cerrar Sesión</span>
                     </a>
                 </div>
 
             </div>
 
             <!-- Footer del Drawer -->
-            <div class="p-4 border-t border-slate-100 text-center text-[11px] text-slate-400 bg-slate-50">
-                VitalSenior • Cuidado y Salud Integral
+            <div class="p-3 border-t border-slate-100 text-center text-[11px] text-slate-400 bg-slate-50">
+                VitalSenior • Cuidado y Salud Geriátrica
             </div>
         </div>
     </div>
@@ -532,6 +632,21 @@
     <!-- Scripts de Drawer, Modal y Animaciones -->
     <script>
         let enlaceMedicoGenerado = '';
+
+        function toggleUserDropdownMenu() {
+            const popover = document.getElementById('user-dropdown-popover');
+            if (popover) {
+                popover.classList.toggle('hidden');
+            }
+        }
+
+        document.addEventListener('click', function(e) {
+            const wrapper = document.getElementById('user-menu-wrapper');
+            const popover = document.getElementById('user-dropdown-popover');
+            if (wrapper && popover && !wrapper.contains(e.target)) {
+                popover.classList.add('hidden');
+            }
+        });
 
         // Funciones del Drawer Lateral
         function abrirDrawerLateral() {
