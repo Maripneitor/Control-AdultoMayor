@@ -77,6 +77,9 @@ $router->post('/medicamentos/deshacer', 'MedicamentoController@deshacerToma', [A
 // Citas y Laboratorios
 $router->get('/citas', 'CitaController@index', [AuthMiddleware::class]);
 $router->post('/citas/crear', 'CitaController@store', [AuthMiddleware::class]);
+$router->post('/citas/completar', 'CitaController@completar', [AuthMiddleware::class]);
+$router->post('/citas/cancelar', 'CitaController@cancelar', [AuthMiddleware::class]);
+$router->get('/citas/ics', 'CitaController@exportarIcs', [AuthMiddleware::class]);
 
 // Salud y Signos Vitales
 $router->get('/salud', 'SaludController@stepper', [AuthMiddleware::class]);

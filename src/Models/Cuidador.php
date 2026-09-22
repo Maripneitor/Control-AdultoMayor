@@ -28,5 +28,16 @@ class Cuidador extends Model {
         $stmt->execute(['uid' => $usuarioId]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+
+    public function obtenerCuidadoresPorPaciente(int $pacienteId): array {
+        $stmt = $this->db->prepare("
+            SELECT u.id, u.nombre, u.email, pc.parentesco, pc.nivel_acceso
+            FROM usuarios u
+            JOIN paciente_cuidador pc ON u.id = pc.usuario_cuidador_id
+            WHERE pc.paciente_id = :pid
+        ");
+        $stmt->execute([':pid' => $pacienteId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 }
 

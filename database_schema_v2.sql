@@ -143,13 +143,20 @@ CREATE TABLE IF NOT EXISTS citas_laboratorios (
     id SERIAL PRIMARY KEY,
     paciente_id INT NOT NULL REFERENCES pacientes(id) ON DELETE CASCADE,
     doctor_id INT REFERENCES doctores(id) ON DELETE SET NULL,
-    tipo_evento VARCHAR(50) DEFAULT 'cita_medica',
+    familiar_responsable_id INT REFERENCES usuarios(id) ON DELETE SET NULL,
+    tipo_evento VARCHAR(50) DEFAULT 'consulta',
     titulo VARCHAR(255) NOT NULL,
     lugar VARCHAR(255),
+    ubicacion_mapa VARCHAR(500),
     fecha_hora TIMESTAMP WITH TIME ZONE NOT NULL,
+    preparacion_previa TEXT,
+    estado VARCHAR(20) DEFAULT 'programada',
     notas TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE INDEX IF NOT EXISTS idx_citas_laboratorios_paciente_fecha 
+ON citas_laboratorios(paciente_id, estado, fecha_hora ASC);
 
 -- ==========================================
 -- 7. Seguridad: Rate Limiting & Auditoría Clínica

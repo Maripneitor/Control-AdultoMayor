@@ -134,3 +134,30 @@ BEGIN
         ALTER TABLE contactos_emergencia ADD COLUMN email VARCHAR(255);
     END IF;
 END $$;
+
+-- 9. Flexibilidad y Modernización de Citas y Laboratorios
+DO $$
+BEGIN
+    -- Permitir tipos extendidos (consulta, laboratorio_estudio, terapia, resurtido_receta)
+    ALTER TABLE citas_laboratorios ALTER COLUMN tipo_evento TYPE VARCHAR(50);
+
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'citas_laboratorios' AND column_name = 'preparacion_previa') THEN
+        ALTER TABLE citas_laboratorios ADD COLUMN preparacion_previa TEXT;
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'citas_laboratorios' AND column_name = 'familiar_responsable_id') THEN
+        ALTER TABLE citas_laboratorios ADD COLUMN familiar_responsable_id INT REFERENCES usuarios(id) ON DELETE SET NULL;
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'citas_laboratorios' AND column_name = 'ubicacion_mapa') THEN
+        ALTER TABLE citas_laboratorios ADD COLUMN ubicacion_mapa VARCHAR(500);
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'citas_laboratorios' AND column_name = 'estado') THEN
+        ALTER TABLE citas_laboratorios ADD COLUMN estado VARCHAR(20) DEFAULT 'programada';
+    END IF;
+END $$;
+
+CREATE INDEX IF NOT EXISTS idx_citas_laboratorios_paciente_fecha 
+ON citas_laboratorios(paciente_id, estado, fecha_hora ASC);
+
