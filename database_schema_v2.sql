@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
     email VARCHAR(255) UNIQUE NOT NULL,
     telefono VARCHAR(20),
     password_hash VARCHAR(255) NOT NULL,
-    rol VARCHAR(50) NOT NULL DEFAULT 'cuidador' CHECK (rol IN ('administrador', 'cuidador', 'emergencia', 'adulto_mayor')),
+    rol VARCHAR(50) NOT NULL DEFAULT 'familiar_admin' CHECK (rol IN ('administrador', 'familiar_admin', 'cuidador_auxiliar', 'paciente', 'medico', 'cuidador', 'adulto_mayor', 'familiar', 'emergencia')),
     activo BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
@@ -51,7 +51,7 @@ CREATE TABLE IF NOT EXISTS paciente_cuidador (
     paciente_id INT NOT NULL REFERENCES pacientes(id) ON DELETE CASCADE,
     usuario_cuidador_id INT NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
     parentesco VARCHAR(50) DEFAULT 'Familiar',
-    nivel_acceso VARCHAR(50) DEFAULT 'edicion_completa' CHECK (nivel_acceso IN ('lectura', 'tomas_y_citas', 'edicion_completa', 'admin')),
+    nivel_acceso VARCHAR(50) DEFAULT 'familiar_admin' CHECK (nivel_acceso IN ('lectura', 'tomas_y_signos', 'familiar_admin', 'admin', 'tomas_y_citas', 'edicion_completa')),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT uq_paciente_cuidador UNIQUE (paciente_id, usuario_cuidador_id)
 );
@@ -197,7 +197,32 @@ CREATE INDEX IF NOT EXISTS idx_expediente_archivos_paciente ON expediente_archiv
 CREATE INDEX IF NOT EXISTS idx_expediente_archivos_visita ON expediente_archivos(visita_medica_id);
 
 -- ==========================================
--- 8. Seguridad: Rate Limiting & Auditoría Clínica
+-- 8. Portal Médico & PINs Temporales
+-- ==========================================
+CREATE TABLE IF NOT EXISTS tokens_acceso_medico (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    paciente_id INT NOT NULL REFERENCES pacientes(id) ON DELETE CASCADE,
+    generado_por_usuario_id INT NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+    pin_seguridad VARCHAR(8) NOT NULL,
+    token_url VARCHAR(64) UNIQUE NOT NULL,
+    medico_nombre VARCHAR(150),
+    hospital_institucion VARCHAR(150),
+    duracion_horas INT DEFAULT 24,
+    expira_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    max_usos INT DEFAULT 20,
+    usos_actuales INT DEFAULT 0,
+    activo BOOLEAN DEFAULT TRUE,
+    ultimo_acceso_at TIMESTAMP WITH TIME ZONE,
+    ip_ultimo_acceso VARCHAR(45),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_tokens_medico_pin ON tokens_acceso_medico(pin_seguridad, activo, expira_at);
+CREATE INDEX IF NOT EXISTS idx_tokens_medico_token ON tokens_acceso_medico(token_url, activo, expira_at);
+CREATE INDEX IF NOT EXISTS idx_tokens_medico_paciente ON tokens_acceso_medico(paciente_id, expira_at DESC);
+
+-- ==========================================
+-- 9. Seguridad: Rate Limiting & Auditoría Clínica
 -- ==========================================
 CREATE TABLE IF NOT EXISTS rate_limits (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

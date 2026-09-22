@@ -112,11 +112,13 @@
                         ⋮
                     </button>
                     <!-- Menú Desplegable Móvil -->
-                    <div id="mobile-actions-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-slate-200 py-1.5 z-50 animate-fadeIn">
+                        <button onclick="abrirModalPinMedico()" class="w-full text-left px-4 py-2.5 text-xs font-bold text-blue-700 hover:bg-blue-50 flex items-center gap-2">
+                            <span>🔑</span> Generar PIN Médico
+                        </button>
                         <button onclick="window.print()" class="w-full text-left px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-2">
                             <span>🖨️</span> Imprimir Expediente
                         </button>
-                        <a href="<?= APP_URL ?>/emergencia?token=<?= e((string)($paciente['qr_token'] ?? '')) ?>" target="_blank" class="w-full text-left px-4 py-2.5 text-xs font-bold text-blue-700 hover:bg-blue-50 flex items-center gap-2">
+                        <a href="<?= APP_URL ?>/emergencia?token=<?= e((string)($paciente['qr_token'] ?? '')) ?>" target="_blank" class="w-full text-left px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-2">
                             <span>📱</span> Ficha QR Pública
                         </a>
                         <div class="border-t border-slate-100 my-1"></div>
@@ -129,6 +131,10 @@
 
             <!-- Bloque Derecho: Acciones Compactas en Escritorio (sm+) -->
             <div class="hidden sm:flex items-center gap-2 shrink-0">
+                <button type="button" onclick="abrirModalPinMedico()" class="tap-bounce touch-min sm:touch-min-none px-3.5 py-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-bold rounded-xl shadow-xs transition flex items-center gap-1.5 cursor-pointer">
+                    <span>🔑</span>
+                    <span>PIN Médico</span>
+                </button>
                 <button onclick="window.print()" class="tap-bounce touch-min sm:touch-min-none px-3 py-2 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-700 text-xs font-bold rounded-xl border border-slate-200 transition flex items-center gap-1.5 shadow-xs">
                     <span>🖨️</span>
                     <span>Imprimir</span>
@@ -376,8 +382,121 @@
         <?php require_once dirname(__DIR__) . '/components/bottom_nav.php'; ?>
     </div>
 
-    <!-- Script de Transición Suave y Cierre de Menú Kebab -->
+    <!-- Modal para Generar PIN Médico Temporal -->
+    <div id="modal-pin-medico" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl border border-slate-100 text-center relative animate-fadeIn">
+            <button type="button" onclick="cerrarModalPinMedico()" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-100 text-slate-500 font-bold flex items-center justify-center hover:bg-slate-200 transition cursor-pointer">
+                &times;
+            </button>
+
+            <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center text-2xl mx-auto mb-3">
+                🔑
+            </div>
+
+            <h3 class="text-lg font-bold text-slate-900 mb-1">Acceso Clínico Temporal</h3>
+            <p class="text-xs text-slate-500 mb-6">Genera un PIN seguro de 6 dígitos para que el médico tratante consulte el expediente en consulta.</p>
+
+            <form id="form-generar-pin" onsubmit="ejecutarGeneracionPin(event)" class="space-y-4 text-left">
+                <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
+                <input type="hidden" name="paciente_id" value="<?= e((string)$paciente['id']) ?>">
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Nombre del Médico (Opcional)</label>
+                    <input type="text" name="medico_nombre" placeholder="Ej. Dr. Carlos Mendoza" 
+                           class="w-full rounded-xl border-slate-300 px-3.5 py-2.5 text-xs sm:text-sm bg-slate-50 focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-600/10 outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Vigencia del PIN</label>
+                    <select name="duracion_horas" class="w-full rounded-xl border-slate-300 px-3.5 py-2.5 text-xs sm:text-sm bg-slate-50 focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-600/10 outline-none">
+                        <option value="12">12 Horas (Consulta del día)</option>
+                        <option value="24" selected>24 Horas (Recomendado)</option>
+                        <option value="48">48 Horas (Fin de semana)</option>
+                    </select>
+                </div>
+
+                <div id="resultado-pin" class="hidden p-4 bg-emerald-50 rounded-2xl border border-emerald-200 text-center space-y-2">
+                    <span class="text-xs font-bold text-emerald-800 uppercase tracking-wider block">PIN de Acceso Médico:</span>
+                    <div id="pin-display" class="font-mono text-3xl font-black text-emerald-700 tracking-widest bg-white py-2 rounded-xl border border-emerald-200 shadow-xs">
+                        ------
+                    </div>
+                    <p class="text-[11px] text-emerald-700 font-medium leading-tight">
+                        Dicta este PIN al médico o comparte el enlace:
+                    </p>
+                    <button type="button" id="btn-copiar-enlace" onclick="copiarEnlaceMedico()" class="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-xs transition">
+                        📋 Copiar Enlace Directo
+                    </button>
+                </div>
+
+                <div class="pt-2 flex gap-2">
+                    <button type="button" onclick="cerrarModalPinMedico()" class="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition">
+                        Cerrar
+                    </button>
+                    <button type="submit" id="btn-submit-pin" class="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-xs transition cursor-pointer">
+                        Generar PIN
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Script de Transición Suave, Kebab y PIN Médico -->
     <script>
+        let enlaceMedicoGenerado = '';
+
+        function abrirModalPinMedico() {
+            const modal = document.getElementById('modal-pin-medico');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function cerrarModalPinMedico() {
+            const modal = document.getElementById('modal-pin-medico');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        async function ejecutarGeneracionPin(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btn-submit-pin');
+            btn.disabled = true;
+            btn.innerText = 'Generando...';
+
+            const formData = new FormData(document.getElementById('form-generar-pin'));
+            try {
+                const res = await fetch('<?= APP_URL ?>/api/medico/generar-pin', {
+                    method: 'POST',
+                    body: formData,
+                    headers: { 'Accept': 'application/json' }
+                });
+                const data = await res.json();
+                if (data.success && data.data) {
+                    document.getElementById('pin-display').innerText = data.data.pin;
+                    enlaceMedicoGenerado = data.data.enlace_directo;
+                    document.getElementById('resultado-pin').classList.remove('hidden');
+                    btn.innerText = 'Regenerar PIN';
+                } else {
+                    alert(data.message || 'Error al generar PIN');
+                    btn.innerText = 'Generar PIN';
+                }
+            } catch (err) {
+                alert('Ocurrió un error de conexión');
+                btn.innerText = 'Generar PIN';
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        function copiarEnlaceMedico() {
+            if (enlaceMedicoGenerado) {
+                navigator.clipboard.writeText(enlaceMedicoGenerado).then(() => {
+                    const btn = document.getElementById('btn-copiar-enlace');
+                    btn.innerText = '✓ ¡Enlace Copiado al Portapapeles!';
+                    setTimeout(() => { btn.innerText = '📋 Copiar Enlace Directo'; }, 3000);
+                });
+            }
+        }
+
         window.addEventListener('DOMContentLoaded', () => {
             requestAnimationFrame(() => {
                 const body = document.getElementById('dashboard-body');

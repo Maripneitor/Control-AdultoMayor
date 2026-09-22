@@ -8,6 +8,94 @@ use PDO;
 
 class AuthMiddleware {
     /**
+     * Matriz Formal de Permisos por Rol en VitalSenior
+     */
+    public const ROLES_PERMISSIONS = [
+        'paciente' => [
+            'ver_dashboard_paciente',
+            'marcar_toma_propia',
+            'activar_sos'
+        ],
+        'adulto_mayor' => [
+            'ver_dashboard_paciente',
+            'marcar_toma_propia',
+            'activar_sos'
+        ],
+        'familiar_admin' => [
+            'ver_dashboard_cuidador',
+            'gestionar_pacientes',
+            'gestionar_medicamentos',
+            'gestionar_inventario',
+            'gestionar_expediente',
+            'gestionar_citas',
+            'registrar_signos',
+            'generar_pin_medico',
+            'vincular_cuidadores',
+            'ver_auditoria',
+            'marcar_toma',
+            'posponer_toma',
+            'deshacer_toma',
+            'ver_citas',
+            'ver_contactos_sos'
+        ],
+        'cuidador' => [
+            'ver_dashboard_cuidador',
+            'gestionar_pacientes',
+            'gestionar_medicamentos',
+            'gestionar_inventario',
+            'gestionar_expediente',
+            'gestionar_citas',
+            'registrar_signos',
+            'generar_pin_medico',
+            'vincular_cuidadores',
+            'ver_auditoria',
+            'marcar_toma',
+            'posponer_toma',
+            'deshacer_toma',
+            'ver_citas',
+            'ver_contactos_sos'
+        ],
+        'familiar' => [
+            'ver_dashboard_cuidador',
+            'gestionar_pacientes',
+            'gestionar_medicamentos',
+            'gestionar_inventario',
+            'gestionar_expediente',
+            'gestionar_citas',
+            'registrar_signos',
+            'generar_pin_medico',
+            'vincular_cuidadores',
+            'ver_auditoria',
+            'marcar_toma',
+            'posponer_toma',
+            'deshacer_toma',
+            'ver_citas',
+            'ver_contactos_sos'
+        ],
+        'cuidador_auxiliar' => [
+            'ver_dashboard_cuidador',
+            'marcar_toma',
+            'posponer_toma',
+            'registrar_signos',
+            'ver_citas',
+            'ver_contactos_sos'
+        ],
+        'medico' => [
+            'ver_expediente_clinico',
+            'ver_estudios_laboratorio',
+            'exportar_pdf_expediente',
+            'registrar_nota_evolucion',
+            'emitir_receta'
+        ],
+        'administrador' => [
+            'todas_acciones'
+        ],
+        'admin' => [
+            'todas_acciones'
+        ]
+    ];
+
+    /**
      * Asegura que exista una sesión activa de usuario
      */
     public static function handle(): void {
@@ -40,16 +128,14 @@ class AuthMiddleware {
     }
 
     /**
-     * Bloquea peticiones según el rol del usuario ('familiar', 'adulto_mayor', 'admin')
-     *
-     * @param array $rolesPermitidos Lista de roles con permiso (ej. ['familiar', 'admin'])
+     * Bloquea peticiones según el rol del usuario
      */
     public static function requireRole(array $rolesPermitidos): void {
         self::handle();
 
         $userRole = $_SESSION['user_role'] ?? '';
 
-        if (!in_array($userRole, $rolesPermitidos, true)) {
+        if (!in_array($userRole, $rolesPermitidos, true) && !in_array($userRole, ['admin', 'administrador'], true)) {
             if (!empty($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false) {
                 http_response_code(403);
                 header('Content-Type: application/json; charset=utf-8');
@@ -63,32 +149,41 @@ class AuthMiddleware {
     }
 
     /**
-     * Valida permisos requeridos en sesión (o permite por defecto si rol autorizado)
+     * Valida permisos requeridos evaluando la matriz ROLES_PERMISSIONS
      */
     public static function requirePermission(string $permiso): void {
         self::handle();
-        $permissions = $_SESSION['user_permissions'] ?? [];
         $userRole = $_SESSION['user_role'] ?? '';
 
-        // Si es admin o cuidador_principal/familiar tiene acceso por defecto
-        if ($userRole === 'admin' || in_array('todas_acciones', $permissions, true)) {
+        // Si es administrador tiene acceso irrestricto
+        if (in_array($userRole, ['admin', 'administrador'], true)) {
             return;
         }
 
-        if (!empty($permissions) && !in_array($permiso, $permissions, true)) {
-            // Verificar si el rol base tiene acceso
-            if ($userRole === 'familiar' || $userRole === 'cuidador_principal') {
-                return;
-            }
-            if (!empty($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false) {
-                http_response_code(403);
-                header('Content-Type: application/json; charset=utf-8');
-                echo json_encode(['error' => 'Permiso insuficiente para esta operación.'], JSON_UNESCAPED_UNICODE);
-                exit;
-            }
-            http_response_code(403);
-            die('Error 403: No tienes los permisos necesarios para realizar esta acción.');
+        $permisosRol = self::ROLES_PERMISSIONS[$userRole] ?? [];
+
+        if (in_array('todas_acciones', $permisosRol, true) || in_array($permiso, $permisosRol, true)) {
+            return;
         }
+
+        // Si no tiene el permiso requerido
+        if (!empty($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false) {
+            http_response_code(403);
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode([
+                'error' => 'Permiso insuficiente para esta operación clínica.',
+                'permiso_requerido' => $permiso,
+                'rol_actual' => $userRole
+            ], JSON_UNESCAPED_UNICODE);
+            exit;
+        }
+
+        $_SESSION['flash_notification'] = [
+            'type' => 'danger',
+            'message' => 'No tienes los permisos necesarios para realizar esta acción.'
+        ];
+        header('Location: ' . (defined('APP_URL') ? APP_URL : '') . '/dashboard');
+        exit;
     }
 
     /**
@@ -130,9 +225,6 @@ class AuthMiddleware {
      * Aislamiento de datos Multitenant y Ofuscación de Seguridad.
      * Garantiza que el usuario en sesión es el propio paciente o un familiar/cuidador con vínculo activo.
      * Si no tiene acceso, devuelve un error 404 (en lugar de 403) para ofuscar la existencia del recurso.
-     *
-     * @param string|int $pacienteId Identificador del paciente a consultar
-     * @return array Metadatos de autorización: ['puede_editar' => bool, 'nivel_acceso' => string, 'es_propio' => bool]
      */
     public static function requirePatientAccess($pacienteId): array {
         self::handle();
@@ -152,7 +244,7 @@ class AuthMiddleware {
                 'puede_ver' => true,
                 'puede_editar' => true,
                 'es_propio' => false,
-                'nivel_acceso' => 'edicion_completa'
+                'nivel_acceso' => 'admin'
             ];
         }
 
@@ -162,7 +254,7 @@ class AuthMiddleware {
         $esDuenio = (bool) $stmt->fetch();
 
         if ($esDuenio) {
-            if ($userRole === 'adulto_mayor') {
+            if (in_array($userRole, ['paciente', 'adulto_mayor'], true)) {
                 return [
                     'puede_ver' => true,
                     'puede_editar' => false,
@@ -174,7 +266,7 @@ class AuthMiddleware {
                     'puede_ver' => true,
                     'puede_editar' => true,
                     'es_propio' => true,
-                    'nivel_acceso' => 'edicion_completa'
+                    'nivel_acceso' => 'familiar_admin'
                 ];
             }
         }
@@ -190,19 +282,19 @@ class AuthMiddleware {
         $vinculo = $stmtVinc->fetch(PDO::FETCH_ASSOC);
 
         if ($vinculo) {
-            $nivelAcceso = $vinculo['nivel_acceso'] ?? 'tomas_y_citas';
-            $puedeEditar = in_array($nivelAcceso, ['edicion_completa', 'tomas_y_citas', 'admin'], true);
+            $nivelAcceso = $vinculo['nivel_acceso'] ?? 'tomas_y_signos';
+            $puedeEditar = in_array($nivelAcceso, ['familiar_admin', 'edicion_completa', 'admin'], true);
 
             return [
                 'puede_ver' => true,
                 'puede_editar' => $puedeEditar,
                 'es_propio' => false,
                 'nivel_acceso' => $nivelAcceso,
-                'parentesco' => $vinculo['parentesco'] ?? 'Cuidador'
+                'parentesco' => $vinculo['parentesco'] ?? 'Familiar / Cuidador'
             ];
         }
 
-        // 4. OFUSCACIÓN DE SEGURIDAD: Si falla la comprobación, devolver 404 (no 403)
+        // 4. OFUSCACIÓN DE SEGURIDAD: Si falla la comprobación, devolver 404
         self::abortWith404();
     }
 

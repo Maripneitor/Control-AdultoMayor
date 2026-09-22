@@ -59,9 +59,9 @@ class DashboardController extends Controller {
         }
 
         if (empty($todosLosPacientes)) {
-            $userRole = $_SESSION['user_role'] ?? 'familiar';
-            if ($userRole === 'familiar' || $userRole === 'cuidador') {
-                // Redirección obligatoria a la Vista 5 (Vinculación) para Familiares sin pacientes vinculados
+            $userRole = $_SESSION['user_role'] ?? 'familiar_admin';
+            if (in_array($userRole, ['familiar_admin', 'familiar', 'cuidador', 'cuidador_auxiliar'], true)) {
+                // Redirección obligatoria a la Vinculación para Familiares sin pacientes vinculados
                 header('Location: ' . APP_URL . '/vincular');
                 exit;
             }
@@ -91,6 +91,8 @@ class DashboardController extends Controller {
         }
 
         $pacienteId = $pacienteActivoId;
+        $acceso = AuthMiddleware::requirePatientAccess($pacienteId);
+        $puedeEditar = $acceso['puede_editar'] ?? false;
 
         // 1.5. Generar tomas dinámicamente si no existen hoy
         $this->medicamentoModel->generarTomasDiarias($pacienteId);
@@ -104,10 +106,10 @@ class DashboardController extends Controller {
         $alertasDosis = $this->medicamentoModel->getOmitidasHoy($pacienteId);
         $alertasInventario = $this->medicamentoModel->getBajoInventario($pacienteId);
 
-        // 3. Renderizar la vista pasando los datos
+        // 3. Renderizar la vista pasando los datos según el rol
         $userRole = $_SESSION['user_role'] ?? '';
         
-        if ($userRole === 'adulto_mayor') {
+        if (in_array($userRole, ['paciente', 'adulto_mayor'], true)) {
             require_once __DIR__ . '/../Views/dashboard/index.php';
         } else {
             require_once __DIR__ . '/../Views/dashboard/cuidador.php';

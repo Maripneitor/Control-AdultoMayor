@@ -9,10 +9,19 @@ use PDO;
 class Paciente extends Model {
     protected $table = 'pacientes';
 
+    public static function generarCodigoMnemotecnico(string $nombre): string {
+        $limpio = strtoupper(preg_replace('/[^A-Za-z]/', '', $nombre));
+        $prefijo = substr($limpio, 0, 3);
+        if (strlen($prefijo) < 3) {
+            $prefijo = str_pad($prefijo, 3, 'SEN');
+        }
+        $numero = random_int(1000, 9999);
+        return "{$prefijo}-{$numero}";
+    }
+
     public function createInitialProfile(int $userId, string $nombrePaciente): int {
         $tokenSos = bin2hex(random_bytes(16));
-        $codigoVinculacion = strtoupper(substr(md5(uniqid((string)rand(), true)), 0, 8)); // Generate 8 char code
-        $codigoVinculacion = substr($codigoVinculacion, 0, 4) . '-' . substr($codigoVinculacion, 4, 4);
+        $codigoVinculacion = self::generarCodigoMnemotecnico($nombrePaciente);
 
         $stmt = $this->db->prepare("
             INSERT INTO pacientes (usuario_id, nombre, apellidos, fecha_nacimiento, tipo_sangre, alergias, enfermedades_cronicas, notas_cognitivas, token_sos, codigo_vinculacion) 

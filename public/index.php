@@ -110,6 +110,11 @@ $router->post('/perfil/eliminar', 'PerfilController@eliminarCuenta', [AuthMiddle
 // PDF
 $router->get('/paciente/pdf', 'PacienteController@descargarExpediente', [AuthMiddleware::class]);
 
+// Portal Médico Clínico & PIN Temporal
+$router->post('/api/medico/generar-pin', 'MedicoPortalController@generarPin', [AuthMiddleware::class]);
+$router->get('/medico/consulta', 'MedicoPortalController@consulta');
+$router->post('/medico/guardar-nota', 'MedicoPortalController@guardarNota');
+
 // Ruta de prueba para 404
 $router->get('/404', function() {
     require __DIR__ . '/../src/Views/404.php';
