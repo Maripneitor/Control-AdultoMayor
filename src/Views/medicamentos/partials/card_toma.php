@@ -1,4 +1,4 @@
-<div class="flex flex-col p-4 mb-4 rounded-xl border <?= $toma['estado'] === 'tomada' ? 'bg-emerald-50/50 border-emerald-200' : 'bg-white border-slate-200 shadow-sm' ?>">
+<div class="flex flex-col p-4 mb-4 rounded-xl border <?= in_array($toma['estado'], ['tomada', 'tomado'], true) ? 'bg-emerald-50/50 border-emerald-200' : 'bg-white border-slate-200 shadow-sm' ?>">
     <div class="flex items-center space-x-4 mb-4">
         <?php 
             $color = !empty($toma['color_distintivo']) ? $toma['color_distintivo'] : 'Blanco';

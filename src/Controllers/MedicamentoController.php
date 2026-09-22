@@ -39,15 +39,15 @@ class MedicamentoController extends Controller {
         $db = \Config\Database::getInstance()->getConnection();
         $stmt = $db->prepare("
             SELECT 
-                COUNT(*) FILTER (WHERE estado = 'tomada') as tomadas,
-                COUNT(*) FILTER (WHERE estado IN ('tomada', 'omitido')) as total_evaluadas
+                COUNT(*) FILTER (WHERE estado = 'tomado') as tomadas,
+                COUNT(*) FILTER (WHERE estado IN ('tomado', 'omitido')) as total_evaluadas
             FROM tomas_historial
             WHERE paciente_id = :pid
         ");
         $stmt->execute([':pid' => $pacienteId]);
         $stats = $stmt->fetch(\PDO::FETCH_ASSOC);
-        $adherencia = $stats['total_evaluadas'] > 0 
-            ? round(($stats['tomadas'] / $stats['total_evaluadas']) * 100) 
+        $adherencia = !empty($stats['total_evaluadas']) && $stats['total_evaluadas'] > 0 
+            ? round(((int)$stats['tomadas'] / (int)$stats['total_evaluadas']) * 100) 
             : 100;
 
         // 3. Renderizado condicional en la vista pasando el booleano
@@ -166,7 +166,7 @@ class MedicamentoController extends Controller {
                 // Validación Multitenant para asegurar que el usuario puede interactuar con el paciente de esta toma
                 $acceso = \App\Middlewares\AuthMiddleware::requirePatientAccess($toma['paciente_id']);
 
-                if ($toma['estado'] !== 'tomada') {
+                if ($toma['estado'] !== 'tomado') {
                     $nota = null;
                     if (!empty($toma['hora_programada'])) {
                         $horaProgramada = strtotime($toma['fecha_programada'] . ' ' . $toma['hora_programada']);
@@ -179,7 +179,7 @@ class MedicamentoController extends Controller {
                         }
                     }
 
-                    $this->medicamentoModel->actualizarEstadoToma($registroId, (int)$toma['paciente_id'], 'tomada', $userId, $nota);
+                    $this->medicamentoModel->actualizarEstadoToma($registroId, (int)$toma['paciente_id'], 'tomado', $userId, $nota);
 
                     $medId = (int)$toma['medicamento_id'];
                     $stmtMed = $db->prepare("SELECT stock_actual, dosis_por_toma, stock_minimo_alerta FROM medicamentos WHERE id = :mid FOR UPDATE");
@@ -258,7 +258,7 @@ class MedicamentoController extends Controller {
                 // Validación Multitenant
                 $acceso = \App\Middlewares\AuthMiddleware::requirePatientAccess($toma['paciente_id']);
 
-                if (!in_array($toma['estado'], ['pendiente', 'pospuesta'], true)) {
+                if (!in_array($toma['estado'], ['pendiente', 'pospuesto'], true)) {
                     $db->rollBack();
                     $this->setFlash('warning', 'La toma no se encuentra pendiente para ser pospuesta.');
                     header('Location: ' . APP_URL . '/dashboard');
@@ -267,7 +267,7 @@ class MedicamentoController extends Controller {
 
                 // 2. Determinar la hora base actual y la nueva hora pospuesta (+30 min) en UTC
                 $horaBaseStr = $toma['pospuesto_hasta'] ?? $toma['fecha_programada_utc'];
-                $horaBaseUtc = new \DateTime($horaBaseStr, new \DateTimeZone('UTC'));
+                $horaBaseUtc = new \DateTime($horaBaseStr ?? 'now', new \DateTimeZone('UTC'));
                 
                 // Si la hora base ya quedó en el pasado, posponer desde el instante actual
                 $ahoraUtc = new \DateTime('now', new \DateTimeZone('UTC'));
@@ -286,7 +286,7 @@ class MedicamentoController extends Controller {
                        AND paciente_id = :pid 
                        AND id != :current_id
                        AND fecha_programada_utc > :hora_referencia
-                       AND estado IN ('pendiente', 'pospuesta')
+                       AND estado IN ('pendiente', 'pospuesto')
                      ORDER BY fecha_programada_utc ASC 
                      LIMIT 1"
                 );
@@ -320,7 +320,7 @@ class MedicamentoController extends Controller {
                 // 4. Margen seguro validado: Actualizar estado y posponer
                 $stmtUpdate = $db->prepare(
                     "UPDATE tomas_historial 
-                     SET estado = 'pospuesta', 
+                     SET estado = 'pospuesto', 
                          pospuesto_hasta = :nueva_hora,
                          recordatorio_enviado = FALSE, 
                          nota_incidencia = 'Pospuesta 30 minutos tras validación de margen clínico seguro (>2h)'
@@ -385,7 +385,7 @@ class MedicamentoController extends Controller {
                 // Validación Multitenant
                 $acceso = \App\Middlewares\AuthMiddleware::requirePatientAccess($toma['paciente_id']);
 
-                if ($toma['estado'] !== 'tomada') {
+                if ($toma['estado'] !== 'tomado') {
                     $db->rollBack();
                     $this->setFlash('danger', 'Solo es posible deshacer tomas que figuren como tomadas.');
                     header('Location: ' . APP_URL . '/dashboard');
@@ -411,10 +411,10 @@ class MedicamentoController extends Controller {
                     exit;
                 }
 
-                // Actualizar estado a deshecha
+                // Actualizar estado a pendiente (o estado válido del enum)
                 $stmtUpdate = $db->prepare(
                     "UPDATE tomas_historial 
-                     SET estado = 'deshecha', deshecho_at = CURRENT_TIMESTAMP, nota_incidencia = 'Toma deshecha por el usuario' 
+                     SET estado = 'pendiente', tomado_at = NULL, nota_incidencia = 'Toma deshecha por el usuario' 
                      WHERE id = :id"
                 );
                 $stmtUpdate->execute([':id' => $registroId]);

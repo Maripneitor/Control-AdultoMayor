@@ -103,7 +103,7 @@ class Medicamento extends Model {
         $stmt = $this->db->prepare("
             UPDATE tomas_historial 
             SET estado = :estado, 
-                tomado_at = CASE WHEN :estado IN ('tomada', 'pospuesto') THEN NOW() ELSE tomado_at END,
+                tomado_at = CASE WHEN :estado IN ('tomado', 'pospuesto') THEN NOW() ELSE tomado_at END,
                 registrado_por_usuario_id = :usuario_id,
                 nota_incidencia = :nota
             WHERE id = :id AND medicamento_id IN (SELECT id FROM medicamentos WHERE paciente_id = :paciente_id)
