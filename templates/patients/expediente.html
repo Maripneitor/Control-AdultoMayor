@@ -1,0 +1,197 @@
+{% extends 'base.html' %}
+
+{% block title %}Expediente Clínico - {{ paciente.nombre_completo }}{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Encabezado del Perfil Clínico del Paciente -->
+    <div class="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div class="flex items-center gap-5">
+            <div class="w-16 h-16 rounded-2xl bg-teal-50 border border-teal-200 flex items-center justify-center text-teal-700 font-extrabold text-2xl shadow-inner">
+                {{ paciente.nombre|slice:":1" }}{{ paciente.apellidos|slice:":1" }}
+            </div>
+            <div>
+                <div class="flex items-center gap-3">
+                    <h1 class="text-2xl font-black text-slate-900 tracking-tight">{{ paciente.nombre_completo }}</h1>
+                    <span class="px-2.5 py-1 text-xs font-bold rounded-lg bg-teal-50 text-teal-700 border border-teal-200/70">
+                        Tipo de Sangre: {{ paciente.tipo_sangre }}
+                    </span>
+                </div>
+                <p class="text-xs text-slate-500 mt-1">
+                    Nacimiento: <strong>{{ paciente.fecha_nacimiento|date:"d M Y" }}</strong> &bull; Zona Horaria: {{ paciente.zona_horaria }}
+                </p>
+            </div>
+        </div>
+
+        <!-- Botones de Acción Rápida -->
+        <div class="flex items-center gap-3">
+            <a href="{% url 'patients:emergencia_publica' %}?token={{ paciente.qr_token }}" target="_blank"
+               class="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition shadow-xs flex items-center gap-2">
+                <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>
+                Ver Ficha SOS QR
+            </a>
+
+            {% if permisos.puede_editar %}
+            <span class="px-3 py-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold rounded-xl">
+                Modo Edición Habilitado
+            </span>
+            {% else %}
+            <span class="px-3 py-1.5 bg-slate-100 text-slate-600 border border-slate-200 text-xs font-medium rounded-xl">
+                Acceso Solo Lectura ({{ permisos.nivel }})
+            </span>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Rejilla de Módulos Clínicos -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- Columna 1 y 2: Diagnóstico, Medicamentos y Signos Vitales -->
+        <div class="lg:col-span-2 space-y-6">
+
+            <!-- Diagnóstico y Antecedentes -->
+            <div class="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs">
+                <h2 class="text-sm font-extrabold uppercase tracking-wider text-slate-400 mb-4 flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-teal-500"></span> Antecedentes y Cuidados Médicos
+                </h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="p-4 bg-slate-50 rounded-xl border border-slate-200/60">
+                        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1">Alergias</span>
+                        <p class="text-sm font-semibold text-slate-800">{{ paciente.alergias|default:"Sin alergias registradas" }}</p>
+                    </div>
+                    <div class="p-4 bg-slate-50 rounded-xl border border-slate-200/60">
+                        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1">Padecimientos Crónicos</span>
+                        <p class="text-sm font-semibold text-slate-800">{{ paciente.enfermedades_cronicas|default:"Sin enfermedades crónicas reportadas" }}</p>
+                    </div>
+                </div>
+                {% if paciente.notas_cognitivas %}
+                <div class="mt-4 p-4 bg-amber-50/70 border border-amber-200/70 rounded-xl">
+                    <span class="text-xs font-bold text-amber-800 uppercase tracking-wider block mb-1">Consideraciones Cognitivas y Conductuales</span>
+                    <p class="text-xs text-amber-900 leading-relaxed">{{ paciente.notas_cognitivas }}</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Medicamentos Activos -->
+            <div class="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-sm font-extrabold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-blue-500"></span> Medicación Vigente
+                    </h2>
+                    <span class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200/60">
+                        {{ medicamentos_activos|length }} activos
+                    </span>
+                </div>
+
+                <div class="divide-y divide-slate-100">
+                    {% for med in medicamentos_activos %}
+                    <div class="py-3.5 flex items-center justify-between">
+                        <div>
+                            <h3 class="text-sm font-bold text-slate-900">{{ med.nombre_comercial }}</h3>
+                            <p class="text-xs text-slate-500">Dosis: <strong>{{ med.dosis }}</strong> &bull; Cada {{ med.frecuencia_horas }} horas</p>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-xs font-semibold px-2 py-1 rounded-lg {% if med.stock_bajo %}bg-rose-50 text-rose-700 border border-rose-200{% else %}bg-slate-100 text-slate-700{% endif %}">
+                                Stock: {{ med.stock_actual }}
+                            </span>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-xs text-slate-400 italic py-4 text-center">No hay medicamentos prescritos registrados actualmente.</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Últimos Signos Vitales -->
+            <div class="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs">
+                <h2 class="text-sm font-extrabold uppercase tracking-wider text-slate-400 mb-4 flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Bitácora de Signos Vitales
+                </h2>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-slate-100 text-xs">
+                        <thead>
+                            <tr class="text-left text-slate-400 font-bold uppercase">
+                                <th class="pb-3">Fecha</th>
+                                <th class="pb-3">Presión (S/D)</th>
+                                <th class="pb-3">Ritmo</th>
+                                <th class="pb-3">Glucosa</th>
+                                <th class="pb-3">IMC</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 font-medium text-slate-700">
+                            {% for signo in ultimos_signos %}
+                            <tr>
+                                <td class="py-2.5">{{ signo.created_at|date:"d/m H:i" }}</td>
+                                <td class="py-2.5 font-bold">{{ signo.presion_sistolica|default:"-" }}/{{ signo.presion_diastolica|default:"-" }}</td>
+                                <td class="py-2.5">{{ signo.ritmo_cardiaco|default:"-" }} ppm</td>
+                                <td class="py-2.5">{{ signo.glucosa|default:"-" }} mg/dL</td>
+                                <td class="py-2.5 font-bold text-teal-700">{{ signo.imc|default:"-" }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="py-4 text-center text-slate-400 italic">Sin registros recientes de signos vitales.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Columna 3: Contactos de Emergencia & Directorio Médico -->
+        <div class="space-y-6">
+
+            <!-- Agenda SOS / Contactos de Emergencia -->
+            <div class="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs">
+                <h2 class="text-sm font-extrabold uppercase tracking-wider text-slate-400 mb-4 flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-rose-500"></span> Contactos de Emergencia (SOS)
+                </h2>
+                <div class="space-y-3">
+                    {% for c in contactos_emergencia %}
+                    <div class="p-3.5 rounded-xl border {% if c.es_prioritario %}bg-rose-50/40 border-rose-200/80{% else %}bg-slate-50 border-slate-200/60{% endif %}">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-extrabold text-slate-900">{{ c.nombre }}</span>
+                            {% if c.es_prioritario %}
+                            <span class="px-1.5 py-0.5 text-[10px] font-bold rounded bg-rose-600 text-white uppercase">Prioritario</span>
+                            {% endif %}
+                        </div>
+                        <p class="text-[11px] text-slate-500 mt-0.5">{{ c.parentesco }}</p>
+                        <a href="tel:{{ c.telefono }}" class="inline-flex items-center gap-1.5 text-xs font-bold text-teal-700 hover:text-teal-800 mt-2">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                            {{ c.telefono }}
+                        </a>
+                    </div>
+                    {% empty %}
+                    <p class="text-xs text-slate-400 italic py-2">No se han registrado contactos prioritarios.</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Médicos Tratantes -->
+            <div class="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs">
+                <h2 class="text-sm font-extrabold uppercase tracking-wider text-slate-400 mb-4 flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-indigo-500"></span> Médicos Tratantes
+                </h2>
+                <div class="space-y-3">
+                    {% for doc in doctores_asignados %}
+                    <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200/60">
+                        <strong class="text-xs font-bold text-slate-900 block">{{ doc.nombre }}</strong>
+                        <span class="text-[11px] text-indigo-600 font-semibold block">{{ doc.especialidad|default:"Médico General" }}</span>
+                        {% if doc.cedula_profesional %}
+                        <span class="text-[10px] text-slate-400 block mt-1">Cédula: {{ doc.cedula_profesional }}</span>
+                        {% endif %}
+                    </div>
+                    {% empty %}
+                    <p class="text-xs text-slate-400 italic py-2">Sin médicos vinculados actualmente.</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}

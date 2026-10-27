@@ -18,6 +18,10 @@
 .agents/
 composer.phar
 /scratch/
+venv/
+.venv/
+env/
+ENV/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -69,9 +73,15 @@ ehthumbs.db
 Thumbs.db
 [Dd]esktop.ini
 
-# 8. Archivos Temporales y Caché de PHP
+# 8. Archivos Temporales y Caché de PHP y Python
 *.tmp
 *.bak
 *.old
 .phpunit.result.cache
 .php-cs-fixer.cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.sqlite3
+/staticfiles/
+/graphify-out/
