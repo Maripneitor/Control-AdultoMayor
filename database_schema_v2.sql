@@ -36,8 +36,12 @@ CREATE TABLE IF NOT EXISTS pacientes (
     alergias TEXT,
     enfermedades_cronicas TEXT,
     notas_cognitivas TEXT,
+    foto_perfil VARCHAR(255) NULL,
     qr_token UUID UNIQUE DEFAULT gen_random_uuid(),
+    token_emergencia_qr VARCHAR(64) UNIQUE,
     codigo_vinculacion VARCHAR(10) UNIQUE,
+    codigo_expira_en TIMESTAMP WITH TIME ZONE,
+    codigo_activo BOOLEAN DEFAULT TRUE,
     zona_horaria VARCHAR(50) DEFAULT 'America/Mexico_City',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
@@ -51,13 +55,13 @@ CREATE TABLE IF NOT EXISTS paciente_cuidador (
     paciente_id INT NOT NULL REFERENCES pacientes(id) ON DELETE CASCADE,
     usuario_cuidador_id INT NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
     parentesco VARCHAR(50) DEFAULT 'Familiar',
-    nivel_acceso VARCHAR(50) DEFAULT 'familiar_admin' CHECK (nivel_acceso IN ('lectura', 'tomas_y_signos', 'familiar_admin', 'admin', 'tomas_y_citas', 'edicion_completa')),
+    nivel_acceso VARCHAR(50) DEFAULT 'completo' CHECK (nivel_acceso IN ('completo', 'solo_lectura', 'lectura', 'tomas_y_signos', 'familiar_admin', 'admin', 'tomas_y_citas', 'edicion_completa')),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT uq_paciente_cuidador UNIQUE (paciente_id, usuario_cuidador_id)
 );
 
 -- ==========================================
--- 4. Directorio Médico y Contactos SOS
+-- 4. Directorio y Ecosistema Médico / Doctores
 -- ==========================================
 CREATE TABLE IF NOT EXISTS contactos_emergencia (
     id SERIAL PRIMARY KEY,
@@ -72,12 +76,47 @@ CREATE TABLE IF NOT EXISTS contactos_emergencia (
 
 CREATE TABLE IF NOT EXISTS doctores (
     id SERIAL PRIMARY KEY,
-    paciente_id INT NOT NULL REFERENCES pacientes(id) ON DELETE CASCADE,
+    usuario_id INT REFERENCES usuarios(id) ON DELETE SET NULL,
+    paciente_id INT REFERENCES pacientes(id) ON DELETE CASCADE,
     nombre VARCHAR(150) NOT NULL,
+    cedula_profesional VARCHAR(50),
     especialidad VARCHAR(100),
     telefono_contacto VARCHAR(25),
+    telefono_consultorio VARCHAR(25),
+    direccion_consultorio TEXT,
     hospital_clinica VARCHAR(150),
     horario_atencion VARCHAR(100),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS paciente_doctor (
+    id SERIAL PRIMARY KEY,
+    paciente_id INT NOT NULL REFERENCES pacientes(id) ON DELETE CASCADE,
+    doctor_id INT NOT NULL REFERENCES doctores(id) ON DELETE CASCADE,
+    fecha_vinculacion TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    estado VARCHAR(20) DEFAULT 'activo',
+    notas_medicas TEXT NULL,
+    CONSTRAINT uniq_paciente_doctor UNIQUE (paciente_id, doctor_id)
+);
+
+CREATE TABLE IF NOT EXISTS recetas_medicas (
+    id SERIAL PRIMARY KEY,
+    doctor_id INT REFERENCES doctores(id) ON DELETE SET NULL,
+    paciente_id INT NOT NULL REFERENCES pacientes(id) ON DELETE CASCADE,
+    diagnostico TEXT,
+    indicaciones_generales TEXT,
+    fecha_emision DATE DEFAULT CURRENT_DATE,
+    archivo_receta_url VARCHAR(255) NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS notificaciones_alertas (
+    id SERIAL PRIMARY KEY,
+    paciente_id INT NOT NULL REFERENCES pacientes(id) ON DELETE CASCADE,
+    tipo VARCHAR(50) NOT NULL,
+    mensaje TEXT NOT NULL,
+    destinatario_telefono VARCHAR(20),
+    estado_envio VARCHAR(20) DEFAULT 'pendiente',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -110,6 +149,7 @@ CREATE TABLE IF NOT EXISTS tomas_historial (
     tomado_at TIMESTAMP WITH TIME ZONE,
     deshecho_at TIMESTAMP WITH TIME ZONE,
     recordatorio_enviado BOOLEAN DEFAULT FALSE,
+    veces_pospuesto INT DEFAULT 0,
     nota_incidencia TEXT,
     notificacion_enviada_at TIMESTAMP WITH TIME ZONE,
     registrado_por_usuario_id INT REFERENCES usuarios(id) ON DELETE SET NULL,

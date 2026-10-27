@@ -52,8 +52,9 @@
 
 <?php 
 $userRole = $_SESSION['user_role'] ?? 'familiar_admin';
+$esModoPaciente = in_array($userRole, ['paciente', 'adulto_mayor'], true);
 $userNameDisplay = $_SESSION['user_name'] ?? 'Usuario';
-$pacienteNombreDisplay = trim(($paciente['nombre'] ?? '') . ' ' . ($paciente['apellidos'] ?? ''));
+$pacienteNombreDisplay = !empty($paciente) ? trim(($paciente['nombre'] ?? '') . ' ' . ($paciente['apellidos'] ?? '')) : 'Sin Paciente';
 $pacienteQrToken = $paciente['qr_token'] ?? '';
 
 $roleLabel = match($userRole) {
@@ -83,26 +84,27 @@ $roleLabel = match($userRole) {
                 </span>
             </div>
 
-            <!-- CENTRO: Chip selector del paciente activo con avatar compacto, nombre y '+ Vincular' -->
-            <div class="hidden md:flex items-center gap-2 bg-slate-50/90 border border-slate-200/80 rounded-2xl px-3 py-1.5 shadow-xs max-w-md">
+            <!-- CENTRO: Chip del paciente activo -->
+            <div class="hidden md:flex items-center gap-2 bg-slate-50/90 border border-slate-200/80 rounded-2xl px-3 py-1.5 shadow-xs max-w-lg">
                 <div class="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-black shrink-0 shadow-xs">
                     <?= mb_strtoupper(mb_substr($pacienteNombreDisplay, 0, 1)) ?>
                 </div>
                 
                 <div class="min-w-0 flex items-center gap-1.5 truncate">
-                    <span class="text-xs text-slate-400 font-semibold hidden lg:inline">Paciente:</span>
+                    <span class="text-xs text-slate-400 font-semibold hidden lg:inline">Expediente:</span>
                     <span class="text-xs sm:text-sm font-extrabold text-slate-900 truncate" title="<?= e($pacienteNombreDisplay) ?>">
                         <?= e($pacienteNombreDisplay) ?>
                     </span>
                 </div>
 
-                <?php if (!empty($todosLosPacientes) && count($todosLosPacientes) > 1): ?>
-                    <form action="<?= APP_URL ?>/dashboard" method="GET" class="m-0 shrink-0">
-                        <select name="seleccionar_paciente" onchange="this.form.submit()" 
+                <?php if (!$esModoPaciente && !empty($todosLosPacientes) && count($todosLosPacientes) > 1): ?>
+                    <form action="<?= APP_URL ?>/paciente/seleccionar" method="POST" class="m-0 shrink-0">
+                        <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
+                        <select name="paciente_id" onchange="this.form.submit()" 
                                 class="text-[11px] font-bold text-slate-700 bg-white hover:bg-slate-100 border border-slate-200 rounded-lg py-1 px-2 cursor-pointer outline-none transition"
-                                title="Cambiar paciente">
+                                title="Cambiar adulto mayor">
                             <?php foreach ($todosLosPacientes as $p): ?>
-                                <option value="<?= e((string)$p['id']) ?>" <?= ($p['id'] == $pacienteActivoId) ? 'selected' : '' ?>>
+                                <option value="<?= e((string)$p['id']) ?>" <?= ($p['id'] == ($pacienteActivoId ?? 0)) ? 'selected' : '' ?>>
                                     👤 <?= e($p['nombre']) ?>
                                 </option>
                             <?php endforeach; ?>
@@ -110,36 +112,57 @@ $roleLabel = match($userRole) {
                     </form>
                 <?php endif; ?>
 
-                <a href="<?= APP_URL ?>/vincular" 
-                   class="tap-bounce text-[11px] font-bold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100/80 px-2 py-1 rounded-lg transition shrink-0 flex items-center gap-0.5"
-                   title="Vincular otro adulto mayor">
-                    <span>+</span>
-                    <span class="hidden xl:inline">Vincular</span>
-                </a>
+                <?php if (!$esModoPaciente): ?>
+                    <div class="flex items-center gap-1 shrink-0 pl-1 border-l border-slate-200">
+                        <a href="<?= APP_URL ?>/pacientes/crear" 
+                           class="tap-bounce text-[11px] font-bold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100/80 px-2 py-1 rounded-lg transition flex items-center gap-0.5"
+                           title="Registrar nuevo perfil de adulto mayor">
+                            <span>+</span>
+                            <span class="hidden xl:inline">Nuevo Perfil</span>
+                        </a>
+                        <button type="button" onclick="abrirModalUnirseNip()" 
+                                class="tap-bounce text-[11px] font-bold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded-lg transition flex items-center gap-0.5 cursor-pointer"
+                                title="Vincularse con NIP">
+                            <svg class="w-3 h-3 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
+                            <span class="hidden 2xl:inline">NIP</span>
+                        </button>
+                    </div>
+                <?php endif; ?>
             </div>
 
             <!-- LADO DERECHO: Grupo de acciones ordenadas en una sola fila (Desktop) -->
-            <div class="hidden md:flex items-center gap-2.5 shrink-0">
-                <!-- Botón primario: PIN Médico -->
-                <button type="button" onclick="abrirModalPinMedico()" 
-                        class="tap-bounce px-3.5 py-2 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs font-bold rounded-xl shadow-xs transition inline-flex items-center gap-2 cursor-pointer">
-                    <svg class="w-4 h-4 shrink-0" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z"/></svg>
-                    <span>PIN Médico</span>
-                </button>
+            <div class="hidden md:flex items-center gap-2 shrink-0">
+                <?php if ($esModoPaciente): ?>
+                    <!-- Botón SOS Destacado para el Paciente -->
+                    <a href="tel:911" class="tap-bounce px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-black rounded-xl shadow-md shadow-rose-600/20 inline-flex items-center gap-1.5 animate-pulse">
+                        <span>🚨 LLAMAR SOS 911</span>
+                    </a>
+                <?php else: ?>
+                    <!-- Botón primario: PIN Médico -->
+                    <button type="button" onclick="abrirModalPinMedico()" 
+                            class="tap-bounce px-3.5 py-2 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs font-bold rounded-xl shadow-xs transition inline-flex items-center gap-2 cursor-pointer">
+                        <svg class="w-4 h-4 shrink-0" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z"/></svg>
+                        <span>PIN Médico</span>
+                    </button>
 
-                <!-- Botón secundario: Ficha QR -->
-                <a href="<?= APP_URL ?>/emergencia?token=<?= e((string)$pacienteQrToken) ?>" target="_blank" 
-                   class="tap-bounce px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl border border-slate-200 transition inline-flex items-center gap-2 shadow-xs">
-                    <svg class="w-4 h-4 shrink-0 text-blue-600" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 013.75 9.375v-4.5zM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5zM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0113.5 9.375v-4.5z"/><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 6.75h.75v.75h-.75v-.75zM6.75 16.5h.75v.75h-.75v-.75zM16.5 6.75h.75v.75h-.75v-.75zM13.5 13.5h3v3h-3v-3zM16.5 19.5h3v-3h-3v3z"/></svg>
-                    <span>Ficha QR</span>
-                </a>
+                    <!-- Botón secundario: Ficha QR -->
+                    <a href="<?= APP_URL ?>/emergencia?token=<?= e((string)$pacienteQrToken) ?>" target="_blank" 
+                       class="tap-bounce px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl border border-slate-200 transition inline-flex items-center gap-2 shadow-xs">
+                        <svg class="w-4 h-4 shrink-0 text-blue-600" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 013.75 9.375v-4.5zM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5zM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0113.5 9.375v-4.5z"/><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 6.75h.75v.75h-.75v-.75zM6.75 16.5h.75v.75h-.75v-.75zM16.5 6.75h.75v.75h-.75v-.75zM13.5 13.5h3v3h-3v-3zM16.5 19.5h3v-3h-3v3z"/></svg>
+                        <span>Ficha QR</span>
+                    </a>
 
-                <!-- Botón secundario: Imprimir -->
-                <button type="button" onclick="window.print()" 
-                        class="tap-bounce px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl border border-slate-200 transition inline-flex items-center gap-2 shadow-xs cursor-pointer">
-                    <svg class="w-4 h-4 shrink-0" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 7.5V3.75h10.5V7.5M6 16.5H4.5A2.25 2.25 0 012.25 14.25v-4.5A2.25 2.25 0 014.5 7.5h15a2.25 2.25 0 012.25 2.25v4.5a2.25 2.25 0 01-2.25 2.25H18M6.75 13.5h10.5v6.75H6.75V13.5z"/><circle cx="18" cy="10.5" r="0.75" fill="currentColor"/></svg>
-                    <span>Imprimir</span>
-                </button>
+                    <!-- Descargar Reporte PDF -->
+                    <a href="<?= APP_URL ?>/pacientes/reporte-pdf?paciente_id=<?= (int)($paciente['id'] ?? 0) ?>" 
+                       target="_blank" 
+                       class="tap-bounce inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs transition-colors shadow-sm"
+                       title="Descargar Expediente Clínico en PDF">
+                        <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <span>Descargar Reporte PDF</span>
+                    </a>
+                <?php endif; ?>
 
                 <!-- Menú Usuario Dropdown -->
                 <div class="relative" id="user-menu-wrapper">
@@ -332,10 +355,85 @@ $roleLabel = match($userRole) {
                     </div>
                 <?php endif; ?>
             </div>
+
+            <?php if ($esModoPaciente): ?>
+                <!-- Tarjeta de Auxilio SOS Directo (Modo Paciente) -->
+                <div class="bg-gradient-to-br from-rose-600 via-rose-700 to-rose-800 text-white p-5 sm:p-6 rounded-3xl shadow-lg shadow-rose-600/20 space-y-3">
+                    <div class="flex items-center gap-2">
+                        <span class="text-2xl animate-pulse">🚨</span>
+                        <h2 class="text-sm font-black uppercase tracking-wider text-white">Botón de Auxilio SOS</h2>
+                    </div>
+                    <p class="text-xs text-rose-100 leading-relaxed font-medium">
+                        Si te sientes mal, mareado o necesitas asistencia inmediata, presiona un botón para llamar:
+                    </p>
+                    <div class="grid grid-cols-1 gap-2.5 pt-1">
+                        <?php $telPrincipal = !empty($contactosEmergencia[0]['telefono']) ? $contactosEmergencia[0]['telefono'] : '911'; ?>
+                        <a href="tel:<?= e($telPrincipal) ?>" class="tap-bounce touch-min py-3.5 px-4 bg-white hover:bg-slate-50 active:scale-95 text-rose-700 font-black text-xs sm:text-sm rounded-2xl shadow-md text-center flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5 text-rose-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z"/></svg>
+                            <span>Llamar a <?= !empty($contactosEmergencia[0]['nombre']) ? e($contactosEmergencia[0]['nombre']) : 'Contacto SOS' ?></span>
+                        </a>
+                        <a href="tel:911" class="tap-bounce touch-min py-3 px-4 bg-rose-950/70 hover:bg-rose-950 text-white font-bold text-xs rounded-2xl border border-rose-400/40 text-center flex items-center justify-center gap-2">
+                            <span>🚑 Llamar al 911 (Urgencias Médicas)</span>
+                        </a>
+                    </div>
+                </div>
+            <?php else: ?>
+                <!-- Tarjeta de Acceso Familiar (NIP / Código de Vinculación) -->
+                <div class="bg-gradient-to-br from-blue-50/90 to-indigo-50/70 p-5 sm:p-6 rounded-3xl border border-blue-200/80 shadow-card space-y-3">
+                    <div class="flex items-center justify-between pb-2 border-b border-blue-100">
+                        <div class="flex items-center gap-2">
+                            <span class="w-7 h-7 rounded-xl bg-blue-600 text-white flex items-center justify-center text-xs font-bold shadow-xs">🔑</span>
+                            <h2 class="text-xs font-bold text-blue-950 uppercase tracking-wider">Acceso Familiar (NIP)</h2>
+                        </div>
+                        <button type="button" onclick="abrirModalCompartirNip()" class="text-xs font-bold text-blue-600 hover:text-blue-700 cursor-pointer">Detalles →</button>
+                    </div>
+
+                    <p class="text-xs text-slate-600 leading-relaxed">
+                        Comparte este código con otros familiares para que puedan monitorear a <strong class="text-slate-900"><?= e($paciente['nombre'] ?? 'este adulto mayor') ?></strong>:
+                    </p>
+
+                    <div class="bg-white p-3 rounded-2xl border border-blue-200 flex items-center justify-between gap-3 shadow-xs">
+                        <div>
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Código del Expediente</span>
+                            <span id="nip-codigo-texto" class="font-mono text-xl sm:text-2xl font-black text-blue-700 tracking-wider">
+                                <?= e($paciente['codigo_vinculacion'] ?? 'SIN-NIP') ?>
+                            </span>
+                        </div>
+                        <button type="button" onclick="copiarNipFamiliar()" id="btn-copiar-nip" 
+                                class="tap-bounce touch-min px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-xs transition flex items-center gap-1.5 cursor-pointer">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
+                            <span>Copiar</span>
+                        </button>
+                    </div>
+
+                    <div class="pt-1 flex gap-2">
+                        <button type="button" onclick="abrirModalUnirseNip()" 
+                                class="tap-bounce touch-min w-full py-2.5 px-3 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-bold rounded-xl shadow-xs transition flex items-center justify-center gap-2 cursor-pointer">
+                            <span>+ Vincularme a otro Adulto Mayor con NIP</span>
+                        </button>
+                    </div>
+                </div>
+            <?php endif; ?>
         </section>
 
-        <!-- Columna 2: Tomas de Medicamentos del Día -->
+        <!-- Columna 2: Tomas de Medicamentos del Día y Adherencia -->
         <section class="space-y-5">
+            <!-- Card Adherencia Farmacológica Semanal -->
+            <div class="bg-gradient-to-r from-blue-900 to-indigo-900 text-white p-4 sm:p-5 rounded-3xl shadow-card flex items-center justify-between gap-4">
+                <div class="min-w-0 space-y-1 flex-1">
+                    <span class="text-[10px] font-bold text-blue-200 uppercase tracking-wider block">Adherencia Semanal (7 días)</span>
+                    <p class="text-xs text-blue-100/80 leading-tight">Cumplimiento en tomas de medicamentos</p>
+                    <div class="w-full bg-white/20 rounded-full h-2 mt-2 overflow-hidden">
+                        <div class="bg-emerald-400 h-2 rounded-full transition-all duration-500" style="width: <?= min(100, max(0, (float)($adherenciaSemanal ?? 100))) ?>%"></div>
+                    </div>
+                </div>
+                <div class="text-right shrink-0 bg-white/10 backdrop-blur-md px-3.5 py-2.5 rounded-2xl border border-white/10">
+                    <span class="font-mono text-2xl font-black <?= ($adherenciaSemanal ?? 100) >= 80 ? 'text-emerald-300' : (($adherenciaSemanal ?? 100) >= 50 ? 'text-amber-300' : 'text-rose-300') ?>">
+                        <?= $adherenciaSemanal ?? 100 ?>%
+                    </span>
+                </div>
+            </div>
+
             <div class="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200/80 shadow-card space-y-4">
                 <div class="flex items-center justify-between pb-3 border-b border-slate-100">
                     <div>
@@ -432,8 +530,10 @@ $roleLabel = match($userRole) {
                     <p class="text-xs text-slate-400 py-6 text-center">No hay citas o laboratorios pendientes.</p>
                 <?php else: ?>
                     <div class="space-y-3">
-                        <?php foreach ($proximasCitas as $c): ?>
-                            <div class="p-3.5 bg-slate-50 rounded-2xl border border-slate-100 space-y-1">
+                        <?php foreach ($proximasCitas as $c): 
+                            $esPasada = !empty($c['fecha_hora']) && (strtotime($c['fecha_hora']) < time());
+                        ?>
+                            <div class="p-3.5 <?= $esPasada ? 'bg-amber-50/70 border-amber-200' : 'bg-slate-50 border-slate-100' ?> rounded-2xl border space-y-1.5">
                                 <div class="flex justify-between items-start gap-2">
                                     <span class="font-mono text-xs font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-lg border border-blue-100">
                                         <?= date('d M, H:i', strtotime($c['fecha_hora'])) ?>
@@ -445,8 +545,16 @@ $roleLabel = match($userRole) {
                                 <p class="text-xs font-bold text-slate-800"><?= e($c['titulo']) ?></p>
                                 <p class="text-[11px] text-slate-500 truncate">
                                     <svg class="w-3.5 h-3.5 inline text-slate-400 -mt-0.5" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
-                                    <?= e($c['lugar']) ?>
+                                    <?= e($c['lugar'] ?? 'Consultorio') ?>
                                 </p>
+                                <?php if ($esPasada): ?>
+                                    <div class="pt-1.5 border-t border-amber-200/80">
+                                        <a href="<?= APP_URL ?>/visitas/nueva?paciente_id=<?= (int)$paciente['id'] ?>&lugar=<?= urlencode($c['lugar'] ?? '') ?>&motivo=<?= urlencode($c['titulo'] ?? '') ?>" 
+                                           class="tap-bounce touch-min w-full py-1.5 px-2.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-center font-bold text-[11px] transition shadow-xs flex items-center justify-center gap-1.5">
+                                            <span>📋 Completar Bitácora Médica</span>
+                                        </a>
+                                    </div>
+                                <?php endif; ?>
                             </div>
                         <?php endforeach; ?>
                     </div>
@@ -514,12 +622,14 @@ $roleLabel = match($userRole) {
                         <span class="text-left flex-1 font-bold">Generar PIN Médico</span>
                     </button>
 
-                    <!-- 2. Imprimir Expediente -->
-                    <button type="button" onclick="cerrarDrawerLateral(); window.print();" 
-                            class="tap-bounce touch-min w-full p-3 bg-slate-50 hover:bg-slate-100 text-slate-800 rounded-2xl font-bold inline-flex items-center gap-3 border border-slate-100 transition">
-                        <svg class="w-5 h-5 shrink-0 text-slate-600" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 7.5V3.75h10.5V7.5M6 16.5H4.5A2.25 2.25 0 012.25 14.25v-4.5A2.25 2.25 0 014.5 7.5h15a2.25 2.25 0 012.25 2.25v4.5a2.25 2.25 0 01-2.25 2.25H18M6.75 13.5h10.5v6.75H6.75V13.5z"/><circle cx="18" cy="10.5" r="0.75" fill="currentColor"/></svg>
-                        <span class="text-left flex-1">Imprimir Expediente</span>
-                    </button>
+                    <!-- 2. Descargar Reporte PDF -->
+                    <a href="<?= APP_URL ?>/pacientes/reporte-pdf?paciente_id=<?= (int)$paciente['id'] ?>" target="_blank"
+                       class="tap-bounce touch-min w-full p-3 bg-slate-50 hover:bg-slate-100 text-slate-800 rounded-2xl font-bold inline-flex items-center gap-3 border border-slate-100 transition">
+                        <svg class="w-5 h-5 shrink-0 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <span class="text-left flex-1">Descargar Reporte PDF</span>
+                    </a>
 
                     <!-- 3. Ver Ficha QR -->
                     <a href="<?= APP_URL ?>/emergencia?token=<?= e((string)$pacienteQrToken) ?>" target="_blank"
@@ -528,11 +638,11 @@ $roleLabel = match($userRole) {
                         <span class="text-left flex-1">Ver Ficha QR</span>
                     </a>
 
-                    <!-- 4. Descargar Expediente PDF -->
-                    <a href="<?= APP_URL ?>/paciente/pdf?id=<?= e((string)$paciente['id']) ?>" target="_blank"
+                    <!-- 4. Bitácora de Consulta Médica -->
+                    <a href="<?= APP_URL ?>/visitas/nueva" 
                        class="tap-bounce touch-min w-full p-3 bg-slate-50 hover:bg-slate-100 text-slate-800 rounded-2xl font-bold inline-flex items-center gap-3 border border-slate-100 transition">
-                        <svg class="w-5 h-5 shrink-0 text-slate-600" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
-                        <span class="text-left flex-1">Descargar Expediente PDF</span>
+                        <svg class="w-5 h-5 shrink-0 text-blue-600" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
+                        <span class="text-left flex-1">Bitácora Post-Consulta</span>
                     </a>
                 </div>
 
@@ -540,15 +650,29 @@ $roleLabel = match($userRole) {
                 <div class="space-y-1.5 pt-2 border-t border-slate-100">
                     <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block px-1">Gestión Familiar</span>
 
-                    <!-- 4. Vincular Otro Paciente -->
-                    <a href="<?= APP_URL ?>/vincular" 
-                       class="tap-bounce touch-min w-full p-3 bg-slate-50 hover:bg-slate-100 text-slate-800 rounded-2xl font-bold inline-flex items-center gap-3 border border-slate-100 transition">
-                        <svg class="w-5 h-5 shrink-0 text-blue-600" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7.5v6m3-3h-6m-1.5-3.75a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM3.75 19.5a6.75 6.75 0 0113.5 0v.75H3.75v-.75z"/></svg>
-                        <span class="text-left flex-1">Vincular Otro Paciente</span>
+                    <!-- Agregar Nuevo Adulto Mayor -->
+                    <a href="<?= APP_URL ?>/pacientes/crear" 
+                       class="tap-bounce touch-min w-full p-3 bg-blue-50 hover:bg-blue-100 text-blue-900 rounded-2xl font-bold inline-flex items-center gap-3 border border-blue-100 transition">
+                        <svg class="w-5 h-5 shrink-0 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+                        <span class="text-left flex-1">Nuevo Adulto Mayor</span>
                     </a>
 
+                    <!-- Unirse con NIP -->
+                    <button type="button" onclick="cerrarDrawerLateral(); abrirModalUnirseNip();" 
+                            class="tap-bounce touch-min w-full p-3 bg-slate-50 hover:bg-slate-100 text-slate-800 rounded-2xl font-bold inline-flex items-center gap-3 border border-slate-100 transition cursor-pointer">
+                        <svg class="w-5 h-5 shrink-0 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
+                        <span class="text-left flex-1">Unirse con NIP / Código</span>
+                    </button>
+
+                    <!-- Compartir NIP Familiar -->
+                    <button type="button" onclick="cerrarDrawerLateral(); abrirModalCompartirNip();" 
+                            class="tap-bounce touch-min w-full p-3 bg-slate-50 hover:bg-slate-100 text-slate-800 rounded-2xl font-bold inline-flex items-center gap-3 border border-slate-100 transition cursor-pointer">
+                        <svg class="w-5 h-5 shrink-0 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z"/></svg>
+                        <span class="text-left flex-1">Compartir NIP Familiar</span>
+                    </button>
+
                     <?php if (!empty($todosLosPacientes) && count($todosLosPacientes) > 1): ?>
-                        <div class="space-y-1 pt-1">
+                        <div class="space-y-1 pt-2">
                             <span class="text-[10px] text-slate-400 font-semibold block px-1">Cambiar paciente activo:</span>
                             <?php foreach ($todosLosPacientes as $p): ?>
                                 <a href="<?= APP_URL ?>/dashboard?seleccionar_paciente=<?= e((string)$p['id']) ?>" 
@@ -640,7 +764,7 @@ $roleLabel = match($userRole) {
                 </div>
 
                 <div class="pt-2 flex gap-2">
-                    <button type="button" onclick="cerrarModalPinMedico()" class="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition">
+                    <button type="button" onclick="cerrarModalPinMedico()" class="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition cursor-pointer">
                         Cerrar
                     </button>
                     <button type="submit" id="btn-submit-pin" class="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-xs transition cursor-pointer">
@@ -650,6 +774,180 @@ $roleLabel = match($userRole) {
             </form>
         </div>
     </div>
+
+    <!-- 6. Modal para Unirse a un Adulto Mayor con Código NIP -->
+    <div id="modal-unirse-nip" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl border border-slate-100 relative">
+            <button type="button" onclick="cerrarModalUnirseNip()" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-100 text-slate-500 font-bold flex items-center justify-center hover:bg-slate-200 transition cursor-pointer">
+                &times;
+            </button>
+
+            <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                <svg class="w-6 h-6 shrink-0 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
+            </div>
+
+            <h3 class="text-lg font-bold text-slate-900 text-center mb-1">Vincularse con NIP Familiar</h3>
+            <p class="text-xs text-slate-500 text-center mb-5">Ingresa el código que te compartió el cuidador principal para monitorear al adulto mayor.</p>
+
+            <form action="<?= APP_URL ?>/pacientes/vincular-nip" method="POST" class="space-y-4">
+                <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Código de Vinculación / NIP</label>
+                    <input type="text" name="codigo_vinculacion" required placeholder="Ej. ROB-4821 o SEN-9124" maxlength="20"
+                           class="w-full text-center uppercase tracking-widest font-mono font-bold text-lg rounded-2xl border-slate-300 px-4 py-3 bg-slate-50 focus:bg-white focus:border-blue-600 focus:ring-4 focus:ring-blue-600/10 outline-none transition">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Parentesco o Rol</label>
+                    <input type="text" name="parentesco" placeholder="Ej. Hijo, Hija, Enfermero(a), Nieto(a)"
+                           class="w-full text-sm rounded-xl border-slate-300 px-3.5 py-2.5 bg-slate-50 focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-600/10 outline-none transition">
+                </div>
+
+                <div class="pt-2 flex gap-2">
+                    <button type="button" onclick="cerrarModalUnirseNip()" class="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition cursor-pointer">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-md shadow-blue-500/20 transition cursor-pointer">
+                        Vincular Perfil
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 7. Modal para Compartir Acceso Familiar (NIP) -->
+    <div id="modal-compartir-nip" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl border border-slate-100 text-center relative">
+            <button type="button" onclick="cerrarModalCompartirNip()" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-100 text-slate-500 font-bold flex items-center justify-center hover:bg-slate-200 transition cursor-pointer">
+                &times;
+            </button>
+
+            <div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                <svg class="w-6 h-6 shrink-0 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.199l-.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"/></svg>
+            </div>
+
+            <h3 class="text-lg font-bold text-slate-900 mb-1">Compartir Acceso Familiar</h3>
+            <p class="text-xs text-slate-500 mb-4">
+                Permite que otros familiares supervisen a <strong class="text-slate-800"><?= e($pacienteNombreDisplay) ?></strong> compartiendo este código:
+            </p>
+
+            <div class="p-4 bg-slate-50 rounded-2xl border border-slate-200 text-center space-y-2 mb-5">
+                <span class="text-xs font-bold text-slate-500 uppercase tracking-wider block">Código Único de Monitoreo:</span>
+                <div class="font-mono text-3xl font-black text-blue-600 tracking-wider bg-white py-2.5 rounded-xl border border-blue-200 shadow-xs">
+                    <?= e($paciente['codigo_vinculacion'] ?? 'SIN-NIP') ?>
+                </div>
+                <p class="text-[11px] text-slate-500 leading-tight">
+                    Copia este código y envíalo por WhatsApp o mensaje al familiar.
+                </p>
+            </div>
+
+            <div class="space-y-2">
+                <button type="button" onclick="copiarNipFamiliar()" class="w-full py-3 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs font-bold rounded-xl shadow-md shadow-blue-500/20 transition flex items-center justify-center gap-2 cursor-pointer">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
+                    <span>Copiar Código al Portapapeles</span>
+                </button>
+                <button type="button" onclick="cerrarModalCompartirNip()" class="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition cursor-pointer">
+                    Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL PRIORITARIO DE ALERTA CLÍNICA URGENTE -->
+    <?php if (!empty($alertaClinicaUrgente)): ?>
+    <div id="modal-alerta-urgente" class="fixed inset-0 bg-rose-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-fadeIn">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border-2 border-rose-500 relative overflow-hidden">
+            <!-- Barra superior de urgencia -->
+            <div class="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-rose-600 via-red-500 to-amber-500 animate-pulse"></div>
+
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-12 h-12 rounded-2xl bg-rose-100 border border-rose-200 text-rose-600 flex items-center justify-center shrink-0 animate-bounce">
+                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.25">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/>
+                    </svg>
+                </div>
+                <div>
+                    <span class="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-black tracking-widest uppercase bg-rose-600 text-white mb-0.5 shadow-xs">
+                        ALERTA CLÍNICA PRIORITARIA
+                    </span>
+                    <h3 class="text-xl font-black text-slate-900 leading-tight">
+                        <?= e($alertaClinicaUrgente['tipo'] ?? 'Signos Vitales Fuera de Rango') ?>
+                    </h3>
+                </div>
+            </div>
+
+            <!-- Valores Registrados -->
+            <div class="p-3.5 bg-rose-50 rounded-2xl border border-rose-200/80 mb-4">
+                <div class="grid grid-cols-2 gap-2 text-center">
+                    <?php if (!empty($alertaClinicaUrgente['presion'])): ?>
+                    <div class="bg-white p-2.5 rounded-xl border border-rose-100 shadow-xs">
+                        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Presión Registrada</span>
+                        <span class="text-lg font-black text-rose-700"><?= e($alertaClinicaUrgente['presion']) ?></span>
+                    </div>
+                    <?php endif; ?>
+                    <?php if (!empty($alertaClinicaUrgente['glucosa'])): ?>
+                    <div class="bg-white p-2.5 rounded-xl border border-rose-100 shadow-xs">
+                        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Glucosa Registrada</span>
+                        <span class="text-lg font-black text-rose-700"><?= e($alertaClinicaUrgente['glucosa']) ?></span>
+                    </div>
+                    <?php endif; ?>
+                </div>
+                <p class="text-xs text-rose-900 font-medium mt-2 leading-relaxed">
+                    <?= e($alertaClinicaUrgente['mensaje'] ?? 'Se han registrado mediciones en niveles críticos de atención médica inmediata.') ?>
+                </p>
+            </div>
+
+            <!-- Recomendaciones Clínicas Inmediatas -->
+            <?php if (!empty($alertaClinicaUrgente['recomendaciones']) && is_array($alertaClinicaUrgente['recomendaciones'])): ?>
+            <div class="mb-5 space-y-1.5">
+                <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                    <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    Recomendaciones Inmediatas:
+                </h4>
+                <ul class="text-xs text-slate-700 space-y-1 bg-slate-50 p-3 rounded-xl border border-slate-200">
+                    <?php foreach ($alertaClinicaUrgente['recomendaciones'] as $recom): ?>
+                    <li class="flex items-start gap-1.5">
+                        <span class="text-rose-600 font-bold">•</span>
+                        <span><?= e($recom) ?></span>
+                    </li>
+                    <?php endforeach; ?>
+                </ul>
+            </div>
+            <?php endif; ?>
+
+            <!-- Botones de Acción Directa SOS -->
+            <div class="space-y-2.5">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <a href="tel:911" class="w-full py-3 bg-rose-600 hover:bg-rose-700 active:scale-95 text-white text-xs font-black rounded-xl shadow-md shadow-rose-600/30 transition flex items-center justify-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                        <span>Llamar al 911 (Emergencias)</span>
+                    </a>
+                    
+                    <?php 
+                        $telContacto = $paciente['contacto_emergencia_telefono'] ?? $paciente['telefono_contacto'] ?? '';
+                        $nomContacto = $paciente['contacto_emergencia_nombre'] ?? 'Médico / Familiar';
+                    ?>
+                    <?php if (!empty($telContacto)): ?>
+                    <a href="tel:<?= e($telContacto) ?>" class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white text-xs font-black rounded-xl shadow-md shadow-indigo-600/30 transition flex items-center justify-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M16 8l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M5 3a2 2 0 00-2 2v1c0 8.284 6.716 15 15 15h1a2 2 0 002-2v-3.28a1 1 0 00-.684-.948l-4.493-1.498a1 1 0 00-1.21.502l-1.13 2.257a11.042 11.042 0 01-5.516-5.517l2.257-1.128a1 1 0 00.502-1.21L9.228 3.684A1 1 0 008.279 3H5z"/></svg>
+                        <span>Llamar a <?= e($nomContacto) ?></span>
+                    </a>
+                    <?php else: ?>
+                    <a href="<?= APP_URL ?>/emergencia?token=<?= e((string)($paciente['token_emergencia_qr'] ?? $paciente['qr_token'] ?? $paciente['uuid_publico'] ?? '')) ?>" target="_blank" class="w-full py-3 bg-slate-800 hover:bg-slate-900 active:scale-95 text-white text-xs font-black rounded-xl transition flex items-center justify-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>
+                        <span>Ficha Médica de Emergencia</span>
+                    </a>
+                    <?php endif; ?>
+                </div>
+
+                <button type="button" onclick="cerrarModalAlertaUrgente()" class="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition cursor-pointer">
+                    Entendido, estoy atendiendo la situación
+                </button>
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
 
     <!-- Scripts de Drawer, Modal y Animaciones -->
     <script>
@@ -756,6 +1054,66 @@ $roleLabel = match($userRole) {
             }
         }
 
+        // Funciones del Modal Unirse por NIP
+        function abrirModalUnirseNip() {
+            const modal = document.getElementById('modal-unirse-nip');
+            if (modal) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            }
+        }
+
+        function cerrarModalUnirseNip() {
+            const modal = document.getElementById('modal-unirse-nip');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+        }
+
+        // Funciones del Modal Compartir NIP
+        function abrirModalCompartirNip() {
+            const modal = document.getElementById('modal-compartir-nip');
+            if (modal) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            }
+        }
+
+        function cerrarModalCompartirNip() {
+            const modal = document.getElementById('modal-compartir-nip');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+        }
+
+        function copiarNipFamiliar() {
+            const nipTexto = '<?= e($paciente['codigo_vinculacion'] ?? '') ?>';
+            if (nipTexto) {
+                navigator.clipboard.writeText(nipTexto).then(() => {
+                    const btn = document.getElementById('btn-copiar-nip');
+                    if (btn) {
+                        btn.innerHTML = '<span>✓ Copiado</span>';
+                        setTimeout(() => {
+                            btn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg><span>Copiar</span>';
+                        }, 2500);
+                    }
+                    alert('¡Código de vinculación ' + nipTexto + ' copiado al portapapeles!');
+                }).catch(() => {
+                    prompt('Código de vinculación:', nipTexto);
+                });
+            }
+        }
+
+        function cerrarModalAlertaUrgente() {
+            const modal = document.getElementById('modal-alerta-urgente');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+        }
+
         window.addEventListener('DOMContentLoaded', () => {
             requestAnimationFrame(() => {
                 const body = document.getElementById('dashboard-body');
@@ -764,8 +1122,13 @@ $roleLabel = match($userRole) {
                     body.classList.add('opacity-100');
                 }
             });
+
+            // Apertura automática del modal de NIP si viene desde /vincular o parámetro URL
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('abrir_nip') === '1' || urlParams.get('modal') === 'nip') {
+                abrirModalUnirseNip();
+            }
         });
     </script>
-
 </body>
 </html>

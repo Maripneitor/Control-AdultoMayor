@@ -85,7 +85,16 @@ class AuthMiddleware {
             'ver_estudios_laboratorio',
             'exportar_pdf_expediente',
             'registrar_nota_evolucion',
-            'emitir_receta'
+            'emitir_receta',
+            'vincular_paciente_nip'
+        ],
+        'doctor' => [
+            'ver_expediente_clinico',
+            'ver_estudios_laboratorio',
+            'exportar_pdf_expediente',
+            'registrar_nota_evolucion',
+            'emitir_receta',
+            'vincular_paciente_nip'
         ],
         'administrador' => [
             'todas_acciones'
@@ -96,7 +105,14 @@ class AuthMiddleware {
     ];
 
     /**
-     * Asegura que exista una sesión activa de usuario
+     * Asegura que el usuario tenga rol de Doctor o Médico
+     */
+    public static function requireDoctorRole(): void {
+        self::requireRole(['doctor', 'medico']);
+    }
+
+    /**
+     * Asegura que exista una sesión activa de usuario y que sea la única sesión autorizada
      */
     public static function handle(): void {
         if (empty($_SESSION['user_id'])) {
@@ -115,6 +131,23 @@ class AuthMiddleware {
             header('Location: ' . (defined('APP_URL') ? APP_URL : '') . '/login');
             exit;
         }
+
+        // Validación estricta de Sesión Única Activa (Protección contra sesiones simultáneas en otro navegador o dispositivo)
+        if (!\App\Security\SingleSessionManager::validate()) {
+            if (!empty($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false) {
+                http_response_code(401);
+                header('Content-Type: application/json; charset=utf-8');
+                echo json_encode([
+                    'success' => false,
+                    'error' => 'Tu sesión ha sido cerrada porque se inició sesión en otro navegador o dispositivo.',
+                    'code' => 'CONCURRENT_SESSION_DETECTED'
+                ], JSON_UNESCAPED_UNICODE);
+                exit;
+            }
+
+            header('Location: ' . (defined('APP_URL') ? APP_URL : '') . '/login');
+            exit;
+        }
     }
 
     /**
@@ -122,6 +155,11 @@ class AuthMiddleware {
      */
     public static function guestOnly(): void {
         if (!empty($_SESSION['user_id'])) {
+            // Verificar si su sesión sigue siendo la activa antes de asumir que está autenticado
+            if (!\App\Security\SingleSessionManager::validate()) {
+                // Si fue invalidada por otro dispositivo, la sesión se limpió y puede ver el login
+                return;
+            }
             header('Location: ' . (defined('APP_URL') ? APP_URL : '') . '/dashboard');
             exit;
         }
@@ -187,33 +225,119 @@ class AuthMiddleware {
     }
 
     /**
-     * Valida si un usuario tiene acceso a un paciente específico (retorna booleano)
+     * Valida si un usuario tiene acceso a un paciente específico y retorna la matriz de privilegios
+     * Compatible con firmas booleanas y llamadas detalladas (pacienteId, usuarioId, rol)
      */
-    public static function autorizarAccesoPaciente($pacienteId, $userId): bool {
-        if (empty($pacienteId) || empty($userId)) {
+    public static function autorizarAccesoPaciente($pacienteId, $userId = null, ?string $rol = null): array|bool {
+        $pacienteId = (int)$pacienteId;
+        $userId = $userId !== null ? (int)$userId : (int)($_SESSION['user_id'] ?? 0);
+        $rol = $rol !== null ? $rol : ($_SESSION['user_role'] ?? '');
+
+        if ($pacienteId <= 0 || $userId <= 0) {
             return false;
         }
 
-        $userRole = $_SESSION['user_role'] ?? '';
-        if (in_array($userRole, ['admin', 'administrador'], true)) {
-            return true;
+        if (in_array($rol, ['admin', 'administrador'], true)) {
+            return [
+                'autorizado' => true,
+                'puede_ver' => true,
+                'puede_editar' => true,
+                'puede_suministrar' => true,
+                'es_doctor' => false,
+                'es_propio' => false,
+                'nivel_acceso' => 'principal',
+                'rol' => $rol
+            ];
         }
 
         try {
             $db = Database::getInstance()->getConnection();
-            // Comprobar si es paciente propio
-            $stmt = $db->prepare("SELECT id FROM pacientes WHERE id = :pid AND usuario_id = :uid LIMIT 1");
-            $stmt->execute([':pid' => $pacienteId, ':uid' => $userId]);
-            if ($stmt->fetch()) {
-                return true;
+
+            // 1. Verificar si es Médico / Doctor
+            if (in_array($rol, ['doctor', 'medico'], true)) {
+                $stmtDoc = $db->prepare("
+                    SELECT pd.estado, pd.notas_medicas, d.id AS doctor_id, d.nombre AS doctor_nombre 
+                    FROM paciente_doctor pd 
+                    JOIN doctores d ON pd.doctor_id = d.id 
+                    WHERE d.usuario_id = :uid AND pd.paciente_id = :pid AND pd.estado = 'activo' 
+                    LIMIT 1
+                ");
+                $stmtDoc->execute([':uid' => $userId, ':pid' => $pacienteId]);
+                $vinculoDoc = $stmtDoc->fetch(PDO::FETCH_ASSOC);
+
+                if ($vinculoDoc) {
+                    return [
+                        'autorizado' => true,
+                        'puede_ver' => true,
+                        'puede_editar' => false,
+                        'puede_suministrar' => false,
+                        'es_doctor' => true,
+                        'es_propio' => false,
+                        'nivel_acceso' => 'doctor',
+                        'rol' => 'doctor',
+                        'doctor_id' => $vinculoDoc['doctor_id']
+                    ];
+                }
+                return false;
             }
 
-            // Comprobar en paciente_cuidador
-            $stmtVinc = $db->prepare("SELECT 1 FROM paciente_cuidador WHERE usuario_cuidador_id = :uid AND paciente_id = :pid LIMIT 1");
-            $stmtVinc->execute([':uid' => $userId, ':pid' => $pacienteId]);
-            if ($stmtVinc->fetch()) {
-                return true;
+            // 2. Comprobar si es paciente propio (dueño directo o titular de cuenta)
+            $stmt = $db->prepare("SELECT id, usuario_id FROM pacientes WHERE id = :pid AND usuario_id = :uid LIMIT 1");
+            $stmt->execute([':pid' => $pacienteId, ':uid' => $userId]);
+            if ($stmt->fetch()) {
+                if (in_array($rol, ['paciente', 'adulto_mayor'], true)) {
+                    return [
+                        'autorizado' => true,
+                        'puede_ver' => true,
+                        'puede_editar' => false,
+                        'puede_suministrar' => true,
+                        'es_doctor' => false,
+                        'es_propio' => true,
+                        'nivel_acceso' => 'paciente',
+                        'rol' => 'paciente'
+                    ];
+                } else {
+                    return [
+                        'autorizado' => true,
+                        'puede_ver' => true,
+                        'puede_editar' => true,
+                        'puede_suministrar' => true,
+                        'es_doctor' => false,
+                        'es_propio' => true,
+                        'nivel_acceso' => 'principal',
+                        'rol' => $rol
+                    ];
+                }
             }
+
+            // 3. Comprobar en paciente_cuidador
+            $stmtVinc = $db->prepare("
+                SELECT nivel_acceso, parentesco 
+                FROM paciente_cuidador 
+                WHERE usuario_cuidador_id = :uid AND paciente_id = :pid 
+                LIMIT 1
+            ");
+            $stmtVinc->execute([':uid' => $userId, ':pid' => $pacienteId]);
+            $vinculo = $stmtVinc->fetch(PDO::FETCH_ASSOC);
+
+            if ($vinculo) {
+                $rawNivel = strtolower(trim((string)($vinculo['nivel_acceso'] ?? 'completo')));
+                $esSoloLectura = in_array($rawNivel, ['solo_lectura', 'lectura'], true);
+                $nivelFinal = $esSoloLectura ? 'solo_lectura' : 'completo';
+
+                return [
+                    'autorizado' => true,
+                    'puede_ver' => true,
+                    'puede_editar' => !$esSoloLectura,
+                    'puede_suministrar' => !$esSoloLectura,
+                    'es_doctor' => false,
+                    'es_propio' => false,
+                    'nivel_acceso' => $nivelFinal,
+                    'parentesco' => $vinculo['parentesco'] ?? 'Familiar',
+                    'rol' => $rol
+                ];
+            }
+
         } catch (\Throwable $e) {
             error_log('[AuthMiddleware::autorizarAccesoPaciente] ' . $e->getMessage());
         }
@@ -223,7 +347,7 @@ class AuthMiddleware {
 
     /**
      * Aislamiento de datos Multitenant y Ofuscación de Seguridad.
-     * Garantiza que el usuario en sesión es el propio paciente o un familiar/cuidador con vínculo activo.
+     * Garantiza que el usuario en sesión es el propio paciente o un familiar/cuidador/médico con vínculo activo.
      * Si no tiene acceso, devuelve un error 404 (en lugar de 403) para ofuscar la existencia del recurso.
      */
     public static function requirePatientAccess($pacienteId): array {
@@ -236,66 +360,13 @@ class AuthMiddleware {
             self::abortWith404();
         }
 
-        $db = Database::getInstance()->getConnection();
+        $auth = self::autorizarAccesoPaciente($pacienteId, $userId, $userRole);
 
-        // 1. Rol Administrador: Acceso total de auditoría y soporte
-        if (in_array($userRole, ['admin', 'administrador'], true)) {
-            return [
-                'puede_ver' => true,
-                'puede_editar' => true,
-                'es_propio' => false,
-                'nivel_acceso' => 'admin'
-            ];
+        if ($auth === false || empty($auth['autorizado'])) {
+            self::abortWith404();
         }
 
-        // 2. Verificar si es el dueño directo del perfil clínico (paciente propio)
-        $stmt = $db->prepare("SELECT id FROM pacientes WHERE id = :pid AND usuario_id = :uid LIMIT 1");
-        $stmt->execute([':pid' => $pacienteId, ':uid' => $userId]);
-        $esDuenio = (bool) $stmt->fetch();
-
-        if ($esDuenio) {
-            if (in_array($userRole, ['paciente', 'adulto_mayor'], true)) {
-                return [
-                    'puede_ver' => true,
-                    'puede_editar' => false,
-                    'es_propio' => true,
-                    'nivel_acceso' => 'lectura'
-                ];
-            } else {
-                return [
-                    'puede_ver' => true,
-                    'puede_editar' => true,
-                    'es_propio' => true,
-                    'nivel_acceso' => 'familiar_admin'
-                ];
-            }
-        }
-
-        // 3. Rol Familiar / Cuidador: Consultar paciente_cuidador
-        $stmtVinc = $db->prepare(
-            "SELECT pc.nivel_acceso, pc.parentesco 
-             FROM paciente_cuidador pc 
-             WHERE pc.usuario_cuidador_id = :uid AND pc.paciente_id = :pid 
-             LIMIT 1"
-        );
-        $stmtVinc->execute([':uid' => $userId, ':pid' => $pacienteId]);
-        $vinculo = $stmtVinc->fetch(PDO::FETCH_ASSOC);
-
-        if ($vinculo) {
-            $nivelAcceso = $vinculo['nivel_acceso'] ?? 'tomas_y_signos';
-            $puedeEditar = in_array($nivelAcceso, ['familiar_admin', 'edicion_completa', 'admin'], true);
-
-            return [
-                'puede_ver' => true,
-                'puede_editar' => $puedeEditar,
-                'es_propio' => false,
-                'nivel_acceso' => $nivelAcceso,
-                'parentesco' => $vinculo['parentesco'] ?? 'Familiar / Cuidador'
-            ];
-        }
-
-        // 4. OFUSCACIÓN DE SEGURIDAD: Si falla la comprobación, devolver 404
-        self::abortWith404();
+        return $auth;
     }
 
     /**

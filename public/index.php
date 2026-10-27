@@ -52,10 +52,15 @@ $router->get('/password-updated', 'RecoveryController@showPasswordUpdated', [[Au
 $router->get('/dashboard', 'DashboardController@index', [AuthMiddleware::class]);
 $router->get('/logout', 'AuthController@logout', [AuthMiddleware::class]);
 
-// Vinculación
+// Vinculación y Gestión de Múltiples Adultos Mayores
 $router->get('/vincular', 'VinculacionController@showForm', [AuthMiddleware::class]);
 $router->post('/vincular/procesar', 'VinculacionController@processVinculacion', [AuthMiddleware::class]);
 $router->post('/vincular/promover', 'VinculacionController@promoverAIndependiente', [AuthMiddleware::class]);
+$router->get('/pacientes/crear', 'PacienteController@crear', [AuthMiddleware::class]);
+$router->post('/pacientes/guardar', 'PacienteController@guardar', [AuthMiddleware::class]);
+$router->post('/pacientes/vincular-nip', 'PacienteController@unirsePorNip', [AuthMiddleware::class]);
+$router->post('/paciente/seleccionar', 'PacienteController@seleccionar', [AuthMiddleware::class]);
+$router->get('/paciente/seleccionar', 'PacienteController@seleccionar', [AuthMiddleware::class]);
 
 // Ficha QR pública (sin AuthMiddleware)
 $router->get('/emergencia', 'EmergenciaController@showPublicCard');
@@ -109,8 +114,22 @@ $router->post('/perfil/actualizar', 'PerfilController@actualizar', [AuthMiddlewa
 $router->post('/perfil/password', 'PerfilController@actualizarPassword', [AuthMiddleware::class]);
 $router->post('/perfil/eliminar', 'PerfilController@eliminarCuenta', [AuthMiddleware::class]);
 
-// PDF
-$router->get('/paciente/pdf', 'PacienteController@descargarExpediente', [AuthMiddleware::class]);
+// Gestión de Cuidadores y NIP Familiar
+$router->post('/paciente/regenerar-nip', 'PacienteController@regenerarNip', [AuthMiddleware::class]);
+$router->post('/paciente/desvincular-cuidador', 'PacienteController@desvincularCuidador', [AuthMiddleware::class]);
+
+// Ecosistema Clínico del Doctor
+$router->get('/doctor/dashboard', 'DoctorController@dashboard', [AuthMiddleware::class]);
+$router->get('/doctor/paciente/expediente', 'DoctorController@expediente', [AuthMiddleware::class]);
+$router->post('/doctor/paciente/vincular', 'DoctorController@vincularPaciente', [AuthMiddleware::class]);
+$router->post('/doctor/paciente/notas', 'DoctorController@guardarNotasEvolucion', [AuthMiddleware::class]);
+$router->get('/doctor/recetas/nueva', 'DoctorController@crearReceta', [AuthMiddleware::class]);
+$router->post('/doctor/recetas/guardar', 'DoctorController@guardarReceta', [AuthMiddleware::class]);
+$router->get('/doctor/paciente/pdf', 'DoctorController@descargarReporteClinico', [AuthMiddleware::class]);
+
+// PDF y Exportación de Expediente Clínico y Recetas (Canónica)
+$router->get('/pacientes/reporte-pdf', 'PacienteController@descargarReporte', [AuthMiddleware::class]);
+$router->get('/pacientes/receta-pdf', 'PacienteController@descargarRecetaPdf', [AuthMiddleware::class]);
 
 // Portal Médico Clínico & PIN Temporal
 $router->post('/api/medico/generar-pin', 'MedicoPortalController@generarPin', [AuthMiddleware::class]);

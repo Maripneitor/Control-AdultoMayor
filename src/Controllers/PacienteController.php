@@ -8,8 +8,7 @@ use App\Models\Paciente;
 use App\Models\Medicamento;
 use App\Models\ContactoEmergencia;
 use App\Models\Doctor;
-use Dompdf\Dompdf;
-use Dompdf\Options;
+use App\Services\PdfReportService;
 use App\Middlewares\AuthMiddleware;
 
 class PacienteController extends Controller {
@@ -43,7 +42,11 @@ class PacienteController extends Controller {
 
         // Aislamiento Multitenant con ofuscación 404
         $acceso = AuthMiddleware::requirePatientAccess($pacienteId);
-        $puedeEditar = $acceso['puede_editar'];
+        $userRole = $_SESSION['user_role'] ?? 'familiar';
+        $esDoctor = in_array($userRole, ['doctor', 'medico'], true) || ($acceso['nivel_acceso'] ?? '') === 'doctor';
+        $nivelAcceso = $acceso['nivel_acceso'] ?? ($esDoctor ? 'doctor' : 'solo_lectura');
+        $puedeEditar = in_array($nivelAcceso, ['principal', 'completo'], true) && !$esDoctor;
+        $puedeSuministrar = in_array($nivelAcceso, ['principal', 'completo'], true) || in_array($userRole, ['paciente', 'adulto_mayor'], true);
 
         // Sincronización estricta de la sesión activa del paciente
         $_SESSION['paciente_activo_id'] = $pacienteId;
@@ -60,6 +63,8 @@ class PacienteController extends Controller {
         $visitaModel = new \App\Models\VisitaMedica();
         $visitasMedicas = $visitaModel->getByPacienteId($pacienteId);
 
+        $recetas = $doctorModel->obtenerRecetasPorPaciente($pacienteId);
+
         $todosLosPacientes = $pacienteModel->obtenerTodosVinculados($userId);
 
         $this->render('pacientes/expediente', [
@@ -69,8 +74,11 @@ class PacienteController extends Controller {
             'contactosEmergencia' => $contactosEmergencia,
             'ultimoSalud' => $ultimoSalud,
             'visitasMedicas' => $visitasMedicas,
+            'recetas' => $recetas,
             'puedeEditar' => $puedeEditar,
-            'nivelAcceso' => $acceso['nivel_acceso']
+            'puedeSuministrar' => $puedeSuministrar,
+            'esDoctor' => $esDoctor,
+            'nivelAcceso' => $nivelAcceso
         ], false);
     }
 
@@ -342,102 +350,358 @@ class PacienteController extends Controller {
         exit;
     }
 
-    public function descargarExpediente() {
-        if (!isset($_GET['id'])) {
-            $this->setFlash('danger', 'ID de paciente no válido');
-            header("Location: " . APP_URL . "/dashboard");
-            exit;
-        }
-
-        $pacienteId = (int)$_GET['id'];
-        $usuarioId = $_SESSION['user_id'] ?? null;
-
-        if (!AuthMiddleware::autorizarAccesoPaciente($pacienteId, $usuarioId)) {
-            $this->setFlash('danger', 'No tienes permiso para acceder a este expediente');
-            header("Location: " . APP_URL . "/dashboard");
-            exit;
-        }
-
+    /**
+     * Exporta el resumen clínico y expediente del paciente en formato PDF.
+     * Valida permisos multitenant (paciente o cuidador vinculado con acceso).
+     */
+    public function descargarReporte(): void {
+        AuthMiddleware::handle();
+        $userId = (int)($_SESSION['user_id'] ?? 0);
         $pacienteModel = new Paciente();
-        $paciente = $pacienteModel->find($pacienteId);
 
-        if (!$paciente) {
-            $this->setFlash('danger', 'Paciente no encontrado');
+        $pacienteId = isset($_GET['paciente_id']) ? (int)$_GET['paciente_id'] : (isset($_GET['id']) ? (int)$_GET['id'] : (int)($_SESSION['paciente_activo_id'] ?? 0));
+
+        if ($pacienteId === 0) {
+            $paciente = $pacienteModel->findByUserId($userId);
+            if (!$paciente) {
+                $cuidadorModel = new \App\Models\Cuidador();
+                $pacientesAsignados = $cuidadorModel->obtenerPacientesPorCuidador($userId);
+                if (!empty($pacientesAsignados)) {
+                    $paciente = $pacientesAsignados[0];
+                }
+            }
+            $pacienteId = $paciente ? (int)$paciente['id'] : 0;
+        } else {
+            $paciente = $pacienteModel->find($pacienteId);
+        }
+
+        if (!$paciente || $pacienteId === 0) {
+            $this->setFlash('danger', 'Paciente o expediente clínico no encontrado.');
             header("Location: " . APP_URL . "/dashboard");
             exit;
         }
 
+        // Aislamiento Multitenant con ofuscación 404
+        $acceso = AuthMiddleware::requirePatientAccess($pacienteId);
+
+        // Modelos de consulta de datos clínicos
         $medicamentoModel = new Medicamento();
         $medicamentos = $medicamentoModel->getAllByPacienteId($pacienteId);
+        $adherencia = $medicamentoModel->calcularAdherenciaSemanal($pacienteId);
 
         $contactoModel = new ContactoEmergencia();
         $contactos = $contactoModel->getByPacienteId($pacienteId);
 
         $saludModel = new \App\Models\RegistroSaludDiario();
-        $registrosSalud = $saludModel->getAllByPacienteId($pacienteId, 7); // Últimos 7 días
+        $registrosSalud = $saludModel->getAllByPacienteId($pacienteId, 30);
 
-        // Generar URL para QuickChart
-        $fechas = [];
-        $sisData = [];
-        $diaData = [];
-        $glucosaData = [];
-        
-        // Invertimos para que el gráfico vaya cronológicamente de izquierda a derecha
-        foreach (array_reverse($registrosSalud) as $reg) {
-            $fechas[] = date('d/m', strtotime($reg['created_at']));
-            $sisData[] = $reg['presion_sistolica'] ?? 'null';
-            $diaData[] = $reg['presion_diastolica'] ?? 'null';
-            $glucosaData[] = $reg['glucosa'] ?? 'null';
-        }
+        $doctorModel = new Doctor();
+        $recetas = $doctorModel->obtenerRecetasPorPaciente($pacienteId);
 
-        $chartConfig = [
-            'type' => 'line',
-            'data' => [
-                'labels' => $fechas,
-                'datasets' => [
-                    ['label' => 'Sistólica', 'data' => $sisData, 'borderColor' => 'red', 'fill' => false],
-                    ['label' => 'Diastólica', 'data' => $diaData, 'borderColor' => 'blue', 'fill' => false],
-                    ['label' => 'Glucosa', 'data' => $glucosaData, 'borderColor' => 'green', 'fill' => false]
-                ]
-            ],
-            'options' => [
-                'title' => ['display' => true, 'text' => 'Evolución últimos 7 registros']
-            ]
-        ];
+        $visitaModel = new \App\Models\VisitaMedica();
+        $visitas = $visitaModel->getByPacienteId($pacienteId);
 
-        $chartUrl = 'https://quickchart.io/chart?c=' . urlencode(json_encode($chartConfig)) . '&w=600&h=300';
+        // Registro de auditoría
+        AuthMiddleware::logAudit(
+            $pacienteId,
+            'DESCARGA_REPORTE_PDF',
+            "Reporte clínico en PDF descargado por el usuario ID {$userId}."
+        );
 
-        // Promedios
-        $avgSis = !empty($sisData) && max($sisData) !== 'null' ? array_sum(array_filter($sisData, 'is_numeric')) / max(1, count(array_filter($sisData, 'is_numeric'))) : 0;
-        $avgDia = !empty($diaData) && max($diaData) !== 'null' ? array_sum(array_filter($diaData, 'is_numeric')) / max(1, count(array_filter($diaData, 'is_numeric'))) : 0;
-        $avgGluc = !empty($glucosaData) && max($glucosaData) !== 'null' ? array_sum(array_filter($glucosaData, 'is_numeric')) / max(1, count(array_filter($glucosaData, 'is_numeric'))) : 0;
+        $pdfService = new PdfReportService();
+        $pdfService->generarResumenPaciente([
+            'paciente' => $paciente,
+            'signos' => $registrosSalud,
+            'medicamentos' => $medicamentos,
+            'adherencia' => $adherencia,
+            'contactos' => $contactos,
+            'registrosSalud' => $registrosSalud,
+            'recetas' => $recetas,
+            'visitas' => $visitas,
+            'nivelAcceso' => $acceso['nivel_acceso'] ?? 'lectura',
+            'emisor' => $_SESSION['user_nombre'] ?? 'Cuidador / Familiar Autorizado'
+        ]);
+    }
 
-        // Si dompdf no está instalado (el autoload fallará si no está). 
-        // Verificamos si la clase existe antes de instanciar.
-        if (!class_exists('Dompdf\Dompdf')) {
-            $this->setFlash('danger', 'El motor PDF (dompdf) no está instalado. Ejecute "composer install".');
-            header("Location: " . APP_URL . "/dashboard");
+    /**
+     * Muestra el formulario para registrar un nuevo adulto mayor administrado
+     */
+    public function crear(): void {
+        AuthMiddleware::handle();
+        $userRole = $_SESSION['user_role'] ?? '';
+
+        if (in_array($userRole, ['paciente', 'adulto_mayor'], true)) {
+            $this->setFlash('warning', 'Tu cuenta de paciente no permite registrar perfiles adicionales.');
+            header('Location: ' . APP_URL . '/dashboard');
             exit;
         }
+
+        $this->render('pacientes/crear', [], 'main');
+    }
+
+    /**
+     * Procesa el guardado de un nuevo adulto mayor administrado por el cuidador
+     */
+    public function guardar(): void {
+        AuthMiddleware::handle();
+
+        if (!validateCsrfToken($_POST['csrf_token'] ?? null)) {
+            $this->setFlash('danger', 'Token CSRF de seguridad inválido o expirado.');
+            header('Location: ' . APP_URL . '/pacientes/crear');
+            exit;
+        }
+
+        $userId = (int)($_SESSION['user_id'] ?? 0);
+        $nombre = trim($_POST['nombre'] ?? '');
+        $apellidos = trim($_POST['apellidos'] ?? '');
+        $fechaNacimiento = trim($_POST['fecha_nacimiento'] ?? '');
+        $genero = trim($_POST['genero'] ?? 'No especificado');
+        $tipoSangre = trim($_POST['tipo_sangre'] ?? 'N/D');
+        $alergias = trim($_POST['alergias'] ?? 'Ninguna');
+        $enfermedades = trim($_POST['enfermedades_cronicas'] ?? 'Ninguna');
+        $notas = trim($_POST['notas_cognitivas'] ?? '');
+        $parentesco = trim($_POST['parentesco'] ?? 'Familiar / Cuidador Principal');
+
+        if (empty($nombre)) {
+            $this->setFlash('warning', 'El nombre del adulto mayor es obligatorio.');
+            header('Location: ' . APP_URL . '/pacientes/crear');
+            exit;
+        }
+
+        $pacienteModel = new Paciente();
 
         try {
-            $options = new Options();
-            $options->set('isHtml5ParserEnabled', true);
-            $options->set('isRemoteEnabled', true);
-            $dompdf = new Dompdf($options);
+            $nuevoId = $pacienteModel->crearPerfilAdministrado($userId, [
+                'nombre' => $nombre,
+                'apellidos' => $apellidos,
+                'fecha_nacimiento' => $fechaNacimiento,
+                'genero' => $genero,
+                'tipo_sangre' => $tipoSangre,
+                'alergias' => $alergias,
+                'enfermedades_cronicas' => $enfermedades,
+                'notas_cognitivas' => $notas,
+                'parentesco' => $parentesco
+            ]);
 
-            ob_start();
-            require __DIR__ . '/../Views/pacientes/pdf_resumen.php';
-            $html = ob_get_clean();
+            // Sincronizar en la sesión activa como el paciente seleccionado
+            $_SESSION['paciente_activo_id'] = $nuevoId;
+            $_SESSION['paciente_activo_nombre'] = trim("{$nombre} {$apellidos}");
 
-            $dompdf->loadHtml($html);
-            $dompdf->setPaper('A4', 'portrait');
-            $dompdf->render();
-            $dompdf->stream("expediente_" . ($paciente['nombre'] ?? 'paciente') . ".pdf", ["Attachment" => true]);
-        } catch (\Exception $e) {
-            $this->setFlash('danger', 'Error al generar el PDF: ' . $e->getMessage());
-            header("Location: " . APP_URL . "/dashboard");
+            AuthMiddleware::logAudit(
+                $nuevoId,
+                'PERFIL_ADULTO_MAYOR_CREADO',
+                "Nuevo perfil administrado creado para {$nombre} {$apellidos} por usuario ID {$userId}."
+            );
+
+            $this->setFlash('success', "¡Perfil de {$nombre} creado y activado correctamente!");
+            header('Location: ' . APP_URL . '/dashboard');
+            exit;
+
+        } catch (\Throwable $e) {
+            error_log("[PacienteController::guardar Error] " . $e->getMessage());
+            $this->setFlash('danger', 'Error al guardar el nuevo perfil: ' . $e->getMessage());
+            header('Location: ' . APP_URL . '/pacientes/crear');
             exit;
         }
+    }
+
+    /**
+     * Vincula a un cuidador con un adulto mayor existente utilizando su código/NIP familiar
+     */
+    public function unirsePorNip(): void {
+        AuthMiddleware::handle();
+
+        if (!validateCsrfToken($_POST['csrf_token'] ?? null)) {
+            $this->setFlash('danger', 'Token CSRF inválido o expirado.');
+            header('Location: ' . APP_URL . '/dashboard');
+            exit;
+        }
+
+        $userId = (int)($_SESSION['user_id'] ?? 0);
+        $nip = strtoupper(trim($_POST['codigo_vinculacion'] ?? ($_POST['nip'] ?? '')));
+        $parentesco = trim($_POST['parentesco'] ?? 'Familiar / Cuidador');
+
+        if (empty($nip)) {
+            $this->setFlash('warning', 'Debes ingresar el NIP o código de vinculación familiar.');
+            header('Location: ' . APP_URL . '/dashboard');
+            exit;
+        }
+
+        $pacienteModel = new Paciente();
+
+        try {
+            $paciente = $pacienteModel->vincularPorNip($userId, $nip, $parentesco);
+            $pacienteId = (int)$paciente['id'];
+
+            $_SESSION['paciente_activo_id'] = $pacienteId;
+            $_SESSION['paciente_activo_nombre'] = trim(($paciente['nombre'] ?? '') . ' ' . ($paciente['apellidos'] ?? ''));
+
+            AuthMiddleware::logAudit(
+                $pacienteId,
+                'VINCULACION_POR_NIP_EXITOSA',
+                "Usuario ID {$userId} vinculado al paciente '{$paciente['nombre']}' mediante NIP {$nip}."
+            );
+
+            $this->setFlash('success', "¡Vinculado exitosamente con {$paciente['nombre']}!");
+            header('Location: ' . APP_URL . '/dashboard');
+            exit;
+
+        } catch (\Throwable $e) {
+            error_log("[PacienteController::unirsePorNip Error] " . $e->getMessage());
+            $this->setFlash('danger', $e->getMessage());
+            header('Location: ' . APP_URL . '/dashboard');
+            exit;
+        }
+    }
+
+    /**
+     * Cambia fluidamente el paciente activo en sesión
+     */
+    public function seleccionar(): void {
+        AuthMiddleware::handle();
+        $userId = (int)($_SESSION['user_id'] ?? 0);
+        $pacienteId = (int)($_POST['paciente_id'] ?? ($_GET['paciente_id'] ?? 0));
+        $returnUrl = $_POST['return_url'] ?? ($_GET['return_url'] ?? APP_URL . '/dashboard');
+
+        if ($pacienteId > 0 && AuthMiddleware::autorizarAccesoPaciente($pacienteId, $userId)) {
+            $_SESSION['paciente_activo_id'] = $pacienteId;
+            
+            $pacienteModel = new Paciente();
+            $p = $pacienteModel->find($pacienteId);
+            if ($p) {
+                $_SESSION['paciente_activo_nombre'] = trim(($p['nombre'] ?? '') . ' ' . ($p['apellidos'] ?? ''));
+                $_SESSION['paciente_qr_token'] = $p['qr_token'] ?? '';
+            }
+            $this->setFlash('info', 'Has cambiado al perfil de ' . ($p['nombre'] ?? 'Adulto Mayor'));
+        } else {
+            $this->setFlash('danger', 'No tienes autorización para acceder al paciente seleccionado.');
+        }
+
+        // Sanitizar URL de retorno para evitar Open Redirects
+        if (!str_starts_with($returnUrl, APP_URL) && !str_starts_with($returnUrl, '/')) {
+            $returnUrl = APP_URL . '/dashboard';
+        }
+
+        header('Location: ' . $returnUrl);
+        exit;
+    }
+
+    /**
+     * Regenera el código / NIP de vinculación del adulto mayor
+     */
+    public function regenerarNip(): void {
+        AuthMiddleware::handle();
+
+        if (!validateCsrfToken($_POST['csrf_token'] ?? null)) {
+            $this->setFlash('danger', 'Token CSRF inválido o expirado.');
+            header('Location: ' . APP_URL . '/dashboard');
+            exit;
+        }
+
+        $pacienteId = (int)($_POST['paciente_id'] ?? ($_SESSION['paciente_activo_id'] ?? 0));
+        $acceso = AuthMiddleware::requirePatientAccess($pacienteId);
+
+        if (!$acceso['puede_editar']) {
+            $this->setFlash('danger', 'No tienes permisos para regenerar el NIP de este expediente.');
+            header('Location: ' . APP_URL . '/dashboard');
+            exit;
+        }
+
+        $pacienteModel = new Paciente();
+        try {
+            $nuevoNip = $pacienteModel->regenerarCodigoNip($pacienteId);
+            AuthMiddleware::logAudit(
+                $pacienteId,
+                'NIP_REGENERADO',
+                "Nuevo NIP '{$nuevoNip}' generado para el paciente ID {$pacienteId}."
+            );
+            $this->setFlash('success', "¡Nuevo código de vinculación generado: {$nuevoNip}!");
+        } catch (\Throwable $e) {
+            $this->setFlash('danger', 'Error al regenerar código: ' . $e->getMessage());
+        }
+
+        header('Location: ' . ($_POST['return_url'] ?? APP_URL . '/dashboard'));
+        exit;
+    }
+
+    /**
+     * Desvincula a un familiar o cuidador secundario
+     */
+    public function desvincularCuidador(): void {
+        AuthMiddleware::handle();
+
+        if (!validateCsrfToken($_POST['csrf_token'] ?? null)) {
+            $this->setFlash('danger', 'Token CSRF inválido o expirado.');
+            header('Location: ' . APP_URL . '/dashboard');
+            exit;
+        }
+
+        $pacienteId = (int)($_POST['paciente_id'] ?? ($_SESSION['paciente_activo_id'] ?? 0));
+        $cuidadorId = (int)($_POST['cuidador_id'] ?? 0);
+
+        $acceso = AuthMiddleware::requirePatientAccess($pacienteId);
+        if (!$acceso['puede_editar']) {
+            $this->setFlash('danger', 'No tienes permisos para desvincular cuidadores de este expediente.');
+            header('Location: ' . APP_URL . '/expediente#tab-contactos');
+            exit;
+        }
+
+        if ($cuidadorId > 0 && $pacienteId > 0) {
+            $pacienteModel = new Paciente();
+            $pacienteModel->desvincularFamiliar($pacienteId, $cuidadorId);
+            AuthMiddleware::logAudit(
+                $pacienteId,
+                'FAMILIAR_DESVINCULADO',
+                "Usuario cuidador ID {$cuidadorId} desvinculado del paciente ID {$pacienteId}."
+            );
+            $this->setFlash('success', 'Familiar desvinculado correctamente.');
+        }
+
+        header('Location: ' . APP_URL . '/expediente#tab-contactos');
+        exit;
+    }
+
+
+
+    /**
+     * Descarga de una receta médica individual en PDF
+     */
+    public function descargarRecetaPdf(): void {
+        AuthMiddleware::handle();
+        $recetaId = (int)($_GET['id'] ?? ($_GET['receta_id'] ?? 0));
+
+        if ($recetaId === 0) {
+            http_response_code(404);
+            die('Error 404: Receta no especificada.');
+        }
+
+        $doctorModel = new Doctor();
+        $receta = $doctorModel->obtenerRecetaPorId($recetaId);
+
+        if (!$receta) {
+            http_response_code(404);
+            die('Error 404: Receta no encontrada.');
+        }
+
+        $pacienteId = (int)$receta['paciente_id'];
+        $acceso = AuthMiddleware::requirePatientAccess($pacienteId);
+
+        $db = \Config\Database::getInstance()->getConnection();
+        $stmtMed = $db->prepare("SELECT * FROM medicamentos WHERE receta_id = :rid ORDER BY id ASC");
+        $stmtMed->execute(['rid' => $recetaId]);
+        $medicamentosRecetados = $stmtMed->fetchAll(\PDO::FETCH_ASSOC);
+
+        $pdfService = new PdfReportService();
+        $pdfService->generarRecetaPdf([
+            'receta' => $receta,
+            'medicamentosRecetados' => $medicamentosRecetados
+        ]);
+    }
+
+    /**
+     * Alias compatible con rutas anteriores
+     */
+    public function descargarExpediente(): void {
+        $this->descargarReporte();
     }
 }

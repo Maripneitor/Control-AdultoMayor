@@ -25,13 +25,12 @@ class ContactoEmergencia extends Model {
             INSERT INTO contactos_emergencia (paciente_id, nombre, parentesco, telefono, es_prioritario) 
             VALUES (:paciente_id, :nombre, :parentesco, :telefono, :es_prioritario)
         ");
-        return $stmt->execute([
-            'paciente_id' => $data['paciente_id'],
-            'nombre' => $data['nombre'],
-            'parentesco' => $data['parentesco'] ?? 'Familiar',
-            'telefono' => $data['telefono'],
-            'es_prioritario' => !empty($data['es_prioritario']) ? true : false
-        ]);
+        $stmt->bindValue(':paciente_id', (int)$data['paciente_id'], PDO::PARAM_INT);
+        $stmt->bindValue(':nombre', (string)$data['nombre'], PDO::PARAM_STR);
+        $stmt->bindValue(':parentesco', (string)($data['parentesco'] ?? 'Familiar'), PDO::PARAM_STR);
+        $stmt->bindValue(':telefono', (string)$data['telefono'], PDO::PARAM_STR);
+        $stmt->bindValue(':es_prioritario', !empty($data['es_prioritario']), PDO::PARAM_BOOL);
+        return $stmt->execute();
     }
 
     public function eliminar(int $id, int $pacienteId): bool {

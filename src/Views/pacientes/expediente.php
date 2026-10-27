@@ -88,9 +88,27 @@
                         <h1 class="text-base sm:text-lg font-black text-slate-900 tracking-tight leading-tight">
                             Expediente Clínico Geriátrico
                         </h1>
-                        <span class="px-2.5 py-0.5 text-[10px] font-bold rounded-full <?= $puedeEditar ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-100 text-slate-600 border border-slate-200' ?>">
-                            <?= $puedeEditar ? 'Modo Edición' : 'Solo Lectura (' . e($nivelAcceso ?? 'consulta') . ')' ?>
-                        </span>
+                        <?php if ($esDoctor || ($nivelAcceso ?? '') === 'doctor'): ?>
+                            <span class="px-2.5 py-0.5 text-[10px] font-bold rounded-full bg-indigo-100 text-indigo-800 border border-indigo-200">
+                                Médico Tratante Vinculado
+                            </span>
+                        <?php elseif (($nivelAcceso ?? '') === 'principal'): ?>
+                            <span class="px-2.5 py-0.5 text-[10px] font-bold rounded-full bg-blue-100 text-blue-800 border border-blue-200">
+                                Cuidador Principal (Control Total)
+                            </span>
+                        <?php elseif (($nivelAcceso ?? '') === 'completo'): ?>
+                            <span class="px-2.5 py-0.5 text-[10px] font-bold rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                Cuidador Vinculado (Control Total)
+                            </span>
+                        <?php elseif (($nivelAcceso ?? '') === 'solo_lectura'): ?>
+                            <span class="px-2.5 py-0.5 text-[10px] font-bold rounded-full bg-amber-100 text-amber-800 border border-amber-200">
+                                Familiar (Solo Lectura)
+                            </span>
+                        <?php else: ?>
+                            <span class="px-2.5 py-0.5 text-[10px] font-bold rounded-full bg-slate-100 text-slate-700 border border-slate-200">
+                                Paciente Titular
+                            </span>
+                        <?php endif; ?>
                     </div>
                     <?php 
                         $nombreCompleto = trim(($paciente['nombre'] ?? '') . ' ' . ($paciente['apellidos'] ?? ''));
@@ -118,14 +136,29 @@
                 </div>
             </div>
 
-            <div class="flex flex-wrap items-center gap-2 no-print w-full sm:w-auto justify-end">
-                <a href="<?= APP_URL ?>/paciente/pdf?id=<?= e((string)$paciente['id']) ?>" 
+            <div class="flex flex-wrap items-center gap-2.5 no-print w-full sm:w-auto justify-end">
+                <?php if (!empty($esDoctor)): ?>
+                    <!-- Acceso Rápido a Emitir Receta para Médicos -->
+                    <a href="<?= APP_URL ?>/doctor/recetas/nueva?paciente_id=<?= e((string)$paciente['id']) ?>" 
+                       aria-label="Emitir receta médica oficial"
+                       class="tap-bounce touch-min inline-flex items-center justify-center gap-2 px-4 py-2.5 min-h-[44px] bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-bold rounded-xl shadow-xs transition">
+                        <svg class="w-4 h-4 text-white shrink-0" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+                        </svg>
+                        <span>Emitir Receta</span>
+                    </a>
+                <?php endif; ?>
+
+                <!-- Botón de Exportación de Expediente Clínico PDF -->
+                <a href="<?= APP_URL ?>/pacientes/reporte-pdf?paciente_id=<?= e((string)$paciente['id']) ?>" 
                    target="_blank"
-                   class="tap-bounce touch-min px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl border border-slate-200 shadow-xs transition inline-flex items-center gap-2 cursor-pointer">
-                    <svg class="w-4 h-4 text-slate-600" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/>
+                   rel="noopener noreferrer"
+                   aria-label="Descargar reporte clínico y expediente médico en PDF del paciente <?= e($nombreCompleto) ?>"
+                   class="tap-bounce touch-min inline-flex items-center justify-center gap-2 px-4 py-2.5 min-h-[44px] bg-slate-100 hover:bg-teal-50 text-slate-700 hover:text-teal-800 text-xs sm:text-sm font-bold rounded-xl border border-slate-200 hover:border-teal-300 shadow-xs transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2 active:scale-[0.98] cursor-pointer">
+                    <svg class="w-4 h-4 text-teal-700 shrink-0" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m.75 12 3 3m0 0 3-3m-3 3v-6m-1.5-9H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/>
                     </svg>
-                    <span>Descargar PDF</span>
+                    <span>Descargar Reporte PDF</span>
                 </a>
 
                 <button type="button" 
@@ -144,6 +177,48 @@
 
     <main class="max-w-6xl mx-auto p-4 sm:p-6 md:p-8 w-full space-y-6">
         <?php require_once dirname(__DIR__) . '/components/toast.php'; ?>
+
+        <?php if (!$puedeEditar && !$esDoctor): ?>
+            <!-- Banner Informativo de Modo Solo Lectura -->
+            <div class="p-4 bg-amber-50 rounded-2xl border border-amber-200 flex items-center gap-3 text-xs text-amber-900 shadow-xs" role="alert">
+                <div class="w-8 h-8 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
+                    <svg class="w-4 h-4" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/>
+                    </svg>
+                </div>
+                <div class="flex-1">
+                    <p class="font-bold text-amber-950">Modo de Solo Lectura</p>
+                    <p class="text-amber-800 mt-0.5">Estás consultando este expediente sin privilegios de edición. Los cambios deben ser solicitados al cuidador principal.</p>
+                </div>
+            </div>
+        <?php endif; ?>
+
+        <?php if (!empty($esDoctor)): ?>
+            <!-- Banner y Acceso Clínico para Médicos Tratantes -->
+            <div class="p-4 bg-indigo-50/90 rounded-2xl border border-indigo-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-indigo-950 shadow-xs">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center shrink-0">
+                        <svg class="w-4 h-4" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="font-bold text-indigo-950">Espacio Médico Oficial</p>
+                        <p class="text-indigo-800 mt-0.5">Tienes autorización para emitir recetas digitales y consultar la evolución médica privada.</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 w-full sm:w-auto">
+                    <a href="<?= APP_URL ?>/doctor/recetas/nueva?paciente_id=<?= e((string)$paciente['id']) ?>" 
+                       class="tap-bounce touch-min flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-xs transition">
+                        <span>Emitir Receta</span>
+                    </a>
+                    <a href="<?= APP_URL ?>/doctor/paciente/<?= e((string)$paciente['id']) ?>" 
+                       class="tap-bounce touch-min flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3.5 py-2 bg-white hover:bg-indigo-50 text-indigo-800 font-bold text-xs rounded-xl border border-indigo-200 transition">
+                        <span>Visor Médico</span>
+                    </a>
+                </div>
+            </div>
+        <?php endif; ?>
 
         <!-- Tarjeta Principal con Pestañas -->
         <div class="bg-white rounded-3xl border border-slate-200/80 shadow-card overflow-hidden">
@@ -179,6 +254,12 @@
                     </svg>
                     <span>Historial de Visitas (<?= count($visitasMedicas ?? []) ?>)</span>
                 </button>
+                <button id="btn-tab-recetas" onclick="switchTab('tab-recetas')" class="tab-btn snap-start touch-min py-3 px-4 rounded-xl font-semibold text-xs sm:text-sm border-b-2 border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-100/80 whitespace-nowrap focus:outline-none transition-all inline-flex items-center gap-2 cursor-pointer shrink-0">
+                    <svg class="w-4 h-4 shrink-0" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/>
+                    </svg>
+                    <span>Recetas y Prescripciones (<?= count($recetas ?? []) ?>)</span>
+                </button>
             </div>
 
             <div class="p-4 sm:p-6 md:p-8">
@@ -207,25 +288,25 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                             <div>
                                 <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Nombre(s) <span class="text-rose-500">*</span></label>
-                                <input type="text" name="nombre" value="<?= e($paciente['nombre'] ?? '') ?>" required
-                                       class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-sm text-slate-800 font-semibold focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none">
+                                <input type="text" name="nombre" value="<?= e($paciente['nombre'] ?? '') ?>" required <?= !$puedeEditar ? 'disabled' : '' ?>
+                                       class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-sm text-slate-800 font-semibold focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed">
                             </div>
 
                             <div>
                                 <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Apellidos <span class="text-rose-500">*</span></label>
-                                <input type="text" name="apellidos" value="<?= e(($paciente['apellidos'] ?? '') === 'Por completar' ? '' : ($paciente['apellidos'] ?? '')) ?>" required placeholder="Apellidos del adulto mayor"
-                                       class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-sm text-slate-800 font-semibold focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none">
+                                <input type="text" name="apellidos" value="<?= e(($paciente['apellidos'] ?? '') === 'Por completar' ? '' : ($paciente['apellidos'] ?? '')) ?>" required placeholder="Apellidos del adulto mayor" <?= !$puedeEditar ? 'disabled' : '' ?>
+                                       class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-sm text-slate-800 font-semibold focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed">
                             </div>
 
                             <div>
                                 <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Fecha de Nacimiento <span class="text-rose-500">*</span></label>
-                                <input type="date" name="fecha_nacimiento" value="<?= e($paciente['fecha_nacimiento'] ?? date('Y-m-d')) ?>" required
-                                       class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-sm text-slate-800 font-semibold focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none">
+                                <input type="date" name="fecha_nacimiento" value="<?= e($paciente['fecha_nacimiento'] ?? date('Y-m-d')) ?>" required <?= !$puedeEditar ? 'disabled' : '' ?>
+                                       class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-sm text-slate-800 font-semibold focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed">
                             </div>
 
                             <div>
                                 <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Grupo Sanguíneo y Factor Rh</label>
-                                <select name="tipo_sangre" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-800 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none">
+                                <select name="tipo_sangre" <?= !$puedeEditar ? 'disabled' : '' ?> class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-800 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed">
                                     <option value="N/D" <?= ($paciente['tipo_sangre'] ?? 'N/D') === 'N/D' ? 'selected' : '' ?>>No Especificado / Desconocido</option>
                                     <?php foreach(['A+','A-','B+','B-','AB+','AB-','O+','O-'] as $ts): ?>
                                         <option value="<?= $ts ?>" <?= ($paciente['tipo_sangre'] ?? '') === $ts ? 'selected' : '' ?>><?= $ts ?></option>
@@ -258,7 +339,7 @@
                                 <label class="block text-xs font-bold text-rose-800 uppercase tracking-wider">Alergias Conocidas y Reacciones Adversas (RAM)</label>
                                 <span class="text-[11px] font-semibold text-rose-600 bg-rose-100 px-2 py-0.5 rounded-md">Crítico en Ficha QR</span>
                             </div>
-                            <textarea name="alergias" rows="2" class="w-full bg-white border border-rose-200 rounded-xl p-3 text-sm text-slate-800 focus:border-rose-500 focus:ring-4 focus:ring-rose-500/10 transition-all outline-none font-medium" placeholder="Ej. Alergia severa a Penicilina, AINEs, Yodo, Mariscos"><?= e($paciente['alergias'] ?? '') ?></textarea>
+                            <textarea name="alergias" rows="2" <?= !$puedeEditar ? 'disabled' : '' ?> class="w-full bg-white border border-rose-200 rounded-xl p-3 text-sm text-slate-800 focus:border-rose-500 focus:ring-4 focus:ring-rose-500/10 transition-all outline-none font-medium disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed" placeholder="Ej. Alergia severa a Penicilina, AINEs, Yodo, Mariscos"><?= e($paciente['alergias'] ?? '') ?></textarea>
                             <p class="text-[11px] text-rose-700 mt-1.5 font-medium inline-flex items-center gap-1.5">
                                 <svg class="w-3.5 h-3.5 text-rose-600 shrink-0" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/>
@@ -272,7 +353,7 @@
                                 <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">Diagnósticos Crónicos y Dispositivos Médicos</label>
                                 <span class="text-[11px] text-slate-400">Patologías, prótesis o implantes</span>
                             </div>
-                            <textarea name="enfermedades_cronicas" rows="3" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 text-sm text-slate-800 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none font-medium" placeholder="Ej. Hipertensión Arterial (2015), Diabetes Mellitus Tipo 2, Marcapasos bicameral implantado en 2021, Prótesis de cadera derecha"><?= e($paciente['enfermedades_cronicas'] ?? '') ?></textarea>
+                            <textarea name="enfermedades_cronicas" rows="3" <?= !$puedeEditar ? 'disabled' : '' ?> class="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 text-sm text-slate-800 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none font-medium disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed" placeholder="Ej. Hipertensión Arterial (2015), Diabetes Mellitus Tipo 2, Marcapasos bicameral implantado en 2021, Prótesis de cadera derecha"><?= e($paciente['enfermedades_cronicas'] ?? '') ?></textarea>
                         </div>
 
                         <div>
@@ -280,7 +361,7 @@
                                 <label class="block text-xs font-bold text-indigo-900 uppercase tracking-wider">Autonomía, Estado Cognitivo y Movilidad</label>
                                 <span class="text-[11px] text-slate-400">Escala funcional Geriátrica</span>
                             </div>
-                            <textarea name="notas_cognitivas" rows="3" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 text-sm text-slate-800 focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none font-medium" placeholder="Ej. Autonomía funcional Katz B, requiere andadera para traslados largos, riesgo moderado de caídas, usa prótesis dental y audífono derecho"><?= e($paciente['notas_cognitivas'] ?? '') ?></textarea>
+                            <textarea name="notas_cognitivas" rows="3" <?= !$puedeEditar ? 'disabled' : '' ?> class="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 text-sm text-slate-800 focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none font-medium disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed" placeholder="Ej. Autonomía funcional Katz B, requiere andadera para traslados largos, riesgo moderado de caídas, usa prótesis dental y audífono derecho"><?= e($paciente['notas_cognitivas'] ?? '') ?></textarea>
                         </div>
 
                         <?php if ($puedeEditar): ?>
@@ -669,6 +750,113 @@
                                             </div>
                                         <?php endif; ?>
 
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
+                </div>
+
+                <!-- ============================================================== -->
+                <!-- PESTAÑA 6: RECETAS & PRESCRIPCIONES MÉDICAS                    -->
+                <!-- ============================================================== -->
+                <div id="tab-recetas" class="tab-content hidden space-y-6">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-blue-50/70 p-4 rounded-2xl border border-blue-100">
+                        <div>
+                            <h2 class="font-bold text-blue-950 text-xs sm:text-sm">Recetas y Prescripciones Médicas</h2>
+                            <p class="text-xs text-blue-700">Historial oficial de recetas e indicaciones emitidas por los médicos vinculados.</p>
+                        </div>
+                        <span class="text-xs font-bold text-blue-800 bg-white px-3 py-1.5 rounded-xl border border-blue-200 shadow-2xs">
+                            <?= count($recetas ?? []) ?> <?= count($recetas ?? []) === 1 ? 'Receta' : 'Recetas' ?>
+                        </span>
+                    </div>
+
+                    <?php if (empty($recetas)): ?>
+                        <div class="text-center py-12 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                            <div class="w-12 h-12 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center mx-auto mb-3">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/>
+                                </svg>
+                            </div>
+                            <h3 class="text-sm font-bold text-slate-700">Sin recetas registradas</h3>
+                            <p class="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+                                Los médicos vinculados al paciente pueden emitir prescripciones oficiales, diagnósticos e indicaciones terapéuticas.
+                            </p>
+                        </div>
+                    <?php else: ?>
+                        <div class="space-y-4">
+                            <?php foreach ($recetas as $receta): ?>
+                                <div class="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-xs transition">
+                                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3 mb-4">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-sm shrink-0">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z"/>
+                                                </svg>
+                                            </div>
+                                            <div>
+                                                <h3 class="font-bold text-slate-800 text-sm">
+                                                    Dr(a). <?= e($receta['doctor_nombre'] ?? 'Médico Tratante') ?>
+                                                </h3>
+                                                <p class="text-xs text-slate-500">
+                                                    <?= e($receta['especialidad'] ?? 'Medicina General') ?>
+                                                    <?php if (!empty($receta['cedula_profesional'])): ?>
+                                                        • Céd. Prof. <span class="font-mono"><?= e($receta['cedula_profesional']) ?></span>
+                                                    <?php endif; ?>
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div class="text-right">
+                                            <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700">
+                                                <?= date('d/m/Y', strtotime($receta['fecha_emision'] ?? 'now')) ?>
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div class="bg-slate-50/80 p-3.5 rounded-xl border border-slate-100">
+                                            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-1">
+                                                Diagnóstico Clínico
+                                            </span>
+                                            <p class="text-xs sm:text-sm font-semibold text-slate-800 leading-relaxed">
+                                                <?= nl2br(e($receta['diagnostico'] ?? 'Sin diagnóstico especificado')) ?>
+                                            </p>
+                                        </div>
+
+                                        <div class="bg-blue-50/40 p-3.5 rounded-xl border border-blue-100/60">
+                                            <span class="text-[10px] font-bold uppercase tracking-wider text-blue-600 block mb-1">
+                                                Indicaciones y Tratamiento
+                                            </span>
+                                            <p class="text-xs sm:text-sm text-slate-700 leading-relaxed whitespace-pre-line">
+                                                <?= e($receta['indicaciones_generales'] ?? 'Seguir indicaciones en consulta.') ?>
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <!-- Acciones de Descarga y Visualización de Receta -->
+                                    <div class="mt-4 pt-3 border-t border-slate-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                                        <span class="text-xs text-slate-500 font-medium">Prescripción Oficial Folio #REC-<?= str_pad((string)($receta['id'] ?? 1), 5, '0', STR_PAD_LEFT) ?></span>
+                                        <div class="flex items-center gap-2">
+                                            <?php if (!empty($receta['archivo_receta_url'])): ?>
+                                                <?php 
+                                                    $urlArchivo = APP_URL . '/' . ltrim($receta['archivo_receta_url'], '/');
+                                                    $esImg = preg_match('/\.(jpg|jpeg|png|webp)$/i', $receta['archivo_receta_url']);
+                                                ?>
+                                                <?php if ($esImg): ?>
+                                                    <button type="button" onclick="abrirLightbox('<?= $urlArchivo ?>', 'Receta Médica - <?= e($receta['doctor_nombre'] ?? '') ?>')" class="tap-bounce px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition inline-flex items-center gap-1.5 cursor-pointer">
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                                        <span>Ver Foto</span>
+                                                    </button>
+                                                <?php endif; ?>
+                                            <?php endif; ?>
+                                            
+                                            <a href="<?= APP_URL ?>/pacientes/receta-pdf?id=<?= (int)$receta['id'] ?>" target="_blank" class="tap-bounce px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-xs shadow-blue-500/20 transition inline-flex items-center gap-1.5 cursor-pointer">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/>
+                                                </svg>
+                                                <span>Descargar Receta (PDF)</span>
+                                            </a>
+                                        </div>
                                     </div>
                                 </div>
                             <?php endforeach; ?>

@@ -16,6 +16,8 @@
 /vendor/
 /node_modules/
 .agents/
+composer.phar
+/scratch/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -28,6 +30,9 @@ yarn-error.log*
 *.sql.tar
 *.sql.bak
 dump.sql
+/bd-vitalsenior.sql
+/database_completa.sql
+
 
 # 4. Registros del Sistema y Logs Privados (Excluyendo .gitkeep)
 /logs/*

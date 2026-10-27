@@ -77,17 +77,24 @@ class VisitaMedicaController extends Controller {
         $_SESSION['paciente_activo_id'] = $pacienteId;
 
         $doctores = $this->doctorModel->getByPacienteId($pacienteId);
+        $motivoInicial = trim($_GET['motivo'] ?? '');
+        $lugarInicial = trim($_GET['lugar'] ?? '');
 
         $this->render('visitas/nueva', [
             'paciente' => $paciente,
             'doctores' => $doctores,
+            'motivoInicial' => $motivoInicial,
+            'lugarInicial' => $lugarInicial,
             'puedeEditar' => $acceso['puede_editar']
         ], 'main');
     }
 
     /**
-     * Guarda la visita médica en transacción ACID, procesa fotos de recetas y genera cita de seguimiento si aplica
+     * Alias compatible con VisitaMedicaController::guardar()
      */
+    public function guardar(): void {
+        $this->store();
+    }
     public function store(): void {
         AuthMiddleware::handle();
 

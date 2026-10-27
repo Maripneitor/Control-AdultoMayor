@@ -31,7 +31,11 @@ class MedicamentoController extends Controller {
 
         // 2. Aislamiento Multitenant con ofuscación 404
         $acceso = \App\Middlewares\AuthMiddleware::requirePatientAccess($pacienteId);
-        $puedeEditar = $acceso['puede_editar'];
+        $userRole = $_SESSION['user_role'] ?? 'familiar';
+        $esDoctor = in_array($userRole, ['doctor', 'medico'], true) || ($acceso['nivel_acceso'] ?? '') === 'doctor';
+        $nivelAcceso = $acceso['nivel_acceso'] ?? ($esDoctor ? 'doctor' : 'solo_lectura');
+        $puedeEditar = in_array($nivelAcceso, ['principal', 'completo'], true) && !$esDoctor;
+        $puedeSuministrar = (in_array($nivelAcceso, ['principal', 'completo'], true) || in_array($userRole, ['paciente', 'adulto_mayor'], true)) && !$esDoctor;
         
         $medicamentos = $this->medicamentoModel->getAllByPacienteId((int)$pacienteId);
         $todosLosPacientes = $this->pacienteModel->obtenerTodosVinculados($userId);
@@ -51,13 +55,15 @@ class MedicamentoController extends Controller {
             ? round(((int)$stats['tomadas'] / (int)$stats['total_evaluadas']) * 100) 
             : 100;
 
-        // 3. Renderizado condicional en la vista pasando el booleano
+        // 3. Renderizado condicional en la vista pasando los booleanos
         $this->render('medicamentos/index', [
             'paciente' => $paciente,
             'medicamentos' => $medicamentos,
             'adherencia' => $adherencia,
             'puedeEditar' => $puedeEditar,
-            'nivelAcceso' => $acceso['nivel_acceso'],
+            'puedeSuministrar' => $puedeSuministrar,
+            'esDoctor' => $esDoctor,
+            'nivelAcceso' => $nivelAcceso,
             'todosLosPacientes' => $todosLosPacientes
         ], false);
     }
@@ -76,7 +82,12 @@ class MedicamentoController extends Controller {
 
         // Aislamiento Multitenant con ofuscación 404
         $acceso = \App\Middlewares\AuthMiddleware::requirePatientAccess($pacienteId);
-        $puedeEditar = $acceso['puede_editar'];
+        $userRole = $_SESSION['user_role'] ?? 'familiar';
+        $esDoctor = in_array($userRole, ['doctor', 'medico'], true) || ($acceso['nivel_acceso'] ?? '') === 'doctor';
+        $nivelAcceso = $acceso['nivel_acceso'] ?? ($esDoctor ? 'doctor' : 'solo_lectura');
+        $puedeEditar = in_array($nivelAcceso, ['principal', 'completo'], true) && !$esDoctor;
+        $puedeSuministrar = (in_array($nivelAcceso, ['principal', 'completo'], true) || in_array($userRole, ['paciente', 'adulto_mayor'], true)) && !$esDoctor;
+
         $todosLosPacientes = $this->pacienteModel->obtenerTodosVinculados($userId);
 
         $this->medicamentoModel->generarTomasDiarias((int)$pacienteId);
@@ -99,9 +110,14 @@ class MedicamentoController extends Controller {
         $pacienteId = (int)($_POST['paciente_id'] ?? ($_SESSION['paciente_activo_id'] ?? 0));
 
         $acceso = \App\Middlewares\AuthMiddleware::requirePatientAccess($pacienteId);
-        if (empty($acceso['puede_editar'])) {
+        $userRole = $_SESSION['user_role'] ?? 'familiar';
+        $esDoctor = in_array($userRole, ['doctor', 'medico'], true) || ($acceso['nivel_acceso'] ?? '') === 'doctor';
+        $nivelAcceso = $acceso['nivel_acceso'] ?? ($esDoctor ? 'doctor' : 'solo_lectura');
+        $puedeEditar = in_array($nivelAcceso, ['principal', 'completo'], true) && !$esDoctor;
+
+        if (!$puedeEditar) {
             http_response_code(403);
-            die('Error 403: No tienes permisos para pausar o reactivar medicamentos.');
+            die('Error 403: No tienes permisos para pausar o reactivar medicamentos de este paciente.');
         }
 
         if ($medId > 0 && $pacienteId > 0) {
@@ -129,9 +145,14 @@ class MedicamentoController extends Controller {
         $pacienteId = (int)($_POST['paciente_id'] ?? ($_SESSION['paciente_activo_id'] ?? 0));
 
         $acceso = \App\Middlewares\AuthMiddleware::requirePatientAccess($pacienteId);
-        if (empty($acceso['puede_editar'])) {
+        $userRole = $_SESSION['user_role'] ?? 'familiar';
+        $esDoctor = in_array($userRole, ['doctor', 'medico'], true) || ($acceso['nivel_acceso'] ?? '') === 'doctor';
+        $nivelAcceso = $acceso['nivel_acceso'] ?? ($esDoctor ? 'doctor' : 'solo_lectura');
+        $puedeEditar = in_array($nivelAcceso, ['principal', 'completo'], true) && !$esDoctor;
+
+        if (!$puedeEditar) {
             http_response_code(403);
-            die('Error 403: No tienes permisos para eliminar medicamentos.');
+            die('Error 403: No tienes permisos para eliminar medicamentos de este paciente.');
         }
 
         if ($medId > 0 && $pacienteId > 0) {
@@ -163,7 +184,12 @@ class MedicamentoController extends Controller {
 
         // Validación Multitenant
         $acceso = \App\Middlewares\AuthMiddleware::requirePatientAccess($pacienteId);
-        if (!$acceso['puede_editar']) {
+        $userRole = $_SESSION['user_role'] ?? 'familiar';
+        $esDoctor = in_array($userRole, ['doctor', 'medico'], true) || ($acceso['nivel_acceso'] ?? '') === 'doctor';
+        $nivelAcceso = $acceso['nivel_acceso'] ?? ($esDoctor ? 'doctor' : 'solo_lectura');
+        $puedeEditar = in_array($nivelAcceso, ['principal', 'completo'], true) && !$esDoctor;
+
+        if (!$puedeEditar) {
             http_response_code(403);
             die('Error 403: No tienes permisos para agregar medicamentos a este paciente.');
         }
@@ -196,6 +222,13 @@ class MedicamentoController extends Controller {
 
         header('Location: ' . APP_URL . '/medicamentos');
         exit;
+    }
+
+    /**
+     * Alias de marcarToma para compatibilidad con estándares de la API
+     */
+    public function registrarToma(): void {
+        $this->marcarToma();
     }
 
     public function marcarToma(): void {
@@ -233,6 +266,16 @@ class MedicamentoController extends Controller {
 
                 // Validación Multitenant para asegurar que el usuario puede interactuar con el paciente de esta toma
                 $acceso = \App\Middlewares\AuthMiddleware::requirePatientAccess($toma['paciente_id']);
+                $userRole = $_SESSION['user_role'] ?? 'familiar';
+                $esDoctor = in_array($userRole, ['doctor', 'medico'], true) || ($acceso['nivel_acceso'] ?? '') === 'doctor';
+                $nivelAcceso = $acceso['nivel_acceso'] ?? ($esDoctor ? 'doctor' : 'solo_lectura');
+                $puedeSuministrar = (in_array($nivelAcceso, ['principal', 'completo'], true) || in_array($userRole, ['paciente', 'adulto_mayor'], true)) && !$esDoctor;
+
+                if (!$puedeSuministrar) {
+                    $db->rollBack();
+                    http_response_code(403);
+                    die('Error 403: No tienes permisos para suministrar medicamentos a este paciente.');
+                }
 
                 if ($toma['estado'] !== 'tomado') {
                     $nota = null;
@@ -316,7 +359,7 @@ class MedicamentoController extends Controller {
 
                 // 1. Obtener la toma actual con bloqueo FOR UPDATE
                 $stmt = $db->prepare(
-                    "SELECT id, medicamento_id, paciente_id, fecha_programada_utc, pospuesto_hasta, estado 
+                    "SELECT id, medicamento_id, paciente_id, fecha_programada_utc, pospuesto_hasta, estado, COALESCE(veces_pospuesto, 0) AS veces_pospuesto 
                      FROM tomas_historial 
                      WHERE id = :id FOR UPDATE"
                 );
@@ -332,16 +375,32 @@ class MedicamentoController extends Controller {
 
                 // Validación Multitenant
                 $acceso = \App\Middlewares\AuthMiddleware::requirePatientAccess($toma['paciente_id']);
-                if (empty($acceso['puede_editar'])) {
+                $userRole = $_SESSION['user_role'] ?? 'familiar';
+                $esDoctor = in_array($userRole, ['doctor', 'medico'], true) || ($acceso['nivel_acceso'] ?? '') === 'doctor';
+                $nivelAcceso = $acceso['nivel_acceso'] ?? ($esDoctor ? 'doctor' : 'solo_lectura');
+                $puedeEditar = in_array($nivelAcceso, ['principal', 'completo'], true) && !$esDoctor;
+
+                if (!$puedeEditar) {
                     $db->rollBack();
-                    $this->setFlash('danger', 'Error 403: No tienes permisos para posponer tomas de este paciente.');
-                    header('Location: ' . $redirectUrl);
-                    exit;
+                    http_response_code(403);
+                    die('Error 403: No tienes permisos para posponer tomas de este paciente.');
                 }
 
                 if (!in_array($toma['estado'], ['pendiente', 'pospuesto'], true)) {
                     $db->rollBack();
                     $this->setFlash('warning', 'La toma no se encuentra pendiente para ser pospuesta.');
+                    header('Location: ' . $redirectUrl);
+                    exit;
+                }
+
+                // REGLA: Límite de máximo 2 aplazamientos (30 min cada uno)
+                $vecesPospuesto = (int)($toma['veces_pospuesto'] ?? 0);
+                if ($vecesPospuesto >= 2) {
+                    $db->rollBack();
+                    $this->setFlash(
+                        'danger',
+                        'Límite de Aplazamiento Alcanzado: Esta dosis ya ha sido pospuesta en 2 ocasiones (máximo permitido). Para mantener la adherencia farmacológica y evitar riesgos a la salud, debes marcarla como "Tomada" o "Omitida justificada".'
+                    );
                     header('Location: ' . $redirectUrl);
                     exit;
                 }
@@ -391,7 +450,7 @@ class MedicamentoController extends Controller {
                         $horaProximaLegible = $siguienteHoraUtc->format('H:i');
                         $this->setFlash(
                             'danger', 
-                            "Bloqueo de Seguridad Clínica: No es posible posponer la toma 30 minutos más. Quedaría a menos de 2 horas (margen de " . round(max(0, $margenMinutos)) . " min) de tu próxima dosis programada de las {$horaProximaLegible} UTC, existiendo riesgo de sobredosis o acumulación tóxica. Por favor marca la dosis como tomada o consulta a tu médico."
+                            "Bloqueo de Seguridad Clínica: No es posible posponer la toma 30 minutos más. Quedaría a menos de 2 horas (margen de " . round(max(0, $margenMinutos)) . " min) de tu próxima dosis programada ({$horaProximaLegible} UTC), existiendo riesgo de sobredosis o acumulación tóxica. Por favor marca la dosis como 'Tomada' o 'Omitida justificada'."
                         );
                         header('Location: ' . $redirectUrl);
                         exit;
@@ -399,25 +458,29 @@ class MedicamentoController extends Controller {
                 }
 
                 // 4. Margen seguro validado: Actualizar estado y posponer
+                $nuevoVeces = $vecesPospuesto + 1;
                 $stmtUpdate = $db->prepare(
                     "UPDATE tomas_historial 
                      SET estado = 'pospuesto', 
                          pospuesto_hasta = :nueva_hora,
+                         veces_pospuesto = :veces,
                          recordatorio_enviado = FALSE, 
-                         nota_incidencia = 'Pospuesta 30 minutos tras validación de margen clínico seguro (>2h)'
+                         nota_incidencia = :nota
                      WHERE id = :id"
                 );
                 $stmtUpdate->execute([
                     ':nueva_hora' => $nuevaHoraPospuesta->format('Y-m-d H:i:sP'),
+                    ':veces' => $nuevoVeces,
+                    ':nota' => "Pospuesta en {$nuevoVeces}ª ocasión (+30 min tras validación clínica >2h)",
                     ':id' => $registroId
                 ]);
 
                 $db->commit();
 
                 $usuarioModel = new \App\Models\Usuario();
-                $usuarioModel->registrarAuditoria('TOMA_POSPUESTA_SEGURA', "Toma $registroId pospuesta a {$nuevaHoraPospuesta->format('H:i:s')} UTC. Margen clínico validado.");
+                $usuarioModel->registrarAuditoria('TOMA_POSPUESTA_SEGURA', "Toma $registroId pospuesta (intento {$nuevoVeces}/2) a {$nuevaHoraPospuesta->format('H:i:s')} UTC. Margen clínico validado.");
 
-                $this->setFlash('info', 'Medicamento pospuesto 30 minutos de forma segura. Te recordaremos en el nuevo horario.');
+                $this->setFlash('info', "Medicamento pospuesto 30 minutos de forma segura (intento {$nuevoVeces}/2). Te recordaremos en el nuevo horario.");
             } catch (\Throwable $e) {
                 if (isset($db) && $db->inTransaction()) {
                     $db->rollBack();
@@ -469,11 +532,15 @@ class MedicamentoController extends Controller {
 
                 // Validación Multitenant
                 $acceso = \App\Middlewares\AuthMiddleware::requirePatientAccess($toma['paciente_id']);
-                if (empty($acceso['puede_editar'])) {
+                $userRole = $_SESSION['user_role'] ?? 'familiar';
+                $esDoctor = in_array($userRole, ['doctor', 'medico'], true) || ($acceso['nivel_acceso'] ?? '') === 'doctor';
+                $nivelAcceso = $acceso['nivel_acceso'] ?? ($esDoctor ? 'doctor' : 'solo_lectura');
+                $puedeEditar = in_array($nivelAcceso, ['principal', 'completo'], true) && !$esDoctor;
+
+                if (!$puedeEditar) {
                     $db->rollBack();
-                    $this->setFlash('danger', 'Error 403: No tienes permisos para anular tomas de este paciente.');
-                    header('Location: ' . $redirectUrl);
-                    exit;
+                    http_response_code(403);
+                    die('Error 403: No tienes permisos para anular tomas de este paciente.');
                 }
 
                 if ($toma['estado'] !== 'tomado') {

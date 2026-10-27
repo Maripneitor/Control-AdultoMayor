@@ -328,6 +328,96 @@
         </section>
     </main>
 
+    <!-- MODAL PRIORITARIO DE ALERTA CLÍNICA URGENTE -->
+    <?php if (!empty($alertaClinicaUrgente)): ?>
+    <div id="modal-alerta-urgente" class="fixed inset-0 bg-rose-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-fadeIn">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border-2 border-rose-500 relative overflow-hidden">
+            <!-- Barra superior de urgencia -->
+            <div class="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-rose-600 via-red-500 to-amber-500 animate-pulse"></div>
+
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-12 h-12 rounded-2xl bg-rose-100 border border-rose-200 text-rose-600 flex items-center justify-center shrink-0 animate-bounce">
+                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.25">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/>
+                    </svg>
+                </div>
+                <div>
+                    <span class="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-black tracking-widest uppercase bg-rose-600 text-white mb-0.5 shadow-xs">
+                        ALERTA CLÍNICA PRIORITARIA
+                    </span>
+                    <h3 class="text-xl font-black text-slate-900 leading-tight">
+                        <?= e($alertaClinicaUrgente['tipo'] ?? 'Signos Vitales Fuera de Rango') ?>
+                    </h3>
+                </div>
+            </div>
+
+            <!-- Valores Registrados -->
+            <div class="p-3.5 bg-rose-50 rounded-2xl border border-rose-200/80 mb-4">
+                <div class="grid grid-cols-2 gap-2 text-center">
+                    <?php if (!empty($alertaClinicaUrgente['presion'])): ?>
+                    <div class="bg-white p-2.5 rounded-xl border border-rose-100 shadow-xs">
+                        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Presión Registrada</span>
+                        <span class="text-lg font-black text-rose-700"><?= e($alertaClinicaUrgente['presion']) ?></span>
+                    </div>
+                    <?php endif; ?>
+                    <?php if (!empty($alertaClinicaUrgente['glucosa'])): ?>
+                    <div class="bg-white p-2.5 rounded-xl border border-rose-100 shadow-xs">
+                        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Glucosa Registrada</span>
+                        <span class="text-lg font-black text-rose-700"><?= e($alertaClinicaUrgente['glucosa']) ?></span>
+                    </div>
+                    <?php endif; ?>
+                </div>
+                <p class="text-xs text-rose-900 font-medium mt-2 leading-relaxed">
+                    <?= e($alertaClinicaUrgente['mensaje'] ?? 'Se han registrado mediciones en niveles críticos de atención médica inmediata.') ?>
+                </p>
+            </div>
+
+            <!-- Recomendaciones Clínicas Inmediatas -->
+            <?php if (!empty($alertaClinicaUrgente['recomendaciones']) && is_array($alertaClinicaUrgente['recomendaciones'])): ?>
+            <div class="mb-5 space-y-1.5">
+                <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                    <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    Recomendaciones Inmediatas:
+                </h4>
+                <ul class="text-xs text-slate-700 space-y-1 bg-slate-50 p-3 rounded-xl border border-slate-200">
+                    <?php foreach ($alertaClinicaUrgente['recomendaciones'] as $recom): ?>
+                    <li class="flex items-start gap-1.5">
+                        <span class="text-rose-600 font-bold">•</span>
+                        <span><?= e($recom) ?></span>
+                    </li>
+                    <?php endforeach; ?>
+                </ul>
+            </div>
+            <?php endif; ?>
+
+            <!-- Botones de Acción Directa SOS -->
+            <div class="space-y-2.5">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <a href="tel:911" class="w-full py-3.5 bg-rose-600 hover:bg-rose-700 active:scale-95 text-white text-xs font-black rounded-xl shadow-md shadow-rose-600/30 transition flex items-center justify-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                        <span>Llamar al 911 (Emergencias)</span>
+                    </a>
+                    
+                    <?php 
+                        $telContacto = $paciente['contacto_emergencia_telefono'] ?? $paciente['telefono_contacto'] ?? '';
+                        $nomContacto = $paciente['contacto_emergencia_nombre'] ?? 'Médico / Familiar';
+                    ?>
+                    <?php if (!empty($telContacto)): ?>
+                    <a href="tel:<?= e($telContacto) ?>" class="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white text-xs font-black rounded-xl shadow-md shadow-indigo-600/30 transition flex items-center justify-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M16 8l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M5 3a2 2 0 00-2 2v1c0 8.284 6.716 15 15 15h1a2 2 0 002-2v-3.28a1 1 0 00-.684-.948l-4.493-1.498a1 1 0 00-1.21.502l-1.13 2.257a11.042 11.042 0 01-5.516-5.517l2.257-1.128a1 1 0 00.502-1.21L9.228 3.684A1 1 0 008.279 3H5z"/></svg>
+                        <span>Llamar a <?= e($nomContacto) ?></span>
+                    </a>
+                    <?php endif; ?>
+                </div>
+
+                <button type="button" onclick="cerrarModalAlertaUrgente()" class="w-full py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition cursor-pointer">
+                    Entendido, estoy atendiendo la situación
+                </button>
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
+
     <!-- Barra de Navegación Móvil Fija -->
     <?php require_once dirname(__DIR__) . '/components/bottom_nav.php'; ?>
 
@@ -339,6 +429,14 @@
     <!-- Scripts de SOS y PWA -->
     <script src="<?= APP_URL ?>/assets/js/sos-handler.js"></script>
     <script>
+        function cerrarModalAlertaUrgente() {
+            const modal = document.getElementById('modal-alerta-urgente');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+        }
+
         window.addEventListener('DOMContentLoaded', () => {
             requestAnimationFrame(() => {
                 const body = document.getElementById('dashboard-body');

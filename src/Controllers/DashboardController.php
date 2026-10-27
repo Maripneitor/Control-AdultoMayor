@@ -32,6 +32,13 @@ class DashboardController extends Controller {
     public function index(): void {
         AuthMiddleware::handle();
         $userId = (int)($_SESSION['user_id'] ?? 0);
+        $userRole = $_SESSION['user_role'] ?? '';
+
+        // Si el usuario es Médico o Doctor, redirigir a su panel clínico especializado
+        if (in_array($userRole, ['medico', 'doctor'], true)) {
+            header('Location: ' . APP_URL . '/doctor/dashboard');
+            exit;
+        }
 
         // Si se solicita cambio de paciente
         if (isset($_GET['seleccionar_paciente'])) {
@@ -59,17 +66,13 @@ class DashboardController extends Controller {
         }
 
         if (empty($todosLosPacientes)) {
-            $userRole = $_SESSION['user_role'] ?? 'familiar_admin';
-            if (in_array($userRole, ['familiar_admin', 'familiar', 'cuidador', 'cuidador_auxiliar'], true)) {
-                // Redirección obligatoria a la Vinculación para Familiares sin pacientes vinculados
-                header('Location: ' . APP_URL . '/vincular');
-                exit;
-            }
-
-            $this->setFlash('warning', 'Aún no tienes un perfil de salud asociado. Por favor vincúlalo.');
-            header('Location: ' . APP_URL . '/vincular');
+            $this->setFlash('info', 'Bienvenido(a) a VitalSenior. Para comenzar, registra el perfil del adulto mayor a tu cuidado o vincula un expediente existente mediante su código NIP.');
+            header('Location: ' . APP_URL . '/pacientes/crear');
             exit;
         }
+
+        // Almacenar lista de pacientes en sesión para acceso global
+        $_SESSION['pacientes_asignados'] = $todosLosPacientes;
 
         // Determinar paciente activo
         $pacienteActivoId = (int)($_SESSION['paciente_activo_id'] ?? $todosLosPacientes[0]['id']);
@@ -103,11 +106,16 @@ class DashboardController extends Controller {
         // 2. Consultar información médica real del paciente
         $medicamentosActivos = $this->medicamentoModel->getActiveByPacienteId($pacienteId);
         $tomasDelDia = $this->medicamentoModel->getTodayDoses($pacienteId);
+        $adherenciaSemanal = $this->medicamentoModel->calcularAdherenciaSemanal($pacienteId);
         $proximasCitas = $this->citaModel->getUpcomingByPacienteId($pacienteId, 5);
         $doctores = $this->doctorModel->getByPacienteId($pacienteId);
         $contactosEmergencia = $this->contactoModel->getByPacienteId($pacienteId);
         $alertasDosis = $this->medicamentoModel->getOmitidasHoy($pacienteId);
         $alertasInventario = $this->medicamentoModel->getBajoInventario($pacienteId);
+        $alertaClinicaUrgente = $_SESSION['alerta_clinica_urgente'] ?? null;
+        if ($alertaClinicaUrgente) {
+            unset($_SESSION['alerta_clinica_urgente']);
+        }
 
         // 3. Renderizar la vista pasando los datos según el rol
         $userRole = $_SESSION['user_role'] ?? '';

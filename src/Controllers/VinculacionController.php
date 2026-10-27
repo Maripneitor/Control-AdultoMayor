@@ -22,7 +22,6 @@ class VinculacionController extends Controller {
 
     public function showForm(): void {
         AuthMiddleware::handle();
-        $userId = (int)($_SESSION['user_id'] ?? 0);
         $role = $_SESSION['user_role'] ?? '';
 
         if (in_array($role, ['paciente', 'adulto_mayor'], true)) {
@@ -31,7 +30,8 @@ class VinculacionController extends Controller {
             exit;
         }
 
-        $this->render('pacientes/vincular', [], 'main');
+        header('Location: ' . APP_URL . '/dashboard?abrir_nip=1');
+        exit;
     }
 
     public function processVinculacion(): void {

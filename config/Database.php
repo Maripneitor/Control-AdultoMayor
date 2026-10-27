@@ -20,7 +20,7 @@ class Database {
     private function __construct() {
         $host = defined('DB_HOST') ? DB_HOST : (getenv('DB_HOST') ?: '127.0.0.1');
         $port = defined('DB_PORT') ? DB_PORT : (getenv('DB_PORT') ?: '5432');
-        $dbname = defined('DB_NAME') ? DB_NAME : (getenv('DB_NAME') ?: 'VitalSenior');
+        $dbname = defined('DB_NAME') ? DB_NAME : (getenv('DB_NAME') ?: 'vitalsenior');
         $user = defined('DB_USER') ? DB_USER : (getenv('DB_USER') ?: 'postgres');
         $pass = defined('DB_PASS') ? DB_PASS : (getenv('DB_PASS') ?: '');
 

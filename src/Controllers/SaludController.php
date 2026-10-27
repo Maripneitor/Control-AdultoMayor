@@ -197,6 +197,39 @@ class SaludController extends Controller {
             AuthMiddleware::logAudit($pacienteId, 'registro_signos_vitales', "Registro rutinario de signos vitales (ID: {$registroId})");
         }
 
+        // Alerta Clínica Urgente en Sesión si hay parámetros en Semáforo Rojo
+        if ($alertaEmitida || ($sistolica !== null && ($sistolica >= 180 || $diastolica >= 120)) || ($glucosaVal !== null && ($glucosaVal < 70 || $glucosaVal >= 250))) {
+            $tipoAlerta = '🚨 Alerta Clínica Prioritaria';
+            $recomendaciones = [];
+
+            if ($sistolica !== null && ($sistolica >= 180 || $diastolica >= 120)) {
+                $tipoAlerta = '🚨 Alerta: Crisis Hipertensiva';
+                $recomendaciones[] = 'Coloca al adulto mayor en reposo absoluto, sentado con la espalda apoyada.';
+                $recomendaciones[] = 'Evita la ingesta de café, sal o estímulos estresantes.';
+                $recomendaciones[] = 'Contacta de inmediato a su médico o llama al 911 si presenta dolor de cabeza intenso, visión borrosa o dolor en el pecho.';
+            }
+            if ($glucosaVal !== null && $glucosaVal < 70) {
+                $tipoAlerta = '🚨 Alerta: Hipoglucemia Severa';
+                $recomendaciones[] = 'Suministra de inmediato carbohidratos de absorción rápida: 1/2 vaso de jugo de naranja o agua con 2 cucharadas de azúcar.';
+                $recomendaciones[] = 'Repite la toma de glucosa en 15 minutos.';
+                $recomendaciones[] = 'Si hay desorientación o pérdida de conciencia, busca auxilio médico urgente.';
+            } elseif ($glucosaVal !== null && $glucosaVal >= 250) {
+                $tipoAlerta = '🚨 Alerta: Hiperglucemia Crítica';
+                $recomendaciones[] = 'Asegura hidratación abundante con agua simple.';
+                $recomendaciones[] = 'Verifica la adherencia al tratamiento de insulina o hipoglucemiantes orales.';
+                $recomendaciones[] = 'Notifica al médico tratante.';
+            }
+
+            $_SESSION['alerta_clinica_urgente'] = [
+                'tipo' => $tipoAlerta,
+                'presion' => ($sistolica && $diastolica) ? "{$sistolica}/{$diastolica} mmHg" : null,
+                'glucosa' => $glucosaVal !== null ? "{$glucosaVal} mg/dL" : null,
+                'recomendaciones' => $recomendaciones,
+                'fecha_hora' => date('d/m/Y H:i'),
+                'paciente_id' => $pacienteId
+            ];
+        }
+
         // Notificación al usuario
         $mensaje = 'Signos vitales registrados correctamente.';
         $flashType = 'success';

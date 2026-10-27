@@ -13,7 +13,30 @@
         <div class="flex items-center space-x-3">
             <a href="<?= APP_URL ?>/dashboard" class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-xl hover:bg-blue-700 transition">←</a>
             <div>
-                <h1 class="text-lg font-bold text-slate-800 leading-tight">Inventario de Medicamentos</h1>
+                <div class="flex items-center space-x-2">
+                    <h1 class="text-lg font-bold text-slate-800 leading-tight">Inventario de Medicamentos</h1>
+                    <?php if (!empty($esDoctor) || ($nivelAcceso ?? '') === 'doctor'): ?>
+                        <span class="px-2.5 py-0.5 text-[10px] font-bold rounded-full bg-indigo-100 text-indigo-800 border border-indigo-200">
+                            Médico Tratante Vinculado
+                        </span>
+                    <?php elseif (($nivelAcceso ?? '') === 'principal'): ?>
+                        <span class="px-2.5 py-0.5 text-[10px] font-bold rounded-full bg-blue-100 text-blue-800 border border-blue-200">
+                            Cuidador Principal (Control Total)
+                        </span>
+                    <?php elseif (($nivelAcceso ?? '') === 'completo'): ?>
+                        <span class="px-2.5 py-0.5 text-[10px] font-bold rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
+                            Cuidador Vinculado (Control Total)
+                        </span>
+                    <?php elseif (($nivelAcceso ?? '') === 'solo_lectura'): ?>
+                        <span class="px-2.5 py-0.5 text-[10px] font-bold rounded-full bg-amber-100 text-amber-800 border border-amber-200">
+                            Familiar (Solo Lectura)
+                        </span>
+                    <?php else: ?>
+                        <span class="px-2.5 py-0.5 text-[10px] font-bold rounded-full bg-slate-100 text-slate-700 border border-slate-200">
+                            Paciente Titular
+                        </span>
+                    <?php endif; ?>
+                </div>
                 <p class="text-xs text-slate-500">Paciente: <span class="font-semibold text-blue-700"><?= e($paciente['nombre'] . ' ' . $paciente['apellidos']) ?></span></p>
             </div>
         </div>
@@ -172,6 +195,40 @@
                     Guardar Medicamento
                 </button>
             </form>
+        </section>
+        <?php elseif (!empty($esDoctor)): ?>
+        <!-- Panel para Médicos Tratantes -->
+        <section class="bg-indigo-50/90 p-6 rounded-2xl border border-indigo-200 shadow-sm h-fit sticky top-24 space-y-4">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold text-lg">
+                    <svg class="w-5 h-5 text-white" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/>
+                    </svg>
+                </div>
+                <div>
+                    <h2 class="text-sm font-bold text-indigo-950">Prescripción Médica</h2>
+                    <p class="text-xs text-indigo-700">Módulo Oficial de Recetas</p>
+                </div>
+            </div>
+            <p class="text-xs text-indigo-800 leading-relaxed">
+                Como médico tratante, puedes prescribir nuevos fármacos generando una receta médica electrónica oficial.
+            </p>
+            <a href="<?= APP_URL ?>/doctor/recetas/nueva?paciente_id=<?= e((string)$paciente['id']) ?>" class="block text-center w-full py-2.5 bg-indigo-600 text-white font-bold text-xs rounded-xl hover:bg-indigo-700 transition shadow-xs">
+                Emitir Receta Médica
+            </a>
+        </section>
+        <?php else: ?>
+        <!-- Panel para Cuidadores/Familiares Solo Lectura -->
+        <section class="bg-amber-50/90 p-6 rounded-2xl border border-amber-200 shadow-sm h-fit sticky top-24 space-y-3">
+            <div class="flex items-center space-x-2.5 text-amber-900">
+                <svg class="w-5 h-5 text-amber-600 shrink-0" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/>
+                </svg>
+                <h2 class="text-sm font-bold">Catálogo en Solo Lectura</h2>
+            </div>
+            <p class="text-xs text-amber-800 leading-relaxed">
+                Estás visualizando el catálogo de medicamentos en modo solo lectura. Para registrar nuevos fármacos o modificar dosis, contacta al cuidador principal del paciente.
+            </p>
         </section>
         <?php endif; ?>
     </main>

@@ -66,26 +66,72 @@
                     </div>
                     <h2 class="text-2xl sm:text-3xl font-black text-slate-800 tracking-tight">Presión Arterial</h2>
                     <p class="text-sm text-slate-500 mt-1 max-w-sm mx-auto">
-                        Ingresa la sistólica y diastólica separadas por barra (ej: <strong class="text-slate-700 font-mono">120/80</strong>).
+                        Usa los botones táctiles o escribe los valores (ej: <strong class="text-slate-700 font-mono">120/80</strong>).
                     </p>
                 </div>
 
-                <div class="flex justify-center mb-8">
+                <!-- Controles Táctiles Accesibles para Adultos Mayores (+ / -) -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-md mx-auto mb-6">
+                    <!-- Sistólica (Alta) -->
+                    <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 text-center">
+                        <span class="block text-xs font-bold uppercase tracking-wider text-rose-600 mb-1">Sistólica (Alta)</span>
+                        <div class="flex items-center justify-center gap-2 my-2">
+                            <button type="button" onclick="adjustSis(-5)" aria-label="Disminuir sistólica" class="tap-bounce touch-min w-12 h-12 rounded-2xl bg-white border-2 border-slate-200 text-slate-700 hover:bg-slate-100 hover:border-slate-300 active:scale-95 flex items-center justify-center text-2xl font-black shadow-2xs transition cursor-pointer">
+                                −
+                            </button>
+                            <span id="display-sis" class="font-mono text-3xl font-black text-slate-900 w-16 text-center">120</span>
+                            <button type="button" onclick="adjustSis(5)" aria-label="Aumentar sistólica" class="tap-bounce touch-min w-12 h-12 rounded-2xl bg-rose-600 text-white hover:bg-rose-700 active:scale-95 flex items-center justify-center text-2xl font-black shadow-xs shadow-rose-500/20 transition cursor-pointer">
+                                +
+                            </button>
+                        </div>
+                        <span class="text-[11px] text-slate-400 font-medium">mmHg</span>
+                    </div>
+
+                    <!-- Diastólica (Baja) -->
+                    <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 text-center">
+                        <span class="block text-xs font-bold uppercase tracking-wider text-blue-600 mb-1">Diastólica (Baja)</span>
+                        <div class="flex items-center justify-center gap-2 my-2">
+                            <button type="button" onclick="adjustDia(-5)" aria-label="Disminuir diastólica" class="tap-bounce touch-min w-12 h-12 rounded-2xl bg-white border-2 border-slate-200 text-slate-700 hover:bg-slate-100 hover:border-slate-300 active:scale-95 flex items-center justify-center text-2xl font-black shadow-2xs transition cursor-pointer">
+                                −
+                            </button>
+                            <span id="display-dia" class="font-mono text-3xl font-black text-slate-900 w-16 text-center">80</span>
+                            <button type="button" onclick="adjustDia(5)" aria-label="Aumentar diastólica" class="tap-bounce touch-min w-12 h-12 rounded-2xl bg-blue-600 text-white hover:bg-blue-700 active:scale-95 flex items-center justify-center text-2xl font-black shadow-xs shadow-blue-500/20 transition cursor-pointer">
+                                +
+                            </button>
+                        </div>
+                        <span class="text-[11px] text-slate-400 font-medium">mmHg</span>
+                    </div>
+                </div>
+
+                <!-- Input real sincronizado con patrón -->
+                <div class="flex justify-center mb-4">
                     <div class="relative w-full max-w-xs">
                         <input type="text" 
                                id="input-presion" 
                                name="presion" 
                                inputmode="numeric" 
+                               value="120/80" 
                                placeholder="120/80" 
                                pattern="[0-9]{2,3}/[0-9]{2,3}"
-                               autocomplete="off"
-                               class="text-4xl sm:text-5xl font-mono font-black text-center p-4 sm:p-5 border-2 border-slate-300 rounded-2xl w-full focus:border-blue-600 focus:ring-4 focus:ring-blue-100 transition-all text-slate-900 placeholder:text-slate-300 tracking-wider">
-                        <span class="block text-center text-xs font-bold text-slate-400 mt-2">mmHg (Milímetros de mercurio)</span>
+                               oninput="syncPresionFromInput()"
+                               autocomplete="off" 
+                               class="text-2xl font-mono font-black text-center p-3 border-2 border-slate-300 rounded-xl w-full focus:border-blue-600 focus:ring-4 focus:ring-blue-100 transition-all text-slate-900 tracking-wider">
+                    </div>
+                </div>
+
+                <!-- Presets Rápidos -->
+                <div class="mb-8 text-center">
+                    <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-2">Valores Frecuentes:</span>
+                    <div class="flex flex-wrap justify-center gap-2">
+                        <button type="button" onclick="setPresionPreset(120, 80)" class="tap-bounce px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-700 text-xs font-bold transition cursor-pointer">120/80 (Normal)</button>
+                        <button type="button" onclick="setPresionPreset(130, 85)" class="tap-bounce px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-700 text-xs font-bold transition cursor-pointer">130/85 (Elevada)</button>
+                        <button type="button" onclick="setPresionPreset(140, 90)" class="tap-bounce px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-700 text-xs font-bold transition cursor-pointer">140/90 (Límite)</button>
+                        <button type="button" onclick="setPresionPreset(110, 70)" class="tap-bounce px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-700 text-xs font-bold transition cursor-pointer">110/70 (Baja)</button>
                     </div>
                 </div>
 
                 <div class="flex justify-end pt-4 border-t border-slate-100">
-                    <button type="button" onclick="nextStep(2)" class="tap-bounce touch-min w-full sm:w-auto px-8 py-4 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-base sm:text-lg font-bold rounded-2xl shadow-md shadow-blue-600/20 flex items-center justify-center space-x-2 cursor-pointer">
+                    <button type="button" onclick="nextStep(2); event.preventDefault();" class="tap-bounce touch-min w-full sm:w-auto px-8 py-4 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-base sm:text-lg font-bold rounded-2xl shadow-md shadow-blue-600/20 flex items-center justify-center space-x-2 cursor-pointer">
                         <span>Siguiente: Glucosa</span>
                         <span class="text-xl">→</span>
                     </button>
@@ -106,17 +152,35 @@
                     </p>
                 </div>
 
-                <div class="flex justify-center mb-6">
-                    <div class="relative w-full max-w-xs">
+                <!-- Controles Táctiles Accesibles para Glucosa (+ / -) -->
+                <div class="flex items-center justify-center gap-3 mb-4 max-w-xs mx-auto">
+                    <button type="button" onclick="adjustGlucosa(-5)" aria-label="Disminuir glucosa" class="tap-bounce touch-min w-14 h-14 rounded-2xl bg-slate-100 border-2 border-slate-200 text-slate-700 hover:bg-slate-200 hover:border-slate-300 active:scale-95 flex items-center justify-center text-3xl font-black shadow-2xs transition cursor-pointer shrink-0">
+                        −
+                    </button>
+                    <div class="relative w-full text-center">
                         <input type="number" 
                                step="1" 
                                id="input-glucosa" 
                                name="glucosa" 
                                inputmode="numeric" 
+                               value="100" 
                                placeholder="100" 
                                autocomplete="off" 
-                               class="text-4xl sm:text-5xl font-mono font-black text-center p-4 sm:p-5 border-2 border-slate-300 rounded-2xl w-full focus:border-amber-500 focus:ring-4 focus:ring-amber-100 transition-all text-slate-900 placeholder:text-slate-300">
-                        <span class="block text-center text-xs font-bold text-slate-400 mt-2">mg/dL</span>
+                               class="text-4xl sm:text-5xl font-mono font-black text-center p-3 sm:p-4 border-2 border-slate-300 rounded-2xl w-full focus:border-amber-500 focus:ring-4 focus:ring-amber-100 transition-all text-slate-900 placeholder:text-slate-300">
+                        <span class="block text-center text-xs font-bold text-slate-400 mt-1">mg/dL</span>
+                    </div>
+                    <button type="button" onclick="adjustGlucosa(5)" aria-label="Aumentar glucosa" class="tap-bounce touch-min w-14 h-14 rounded-2xl bg-amber-500 text-white hover:bg-amber-600 active:scale-95 flex items-center justify-center text-3xl font-black shadow-xs shadow-amber-500/20 transition cursor-pointer shrink-0">
+                        +
+                    </button>
+                </div>
+
+                <!-- Presets Rápidos de Glucosa -->
+                <div class="mb-6 text-center">
+                    <div class="flex flex-wrap justify-center gap-2">
+                        <button type="button" onclick="setGlucosaPreset(85)" class="tap-bounce px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-amber-50 hover:text-amber-700 text-slate-700 text-xs font-bold transition cursor-pointer">85 mg/dL</button>
+                        <button type="button" onclick="setGlucosaPreset(100)" class="tap-bounce px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-amber-50 hover:text-amber-700 text-slate-700 text-xs font-bold transition cursor-pointer">100 mg/dL</button>
+                        <button type="button" onclick="setGlucosaPreset(120)" class="tap-bounce px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-amber-50 hover:text-amber-700 text-slate-700 text-xs font-bold transition cursor-pointer">120 mg/dL</button>
+                        <button type="button" onclick="setGlucosaPreset(140)" class="tap-bounce px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-amber-50 hover:text-amber-700 text-slate-700 text-xs font-bold transition cursor-pointer">140 mg/dL</button>
                     </div>
                 </div>
 
@@ -139,10 +203,10 @@
                 </div>
 
                 <div class="flex flex-col-reverse sm:flex-row justify-between gap-3 pt-4 border-t border-slate-100">
-                    <button type="button" onclick="prevStep(1)" class="tap-bounce touch-min px-6 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-2xl transition text-sm flex items-center justify-center">
+                    <button type="button" onclick="prevStep(1); event.preventDefault();" class="tap-bounce touch-min px-6 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-2xl transition text-sm flex items-center justify-center cursor-pointer">
                         ← Atrás
                     </button>
-                    <button type="button" onclick="nextStep(3)" class="tap-bounce touch-min px-8 py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl shadow-md transition text-base flex items-center justify-center space-x-2">
+                    <button type="button" onclick="nextStep(3); event.preventDefault();" class="tap-bounce touch-min px-8 py-3.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold rounded-2xl shadow-md transition text-base flex items-center justify-center space-x-2 cursor-pointer">
                         <span>Siguiente: Pulso & Dolor</span>
                         <span>→</span>
                     </button>
@@ -248,10 +312,10 @@
                 </div>
 
                 <div class="flex flex-col-reverse sm:flex-row justify-between gap-3 pt-4 border-t border-slate-100">
-                    <button type="button" onclick="prevStep(2)" class="tap-bounce touch-min px-6 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-2xl transition text-sm flex items-center justify-center">
+                    <button type="button" onclick="prevStep(2); event.preventDefault();" class="tap-bounce touch-min px-6 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-2xl transition text-sm flex items-center justify-center cursor-pointer">
                         ← Atrás
                     </button>
-                    <button type="button" onclick="nextStep(4)" class="tap-bounce touch-min px-8 py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl shadow-md transition text-base flex items-center justify-center space-x-2">
+                    <button type="button" onclick="nextStep(4); event.preventDefault();" class="tap-bounce touch-min px-8 py-3.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold rounded-2xl shadow-md transition text-base flex items-center justify-center space-x-2 cursor-pointer">
                         <span>Siguiente: Peso & Altura</span>
                         <span>→</span>
                     </button>
@@ -269,8 +333,6 @@
                     <h2 class="text-2xl sm:text-3xl font-black text-slate-800 tracking-tight">Peso, Altura e IMC</h2>
                     <p class="text-sm text-slate-500 mt-1 max-w-sm mx-auto">
                         Calculamos automáticamente el Índice de Masa Corporal (IMC).
-                    </p>
-                </div>Corporal (IMC).
                     </p>
                 </div>
 
@@ -314,7 +376,7 @@
                 </div>
 
                 <div class="flex flex-col-reverse sm:flex-row justify-between gap-3 pt-4 border-t border-slate-100">
-                    <button type="button" onclick="prevStep(3)" class="tap-bounce touch-min px-6 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-2xl transition text-sm flex items-center justify-center">
+                    <button type="button" onclick="prevStep(3); event.preventDefault();" class="tap-bounce touch-min px-6 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-2xl transition text-sm flex items-center justify-center cursor-pointer">
                         ← Atrás
                     </button>
                     <button type="submit" class="tap-bounce touch-min px-8 py-4 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-black text-base sm:text-lg rounded-2xl shadow-lg shadow-emerald-600/25 flex items-center justify-center space-x-2 cursor-pointer">
@@ -337,10 +399,10 @@
                     </p>
                     
                     <div class="flex flex-col gap-3 max-w-xs mx-auto">
-                        <button type="button" onclick="confirmAndProceed()" class="tap-bounce touch-min py-4 px-6 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-2xl text-base shadow-md">
+                        <button type="button" onclick="confirmAndProceed(); event.preventDefault();" class="tap-bounce touch-min py-4 px-6 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-2xl text-base shadow-md cursor-pointer">
                             Sí, el valor es correcto
                         </button>
-                        <button type="button" onclick="goBackToEdit()" class="tap-bounce touch-min py-3.5 px-6 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-2xl text-sm">
+                        <button type="button" onclick="goBackToEdit(); event.preventDefault();" class="tap-bounce touch-min py-3.5 px-6 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-2xl text-sm cursor-pointer">
                             Quiero corregirlo
                         </button>
                     </div>
@@ -362,6 +424,65 @@
 
     let pendingNextStep = null;
     let currentEditStep = 1;
+
+    // --- Control Táctil de Presión Arterial ---
+    function parsePresion() {
+        const input = document.getElementById('input-presion');
+        const val = input ? input.value.trim() : '120/80';
+        const parts = val.split('/');
+        let sis = parseInt(parts[0], 10);
+        let dia = parseInt(parts[1], 10);
+        if (isNaN(sis) || sis <= 0) sis = 120;
+        if (isNaN(dia) || dia <= 0) dia = 80;
+        return { sis, dia };
+    }
+
+    function updatePresionInputs(sis, dia) {
+        sis = Math.max(50, Math.min(250, sis));
+        dia = Math.max(30, Math.min(150, dia));
+        const input = document.getElementById('input-presion');
+        if (input) input.value = `${sis}/${dia}`;
+        const sisDisp = document.getElementById('display-sis');
+        const diaDisp = document.getElementById('display-dia');
+        if (sisDisp) sisDisp.innerText = sis;
+        if (diaDisp) diaDisp.innerText = dia;
+    }
+
+    function syncPresionFromInput() {
+        const { sis, dia } = parsePresion();
+        const sisDisp = document.getElementById('display-sis');
+        const diaDisp = document.getElementById('display-dia');
+        if (sisDisp) sisDisp.innerText = sis;
+        if (diaDisp) diaDisp.innerText = dia;
+    }
+
+    function adjustSis(delta) {
+        const { sis, dia } = parsePresion();
+        updatePresionInputs(sis + delta, dia);
+    }
+
+    function adjustDia(delta) {
+        const { sis, dia } = parsePresion();
+        updatePresionInputs(sis, dia + delta);
+    }
+
+    function setPresionPreset(sis, dia) {
+        updatePresionInputs(sis, dia);
+    }
+
+    // --- Control Táctil de Glucosa ---
+    function adjustGlucosa(delta) {
+        const input = document.getElementById('input-glucosa');
+        let val = parseFloat(input.value);
+        if (isNaN(val) || val <= 0) val = 100;
+        val = Math.max(20, Math.min(500, Math.round(val + delta)));
+        input.value = val;
+    }
+
+    function setGlucosaPreset(val) {
+        const input = document.getElementById('input-glucosa');
+        if (input) input.value = val;
+    }
 
     function updateProgress(step) {
         const percent = Math.round((step / totalSteps) * 100);

@@ -129,6 +129,32 @@ class PerfilController extends Controller {
         }
         
         $db = \Config\Database::getInstance()->getConnection();
+
+        // Validar si el usuario administra adultos mayores o es tutor principal
+        try {
+            $stmtTutor = $db->prepare("
+                SELECT COUNT(*) FROM pacientes 
+                WHERE (usuario_tutor_id = :uid OR (usuario_id = :uid2 AND usuario_tutor_id IS NOT NULL)) 
+                  AND (activo = TRUE OR activo IS NULL)
+            ");
+            $stmtTutor->execute([':uid' => $userId, ':uid2' => $userId]);
+            $countTutelasDirectas = (int)$stmtTutor->fetchColumn();
+
+            $stmtCuidadorPrinc = $db->prepare("
+                SELECT COUNT(*) FROM paciente_cuidador 
+                WHERE usuario_cuidador_id = :uid AND nivel_acceso = 'principal'
+            ");
+            $stmtCuidadorPrinc->execute([':uid' => $userId]);
+            $countCuidadorPrincipal = (int)$stmtCuidadorPrinc->fetchColumn();
+
+            if ($countTutelasDirectas > 0 || $countCuidadorPrincipal > 0) {
+                $this->setFlash('Debes transferir la tutela de tus adultos mayores administrados o desvincularlos antes de eliminar tu cuenta.', 'danger');
+                header("Location: " . APP_URL . "/perfil");
+                exit;
+            }
+        } catch (\Throwable $e) {
+            error_log('[PerfilController::eliminarCuenta Validation Error] ' . $e->getMessage());
+        }
         
         try {
             $db->beginTransaction();

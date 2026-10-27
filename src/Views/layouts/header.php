@@ -181,12 +181,16 @@ $roleLabel = match($userRole) {
                     <span>Ficha QR</span>
                 </a>
 
-                <!-- Botón secundario: Imprimir -->
-                <button type="button" onclick="window.print()" 
-                        class="tap-bounce px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl border border-slate-200 transition inline-flex items-center gap-2 shadow-xs cursor-pointer">
-                    <svg class="w-4 h-4 shrink-0" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 7.5V3.75h10.5V7.5M6 16.5H4.5A2.25 2.25 0 012.25 14.25v-4.5A2.25 2.25 0 014.5 7.5h15a2.25 2.25 0 012.25 2.25v4.5a2.25 2.25 0 01-2.25 2.25H18M6.75 13.5h10.5v6.75H6.75V13.5z"/><circle cx="18" cy="10.5" r="0.75" fill="currentColor"/></svg>
-                    <span>Imprimir</span>
-                </button>
+                <!-- Descargar Reporte PDF -->
+                <a href="<?php echo APP_URL; ?>/pacientes/reporte-pdf?paciente_id=<?= (int)$pacienteActivoId ?>" 
+                   target="_blank" 
+                   class="tap-bounce inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs transition-colors shadow-sm"
+                   title="Descargar Expediente Clínico en PDF">
+                    <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    <span>Descargar Reporte PDF</span>
+                </a>
 
                 <!-- Menú Usuario Dropdown -->
                 <div class="relative" id="user-menu-wrapper">
@@ -305,25 +309,20 @@ $roleLabel = match($userRole) {
                     <span class="text-left flex-1 font-bold">Generar PIN Médico</span>
                 </button>
 
-                <!-- 2. Imprimir Expediente -->
-                <button type="button" onclick="cerrarDrawerLateral(); window.print();" 
-                        class="tap-bounce touch-min w-full p-3 bg-slate-50 hover:bg-slate-100 text-slate-800 rounded-2xl font-bold inline-flex items-center gap-3 border border-slate-100 transition">
-                    <svg class="w-5 h-5 shrink-0 text-slate-600" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 7.5V3.75h10.5V7.5M6 16.5H4.5A2.25 2.25 0 012.25 14.25v-4.5A2.25 2.25 0 014.5 7.5h15a2.25 2.25 0 012.25 2.25v4.5a2.25 2.25 0 01-2.25 2.25H18M6.75 13.5h10.5v6.75H6.75V13.5z"/><circle cx="18" cy="10.5" r="0.75" fill="currentColor"/></svg>
-                    <span class="text-left flex-1">Imprimir Expediente</span>
-                </button>
+                <!-- 2. Descargar Reporte PDF -->
+                <a href="<?php echo APP_URL; ?>/pacientes/reporte-pdf?paciente_id=<?= (int)$pacienteActivoId ?>" target="_blank"
+                   class="tap-bounce touch-min w-full p-3 bg-slate-50 hover:bg-slate-100 text-slate-800 rounded-2xl font-bold inline-flex items-center gap-3 border border-slate-100 transition">
+                    <svg class="w-5 h-5 shrink-0 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    <span class="text-left flex-1">Descargar Reporte PDF</span>
+                </a>
 
                 <!-- 3. Ver Ficha QR -->
                 <a href="<?php echo APP_URL; ?>/emergencia?token=<?= e((string)$pacienteQrToken) ?>" target="_blank"
                    class="tap-bounce touch-min w-full p-3 bg-slate-50 hover:bg-slate-100 text-slate-800 rounded-2xl font-bold inline-flex items-center gap-3 border border-slate-100 transition">
                     <svg class="w-5 h-5 shrink-0 text-blue-600" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 013.75 9.375v-4.5zM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5zM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0113.5 9.375v-4.5z"/><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 6.75h.75v.75h-.75v-.75zM6.75 16.5h.75v.75h-.75v-.75zM16.5 6.75h.75v.75h-.75v-.75zM13.5 13.5h3v3h-3v-3zM16.5 19.5h3v-3h-3v3z"/></svg>
                     <span class="text-left flex-1">Ver Ficha QR</span>
-                </a>
-
-                <!-- 4. Descargar Expediente PDF -->
-                <a href="<?php echo APP_URL; ?>/paciente/pdf?id=<?= e((string)$pacienteActivoId) ?>" target="_blank"
-                   class="tap-bounce touch-min w-full p-3 bg-slate-50 hover:bg-slate-100 text-slate-800 rounded-2xl font-bold inline-flex items-center gap-3 border border-slate-100 transition">
-                    <svg class="w-5 h-5 shrink-0 text-slate-600" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
-                    <span class="text-left flex-1">Descargar Expediente PDF</span>
                 </a>
             </div>
 

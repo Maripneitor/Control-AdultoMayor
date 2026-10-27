@@ -11,7 +11,7 @@ class Medicamento extends Model {
 
     public function getActiveByPacienteId(int $pacienteId): array {
         $stmt = $this->db->prepare("
-            SELECT id, paciente_id, nombre_comercial, dosis, dosis_por_toma, forma, color_distintivo, frecuencia_horas, instrucciones, activo 
+            SELECT id, paciente_id, nombre_comercial, dosis, dosis_por_toma, forma, color_distintivo, frecuencia_horas, stock_actual, dosis_restantes, instrucciones, activo 
             FROM medicamentos 
             WHERE paciente_id = :pid AND activo = TRUE 
             ORDER BY nombre_comercial ASC
@@ -22,7 +22,9 @@ class Medicamento extends Model {
 
     public function getTodayDoses(int $pacienteId): array {
         $stmt = $this->db->prepare("
-            SELECT rt.id AS registro_id, rt.id, m.nombre_comercial, m.nombre_comercial AS medicamento_nombre, m.dosis, m.dosis_por_toma, m.color_distintivo, m.forma, rt.momento_dia, rt.estado, rt.fecha_programada, rt.hora_programada, rt.tomado_at
+            SELECT rt.id AS registro_id, rt.id, m.id AS medicamento_id, m.nombre_comercial, m.nombre_comercial AS medicamento_nombre, 
+                   m.dosis, m.dosis_por_toma, m.color_distintivo, m.forma, m.stock_actual,
+                   rt.momento_dia, rt.estado, rt.fecha_programada, rt.hora_programada, rt.tomado_at
             FROM tomas_historial rt
             JOIN medicamentos m ON rt.medicamento_id = m.id
             WHERE m.paciente_id = :pid 
@@ -35,7 +37,7 @@ class Medicamento extends Model {
 
     public function getAllByPacienteId(int $pacienteId): array {
         $stmt = $this->db->prepare("
-            SELECT id, paciente_id, nombre_comercial, dosis, dosis_por_toma, forma, color_distintivo, frecuencia_horas, instrucciones, activo 
+            SELECT id, paciente_id, nombre_comercial, dosis, dosis_por_toma, forma, color_distintivo, frecuencia_horas, stock_actual, stock_minimo_alerta, instrucciones, activo 
             FROM medicamentos 
             WHERE paciente_id = :pid 
             ORDER BY nombre_comercial ASC
@@ -65,10 +67,11 @@ class Medicamento extends Model {
             FROM medicamentos
             WHERE paciente_id = :pid AND activo = TRUE 
               AND (
-                  stock_actual <= stock_minimo_alerta 
+                  stock_actual <= 3
+                  OR stock_actual <= stock_minimo_alerta 
                   OR (stock_actual / NULLIF((24.0 / GREATEST(frecuencia_horas, 1)) * GREATEST(dosis_por_toma, 1), 0)) < 4
               )
-            ORDER BY dias_restantes ASC, stock_actual ASC
+            ORDER BY stock_actual ASC, dias_restantes ASC
         ");
         $stmt->execute(['pid' => $pacienteId]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -118,6 +121,18 @@ class Medicamento extends Model {
 
     public function actualizarEstadoToma(int $registroId, int $pacienteId, string $estado, int $usuarioId, ?string $nota = null): bool {
         $esTomado = in_array($estado, ['tomado', 'pospuesto'], true) ? 1 : 0;
+        
+        // Obtener el medicamento_id antes de actualizar
+        $stmtMed = $this->db->prepare("
+            SELECT th.medicamento_id, m.dosis_por_toma, th.estado AS estado_anterior
+            FROM tomas_historial th
+            JOIN medicamentos m ON th.medicamento_id = m.id
+            WHERE th.id = :id AND th.paciente_id = :pid
+            LIMIT 1
+        ");
+        $stmtMed->execute(['id' => $registroId, 'pid' => $pacienteId]);
+        $info = $stmtMed->fetch(PDO::FETCH_ASSOC);
+
         $stmt = $this->db->prepare("
             UPDATE tomas_historial 
             SET estado = :estado, 
@@ -126,7 +141,7 @@ class Medicamento extends Model {
                 nota_incidencia = :nota
             WHERE id = :id AND medicamento_id IN (SELECT id FROM medicamentos WHERE paciente_id = :paciente_id)
         ");
-        return $stmt->execute([
+        $ok = $stmt->execute([
             'estado' => $estado,
             'es_tomado' => $esTomado,
             'usuario_id' => $usuarioId,
@@ -134,6 +149,53 @@ class Medicamento extends Model {
             'id' => $registroId,
             'paciente_id' => $pacienteId
         ]);
+
+        // Si se marca como tomado y antes no lo estaba, descontar stock del medicamento
+        if ($ok && $estado === 'tomado' && $info && ($info['estado_anterior'] ?? '') !== 'tomado') {
+            $dosis = (int)($info['dosis_por_toma'] ?? 1);
+            $medId = (int)$info['medicamento_id'];
+            $this->db->prepare("
+                UPDATE medicamentos 
+                SET stock_actual = GREATEST(0, stock_actual - :dosis) 
+                WHERE id = :mid
+            ")->execute(['dosis' => $dosis, 'mid' => $medId]);
+
+            // Registrar en registro_tomas para trazabilidad
+            $this->db->prepare("
+                INSERT INTO registro_tomas (medicamento_id, paciente_id, usuario_registro_id, fecha_hora_programada, fecha_hora_tomada, estado, observaciones)
+                VALUES (:mid, :pid, :uid, NOW(), NOW(), 'tomado', :obs)
+            ")->execute([
+                'mid' => $medId,
+                'pid' => $pacienteId,
+                'uid' => $usuarioId,
+                'obs' => $nota ?? 'Toma registrada en tiempo'
+            ]);
+        }
+
+        return $ok;
+    }
+
+    public function calcularAdherenciaSemanal(int $pacienteId): float {
+        $stmt = $this->db->prepare("
+            SELECT 
+                COUNT(*) AS total_programadas,
+                COUNT(CASE WHEN estado = 'tomado' THEN 1 END) AS total_tomadas
+            FROM tomas_historial
+            WHERE paciente_id = :pid 
+              AND fecha_programada >= (CURRENT_DATE - INTERVAL '7 days')
+              AND fecha_programada <= CURRENT_DATE
+        ");
+        $stmt->execute(['pid' => $pacienteId]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        $total = (int)($row['total_programadas'] ?? 0);
+        $tomadas = (int)($row['total_tomadas'] ?? 0);
+
+        if ($total === 0) {
+            return 100.0;
+        }
+
+        return round(($tomadas / $total) * 100, 1);
     }
 
     public function generarTomasDiarias(int $pacienteId): void {
@@ -150,50 +212,66 @@ class Medicamento extends Model {
             'noche'  => '20:00:00'
         ];
 
-        $valores = [];
-        $parametros = [];
-        $contador = 0;
-
         foreach ($medicamentos as $med) {
-            $mid = (int)$med['id'];
-            $frecuencia = (int)$med['frecuencia_horas'];
+            $frecuencia = (int)($med['frecuencia_horas'] ?? 8);
             
-            $momentos = [];
-            if ($frecuencia <= 8) {
-                $momentos = ['manana', 'tarde', 'noche'];
-            } elseif ($frecuencia <= 12) {
-                $momentos = ['manana', 'noche'];
-            } else {
-                $momentos = ['manana']; 
-            }
+            // Determinar momentos del día según frecuencia
+            $momentos = match(true) {
+                $frecuencia <= 6 => ['manana', 'tarde', 'noche'],
+                $frecuencia <= 8 => ['manana', 'tarde', 'noche'],
+                $frecuencia <= 12 => ['manana', 'noche'],
+                default => ['manana']
+            };
 
             foreach ($momentos as $momento) {
-                $horaProg = $horasMomento[$momento] ?? '08:00:00';
+                $hora = $horasMomento[$momento] ?? '08:00:00';
                 
-                $c = $contador * 5;
-                $valores[] = "(:p{$c}, :p" . ($c+1) . ", :p" . ($c+2) . ", :p" . ($c+3) . ", 'pendiente', :p" . ($c+4) . ")";
-                
-                $parametros["p{$c}"] = $mid;
-                $parametros["p" . ($c+1)] = $pacienteId;
-                $parametros["p" . ($c+2)] = $hoy;
-                $parametros["p" . ($c+3)] = $momento;
-                $parametros["p" . ($c+4)] = $horaProg;
-                
-                $contador++;
-            }
-        }
+                // Verificar si ya existe la toma para hoy
+                $stmtCheck = $this->db->prepare("
+                    SELECT id FROM tomas_historial 
+                    WHERE medicamento_id = :mid AND fecha_programada = :fecha AND momento_dia::text = :momento 
+                    LIMIT 1
+                ");
+                $stmtCheck->execute([
+                    'mid' => $med['id'],
+                    'fecha' => $hoy,
+                    'momento' => $momento
+                ]);
 
-        if (count($valores) > 0) {
-            $sql = "
-                INSERT INTO tomas_historial (medicamento_id, paciente_id, fecha_programada, momento_dia, estado, hora_programada)
-                VALUES " . implode(', ', $valores) . "
-                ON CONFLICT (medicamento_id, fecha_programada, momento_dia) DO NOTHING
-            ";
-            try {
-                $stmt = $this->db->prepare($sql);
-                $stmt->execute($parametros);
-            } catch (\PDOException $e) {
-                error_log("Error bulk insert tomas: " . $e->getMessage());
+                if (!$stmtCheck->fetch()) {
+                    $stmtIns = $this->db->prepare("
+                        INSERT INTO tomas_historial (
+                            medicamento_id, paciente_id, fecha_programada, hora_programada, momento_dia, estado
+                        ) VALUES (
+                            :mid, :pid, :fecha, :hora, :momento::momento_dia_tipo, 'pendiente'
+                        )
+                    ");
+                    try {
+                        $stmtIns->execute([
+                            'mid' => $med['id'],
+                            'pid' => $pacienteId,
+                            'fecha' => $hoy,
+                            'hora' => $hora,
+                            'momento' => $momento
+                        ]);
+                    } catch (\Throwable $e) {
+                        // Fallback si momento_dia no es enum
+                        $stmtInsFallback = $this->db->prepare("
+                            INSERT INTO tomas_historial (
+                                medicamento_id, paciente_id, fecha_programada, hora_programada, momento_dia, estado
+                            ) VALUES (
+                                :mid, :pid, :fecha, :hora, :momento, 'pendiente'
+                            )
+                        ");
+                        $stmtInsFallback->execute([
+                            'mid' => $med['id'],
+                            'pid' => $pacienteId,
+                            'fecha' => $hoy,
+                            'hora' => $hora,
+                            'momento' => $momento
+                        ]);
+                    }
+                }
             }
         }
     }

@@ -44,26 +44,33 @@ class Usuario extends Model {
         \App\Security\AuditLogger::log($accion, $_SESSION['paciente_activo_id'] ?? null, $detalle);
     }
 
-    public function register(string $nombre, string $email, string $telefono, string $password, string $rol = 'cuidador'): int {
+    public function register(string $nombre, string $email, string $telefono, string $password, string $rol = 'familiar_admin'): int {
         $hash = password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]);
         
-        // Mapear rol a los valores del enum en PostgreSQL ('administrador', 'cuidador', 'emergencia')
-        $dbRol = 'cuidador';
+        // Mapear rol a los valores válidos en PostgreSQL
+        $dbRol = 'familiar_admin';
         if (in_array($rol, ['admin', 'administrador'], true)) {
             $dbRol = 'administrador';
+        } elseif (in_array($rol, ['doctor', 'medico'], true)) {
+            $dbRol = 'doctor';
+        } elseif (in_array($rol, ['paciente', 'adulto_mayor'], true)) {
+            $dbRol = 'paciente';
+        } elseif (in_array($rol, ['cuidador_auxiliar'], true)) {
+            $dbRol = 'cuidador_auxiliar';
         } elseif (in_array($rol, ['emergencia'], true)) {
             $dbRol = 'emergencia';
-        } else {
-            $dbRol = 'cuidador';
+        } elseif (in_array($rol, ['cuidador', 'familiar', 'familiar_admin'], true)) {
+            $dbRol = $rol;
         }
 
         $stmt = $this->db->prepare("
-            INSERT INTO usuarios (nombre, email, password_hash, rol, activo) 
-            VALUES (:nombre, :email, :password_hash, :rol, true) RETURNING id
+            INSERT INTO usuarios (nombre, email, telefono, password_hash, rol, activo) 
+            VALUES (:nombre, :email, :telefono, :password_hash, :rol, true) RETURNING id
         ");
         $stmt->execute([
             'nombre' => $nombre,
             'email' => $email,
+            'telefono' => $telefono,
             'password_hash' => $hash,
             'rol' => $dbRol
         ]);

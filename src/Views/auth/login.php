@@ -100,20 +100,7 @@
                         src="https://images.unsplash.com/photo-1576765608535-5f04d1e3f289?q=80&w=900&auto=format&fit=crop"
                         loading="lazy"
                     />
-                    <div class="absolute inset-0 bg-gradient-to-t from-blue-950/80 via-blue-950/20 to-transparent"></div>
-                    
-                    <!-- Floating Overlay Badge -->
-                    <div class="absolute bottom-4 left-4 right-4 bg-white/95 backdrop-blur-md rounded-2xl p-3.5 border border-white/60 text-slate-800 shadow-xl flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center flex-shrink-0 shadow-md shadow-blue-600/30">
-                            <svg class="w-5 h-5 text-white" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/>
-                            </svg>
-                        </div>
-                        <div class="min-w-0">
-                            <p class="text-xs font-extrabold text-slate-900 truncate">Historial Médico Protegido</p>
-                            <p class="text-[11px] text-slate-500 font-medium truncate">Acceso seguro para familiares y médicos tratantes</p>
-                        </div>
-                    </div>
+                    <div class="absolute inset-0 bg-gradient-to-t from-blue-950/40 via-transparent to-transparent"></div>
                 </div>
             </div>
         </div>

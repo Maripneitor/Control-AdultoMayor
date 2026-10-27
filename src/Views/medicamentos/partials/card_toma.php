@@ -68,67 +68,95 @@ if ($esTomada && !empty($toma['tomado_at'])) {
         </div>
     </div>
     
-    <!-- Barra de Acciones Dinámica según Estado Clínico -->
+    <!-- Barra de Acciones Dinámica según Estado Clínico y Permisos -->
     <div class="flex items-center gap-2.5 w-full pt-2 border-t border-slate-100">
-        <?php if ($esTomada): ?>
-            <!-- Estado TOMADA: Badge positivo + Botón Deshacer si está dentro de ventana -->
-            <div class="flex items-center justify-between w-full">
-                <div class="text-xs text-emerald-800 font-medium flex items-center gap-1.5">
-                    <svg class="w-4 h-4 text-emerald-600" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    <span>Dosis registrada exitosamente</span>
+        <?php if (!empty($puedeSuministrar)): ?>
+            <?php if ($esTomada): ?>
+                <!-- Estado TOMADA: Badge positivo + Botón Deshacer si está dentro de ventana -->
+                <div class="flex items-center justify-between w-full">
+                    <div class="text-xs text-emerald-800 font-medium flex items-center gap-1.5">
+                        <svg class="w-4 h-4 text-emerald-600" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span>Dosis registrada exitosamente</span>
+                    </div>
+                    <?php if ($dentroDeVentanaDeshacer && !empty($puedeEditar)): ?>
+                        <form action="<?= APP_URL ?>/medicamentos/deshacer" method="POST" class="inline m-0">
+                            <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
+                            <input type="hidden" name="toma_id" value="<?= $tomaId ?>">
+                            <button type="submit" class="tap-bounce px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold rounded-xl border border-slate-200 transition cursor-pointer" title="Deshacer toma si fue marcada por error">
+                                Deshacer
+                            </button>
+                        </form>
+                    <?php endif; ?>
                 </div>
-                <?php if ($dentroDeVentanaDeshacer): ?>
-                    <form action="<?= APP_URL ?>/medicamentos/deshacer" method="POST" class="inline m-0">
+
+            <?php elseif ($esOmitida): ?>
+                <!-- Estado OMITIDA: Opción de Registrar toma tardía o Mantener omitida -->
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 w-full">
+                    <span class="text-xs text-rose-800 font-medium">
+                        Horario sobrepasado. Puedes registrarla ahora con nota de retraso:
+                    </span>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <form action="<?= APP_URL ?>/medicamentos/toma" method="POST" class="inline m-0 flex-1 sm:flex-initial" onsubmit="return handleTomaSubmit(this, '<?= $tomaId ?>')">
+                            <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
+                            <input type="hidden" name="toma_id" value="<?= $tomaId ?>">
+                            <input type="hidden" name="accion" value="justificar_retraso">
+                            <button type="submit" class="tap-bounce touch-min w-full sm:w-auto px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-sm transition flex items-center justify-center gap-1.5 cursor-pointer">
+                                <svg class="w-4 h-4" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                <span>Registrar toma tardía</span>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+            <?php else: ?>
+                <!-- Estado PENDIENTE / POSPUESTO -->
+                <form action="<?= APP_URL ?>/medicamentos/toma" method="POST" class="flex-1" onsubmit="return handleTomaSubmit(this, '<?= $tomaId ?>')">
+                    <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
+                    <input type="hidden" name="toma_id" value="<?= $tomaId ?>">
+                    <input type="hidden" name="accion" value="marcar_tomada">
+                    <button type="submit" class="tap-bounce touch-min w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-xs transition cursor-pointer">
+                        <svg class="w-5 h-5" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
+                        <span>Marcar Tomada</span>
+                    </button>
+                </form>
+                
+                <?php if (!empty($puedeEditar)): ?>
+                    <form action="<?= APP_URL ?>/medicamentos/posponer" method="POST" class="flex-1" onsubmit="return handleSnoozeSubmit(this, '<?= $tomaId ?>')">
                         <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
                         <input type="hidden" name="toma_id" value="<?= $tomaId ?>">
-                        <button type="submit" class="tap-bounce px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold rounded-xl border border-slate-200 transition cursor-pointer" title="Deshacer toma si fue marcada por error">
-                            Deshacer
+                        <button type="submit" class="tap-bounce touch-min w-full py-3 px-4 rounded-xl bg-amber-50 hover:bg-amber-100 active:bg-amber-200 text-amber-800 font-bold text-sm border border-amber-200 flex items-center justify-center gap-2 transition cursor-pointer">
+                            <svg class="w-4 h-4 text-amber-600" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            <span>Posponer (+30m)</span>
                         </button>
                     </form>
                 <?php endif; ?>
-            </div>
-
-        <?php elseif ($esOmitida): ?>
-            <!-- Estado OMITIDA: Opción de Registrar toma tardía o Mantener omitida -->
-            <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 w-full">
-                <span class="text-xs text-rose-800 font-medium">
-                    Horario de toma sobrepasado. Puedes registrarla ahora con nota de retraso:
-                </span>
-                <div class="flex items-center gap-2 shrink-0">
-                    <form action="<?= APP_URL ?>/medicamentos/toma" method="POST" class="inline m-0 flex-1 sm:flex-initial" onsubmit="return handleTomaSubmit(this, '<?= $tomaId ?>')">
-                        <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
-                        <input type="hidden" name="toma_id" value="<?= $tomaId ?>">
-                        <input type="hidden" name="accion" value="justificar_retraso">
-                        <button type="submit" class="tap-bounce touch-min w-full sm:w-auto px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-sm transition flex items-center justify-center gap-1.5 cursor-pointer">
-                            <svg class="w-4 h-4" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                            <span>Registrar toma tardía</span>
-                        </button>
-                    </form>
-                </div>
-            </div>
-
-        <?php else: ?>
-            <!-- Estado PENDIENTE / POSPUESTO -->
-            <form action="<?= APP_URL ?>/medicamentos/toma" method="POST" class="flex-1" onsubmit="return handleTomaSubmit(this, '<?= $tomaId ?>')">
-                <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
-                <input type="hidden" name="toma_id" value="<?= $tomaId ?>">
-                <input type="hidden" name="accion" value="marcar_tomada">
-                <button type="submit" class="tap-bounce touch-min w-full py-3.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-xs transition cursor-pointer">
-                    <svg class="w-5 h-5" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
-                    <span>Marcar Tomada</span>
-                </button>
-            </form>
-            
-            <?php if (!empty($puedeEditar)): ?>
-                <form action="<?= APP_URL ?>/medicamentos/posponer" method="POST" class="flex-1" onsubmit="return handleSnoozeSubmit(this, '<?= $tomaId ?>')">
-                    <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
-                    <input type="hidden" name="toma_id" value="<?= $tomaId ?>">
-                    <button type="submit" class="tap-bounce touch-min w-full py-3.5 px-4 rounded-xl bg-amber-50 hover:bg-amber-100 active:bg-amber-200 text-amber-800 font-bold text-sm border border-amber-200 flex items-center justify-center gap-2 transition cursor-pointer">
-                        <svg class="w-4 h-4 text-amber-600" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                        <span>Posponer (+30m)</span>
-                    </button>
-                </form>
             <?php endif; ?>
+        <?php else: ?>
+            <!-- Vista de Solo Lectura / Doctor (Insignias Estáticas de Estado) -->
+            <div class="flex items-center justify-between w-full py-1">
+                <?php if ($esTomada): ?>
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold">
+                        <svg class="w-4 h-4 text-emerald-600" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
+                        <span>Dosis Tomada <?= !empty($toma['tomado_at']) ? '• ' . date('H:i A', strtotime($toma['tomado_at'])) : '' ?></span>
+                    </span>
+                <?php elseif ($esOmitida): ?>
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-50 text-rose-700 border border-rose-200 text-xs font-bold">
+                        <svg class="w-4 h-4 text-rose-600" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
+                        <span>Dosis Omitida</span>
+                    </span>
+                <?php elseif ($esPospuesta): ?>
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 text-amber-700 border border-amber-200 text-xs font-bold">
+                        <svg class="w-4 h-4 text-amber-600" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span>Pospuesta (Pendiente de suministro)</span>
+                    </span>
+                <?php else: ?>
+                    <span class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-100 text-slate-600 border border-slate-200 text-xs font-bold">
+                        <svg class="w-4 h-4 text-slate-400" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span>Pendiente de suministro</span>
+                    </span>
+                <?php endif; ?>
+                <span class="text-[11px] text-slate-400 font-medium"><?= !empty($esDoctor) ? 'Solo Consulta Médica' : 'Modo Solo Lectura' ?></span>
+            </div>
         <?php endif; ?>
     </div>
 </div>

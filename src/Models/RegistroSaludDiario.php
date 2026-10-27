@@ -45,6 +45,10 @@ class RegistroSaludDiario extends Model {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    public function getHistorial(int $pacienteId, int $limit = 30): array {
+        return $this->getAllByPacienteId($pacienteId, $limit);
+    }
+
     public function getUltimoRegistro(int $pacienteId): ?array {
         $stmt = $this->db->prepare("
             SELECT id, paciente_id, presion_sistolica, presion_diastolica, glucosa, momento_glucosa, 

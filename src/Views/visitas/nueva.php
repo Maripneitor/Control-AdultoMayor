@@ -77,7 +77,7 @@
                 <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
                     Lugar / Clínica de Atención
                 </label>
-                <input type="text" id="input-lugar" name="lugar_atencion" placeholder="Ej. Clínica Familiar No. 4, Consultorio 6" 
+                <input type="text" id="input-lugar" name="lugar_atencion" value="<?= e($lugarInicial ?? '') ?>" placeholder="Ej. Clínica Familiar No. 4, Consultorio 6" 
                        class="touch-target w-full rounded-2xl border-slate-300 px-4 py-3 text-sm focus:border-blue-500 focus:ring-blue-500 bg-slate-50/50 mb-2">
                 <!-- Chips de Lugares Frecuentes -->
                 <div class="flex flex-wrap gap-1.5">
@@ -95,7 +95,7 @@
                 <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
                     Motivo Principal de la Consulta *
                 </label>
-                <input type="text" id="input-motivo" name="motivo_consulta" required placeholder="Ej. Control de hipertensión y revisión de glucosa" 
+                <input type="text" id="input-motivo" name="motivo_consulta" value="<?= e($motivoInicial ?? '') ?>" required placeholder="Ej. Control de hipertensión y revisión de glucosa" 
                        class="touch-target w-full rounded-2xl border-slate-300 px-4 py-3 text-sm focus:border-blue-500 focus:ring-blue-500 bg-slate-50/50 mb-2">
                 <!-- Chips de Motivos Frecuentes -->
                 <div class="flex flex-wrap gap-1.5">

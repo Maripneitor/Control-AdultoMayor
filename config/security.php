@@ -11,8 +11,8 @@ function startSecureSession(): void {
         header("Referrer-Policy: strict-origin-when-cross-origin");
         
         // Content Security Policy (Módulo 12)
-        // Permitimos Tailwind (cdn.tailwindcss.com), SweetAlert (cdn.jsdelivr.net) y QuickChart (quickchart.io)
-        header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self';");
+        // Permitimos Tailwind (cdn.tailwindcss.com), SweetAlert (cdn.jsdelivr.net), QuickChart (quickchart.io) y Google Fonts
+        header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self';");
 
         // HSTS y CORS (Requisitos Módulo 11/12)
         header("Strict-Transport-Security: max-age=31536000; includeSubDomains");
