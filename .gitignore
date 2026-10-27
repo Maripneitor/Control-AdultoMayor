@@ -85,3 +85,4 @@ __pycache__/
 *.sqlite3
 /staticfiles/
 /graphify-out/
+docker-compose.override.yml

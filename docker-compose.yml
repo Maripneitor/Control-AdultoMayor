@@ -1,0 +1,88 @@
+services:
+  # ==============================================================================
+  # 1. Base de Datos PostgreSQL 15 (Con Inicialización Automática DDL)
+  # ==============================================================================
+  db:
+    image: postgres:15-alpine
+    container_name: vitalsenior_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-vitalsenior}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASS:-postgres}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-vitalsenior}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - vitalsenior_net
+
+  # ==============================================================================
+  # 2. Servidor Web PHP 8.2 + Apache (VitalSenior PHP MVC - Reemplazo de XAMPP)
+  # ==============================================================================
+  app_php:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    container_name: vitalsenior_php_app
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-vitalsenior}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASS: ${DB_PASS:-postgres}
+      APP_ENV: ${APP_ENV:-development}
+      APP_DEBUG: ${APP_DEBUG:-true}
+      APP_URL: ${APP_URL:-http://localhost:8080}
+    volumes:
+      - .:/var/www/html
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - vitalsenior_net
+
+  # ==============================================================================
+  # 3. Aplicación Django 6.x MVT (VitalSenior Django Backend)
+  # ==============================================================================
+  app_django:
+    build:
+      context: .
+      dockerfile: docker/django/Dockerfile
+    container_name: vitalsenior_django_app
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-vitalsenior}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASS: ${DB_PASS:-postgres}
+      APP_DEBUG: "true"
+      APP_KEY: ${APP_KEY:-django-insecure-vitalsenior-dev-key-change-in-prod-1234567890}
+    volumes:
+      - .:/app
+    command: sh -c "python manage.py check && python manage.py runserver 0.0.0.0:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - vitalsenior_net
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  vitalsenior_net:
+    driver: bridge
