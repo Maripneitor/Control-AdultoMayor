@@ -10,7 +10,8 @@
 .env.production
 .env.staging
 .env.local
-!.env.example
+.env.example
+
 
 # 2. Gestor de Paquetes de Terceros y Entornos de Agente
 /vendor/
