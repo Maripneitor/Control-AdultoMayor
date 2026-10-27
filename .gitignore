@@ -9,8 +9,10 @@
 .env.backup
 .env.production
 .env.staging
-.env.local
 .env.example
+ENV_SECRETS_HANDOVER.md
+*secrets*
+*handover*
 
 
 # 2. Gestor de Paquetes de Terceros y Entornos de Agente
