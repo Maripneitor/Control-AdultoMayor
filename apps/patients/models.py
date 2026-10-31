@@ -52,6 +52,16 @@ class Paciente(models.Model):
     def nombre_completo(self):
         return f"{self.nombre} {self.apellidos}".strip()
 
+    @property
+    def uuid(self):
+        """Identificador UUID público no secuencial para prevenir ataques IDOR en URLs."""
+        return self.qr_token
+
+    @property
+    def codigo_sos_corto(self):
+        """Código corto de 8 caracteres para ingreso manual debajo del QR (ej. 'a1b2c3d4')."""
+        return str(self.qr_token).split('-')[0].lower()
+
 class PacienteCuidador(models.Model):
     class NivelAcceso(models.TextChoices):
         COMPLETO = 'completo', 'Acceso Completo'
@@ -101,3 +111,20 @@ class ContactoEmergencia(models.Model):
 
     def __str__(self):
         return f"{self.nombre} ({self.parentesco}) - {self.telefono}"
+
+
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
+
+@receiver(post_save, sender=Paciente)
+def generar_qr_sos_automatico(sender, instance, created, **kwargs):
+    """
+    Al crear o actualizar un paciente, genera automáticamente la imagen PNG
+    de su código QR SOS vinculada a `/sos/<codigo_corto>` en la carpeta `/media/qr_sos/`.
+    """
+    try:
+        from .services import asegurar_imagen_qr_sos
+        asegurar_imagen_qr_sos(instance)
+    except Exception:
+        pass

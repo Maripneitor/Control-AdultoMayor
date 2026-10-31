@@ -1,0 +1,94 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="es">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="x-apple-disable-message-reformatting" />
+    <title>Código de Acceso Seguro - VitalSenior</title>
+</head>
+<body style="margin: 0; padding: 0; width: 100% !important; background-color: #F8FAFC; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased;">
+    <!-- Preheader invisible para vista previa en clientes de correo -->
+    <div style="display: none; max-height: 0px; overflow: hidden; mso-hide: all;">
+        Tu código temporal de acceso para VitalSenior es {{ codigo }}. Expira en 5 minutos.
+    </div>
+
+    <!-- Tabla Maestra de Fondo (#F8FAFC) -->
+    <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" bgcolor="#F8FAFC" style="background-color: #F8FAFC; width: 100%; margin: 0; padding: 36px 16px;">
+        <tr>
+            <td align="center" valign="top">
+                <!-- Contenedor Central (Máx 540px) -->
+                <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" bgcolor="#FFFFFF" style="max-width: 540px; width: 100%; background-color: #FFFFFF; border-radius: 20px; border: 1px solid #E2E8F0; overflow: hidden;">
+                    
+                    <!-- 1. CABECERA: Fondo blanco puro con Logo VitalSenior centrado -->
+                    <tr>
+                        <td align="center" bgcolor="#FFFFFF" style="background-color: #FFFFFF; padding: 36px 32px 24px 32px; border-bottom: 1px solid #F1F5F9;">
+                            <table role="presentation" border="0" cellspacing="0" cellpadding="0">
+                                <tr>
+                                    <!-- Icono Azul (#0EA5E9) -->
+                                    <td align="center" valign="middle" width="44" height="44" bgcolor="#0EA5E9" style="background-color: #0EA5E9; width: 44px; height: 44px; border-radius: 12px; color: #FFFFFF; font-size: 22px; font-weight: 900; line-height: 44px; text-align: center;">
+                                        &#10084;
+                                    </td>
+                                    <td width="12" style="width: 12px;">&nbsp;</td>
+                                    <!-- Texto Azul Marino (#0F172A) -->
+                                    <td align="left" valign="middle" style="font-size: 26px; font-weight: 800; color: #0F172A; letter-spacing: -0.5px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+                                        Vital<span style="color: #0EA5E9;">Senior</span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- 2. CUERPO DEL MENSAJE -->
+                    <tr>
+                        <td align="center" bgcolor="#FFFFFF" style="background-color: #FFFFFF; padding: 32px 36px 16px 36px;">
+                            <p style="margin: 0 0 12px 0; font-size: 20px; line-height: 28px; font-weight: 800; color: #0F172A; text-align: center;">
+                                {% if nombre_usuario %}Hola {{ nombre_usuario }}, aquí{% else %}Hola, aquí{% endif %} tienes tu código de acceso seguro para VitalSenior.
+                            </p>
+                            <p style="margin: 0; font-size: 16px; line-height: 24px; color: #475569; text-align: center;">
+                                Escribe los siguientes 6 dígitos en la pantalla de inicio de sesión para entrar a tu cuenta sin necesidad de contraseña:
+                            </p>
+                        </td>
+                    </tr>
+
+                    <!-- 3. BLOQUE DEL CÓDIGO (EL FOCO VISUAL) -->
+                    <tr>
+                        <td align="center" bgcolor="#FFFFFF" style="background-color: #FFFFFF; padding: 20px 36px 28px 36px;">
+                            <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" bgcolor="#F8FAFC" style="background-color: #F8FAFC; border: 2px solid #BAE6FD; border-radius: 16px;">
+                                <tr>
+                                    <td align="center" style="padding: 28px 24px;">
+                                        <span style="display: inline-block; font-family: 'Courier New', Courier, monospace, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto; font-size: 32px; line-height: 40px; font-weight: 800; letter-spacing: 5px; color: #2563EB;">
+                                            {{ codigo }}
+                                        </span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- 4. PIE DE PÁGINA -->
+                    <tr>
+                        <td align="center" bgcolor="#F8FAFC" style="background-color: #F8FAFC; padding: 24px 36px; border-top: 1px solid #E2E8F0;">
+                            <p style="margin: 0; font-size: 12px; line-height: 18px; color: #64748B; text-align: center;">
+                                Este código expira en 5 minutos. Si no intentaste iniciar sesión, puedes ignorar este mensaje de forma segura.
+                            </p>
+                        </td>
+                    </tr>
+
+                </table>
+
+                <!-- Nota institucional inferior -->
+                <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 540px; width: 100%; margin-top: 16px;">
+                    <tr>
+                        <td align="center" style="padding: 8px 16px;">
+                            <p style="margin: 0; font-size: 12px; line-height: 18px; color: #94A3B8; text-align: center;">
+                                &copy; VitalSenior &bull; Plataforma de Monitoreo y Cuidado del Adulto Mayor
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
+

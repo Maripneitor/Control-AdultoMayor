@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ titulo }} - VitalSenior{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto py-4">
+    <div class="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-6 sm:p-8">
+        <h1 class="text-2xl font-black text-slate-900 tracking-tight mb-1">{{ titulo }}</h1>
+        <p class="text-xs text-slate-500 font-medium mb-6">Asignación farmacológica para <strong>{{ paciente.nombre_completo }}</strong></p>
+
+        <form method="POST" class="space-y-4">
+            {% csrf_token %}
+            <div>
+                <label for="nombre_comercial" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Nombre Comercial del Medicamento *</label>
+                <input type="text" name="nombre_comercial" id="nombre_comercial" value="{{ medicamento.nombre_comercial|default:'' }}" required placeholder="Ej: Losartán, Metformina, Omeprazol"
+                       class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-800 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-teal-500 transition">
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label for="dosis" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Dosis / Concentración *</label>
+                    <input type="text" name="dosis" id="dosis" value="{{ medicamento.dosis|default:'' }}" required placeholder="Ej: 50 mg, 1 tableta, 5 ml"
+                           class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-800 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-teal-500 transition">
+                </div>
+                <div>
+                    <label for="frecuencia_horas" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Frecuencia (Cada cuántas horas) *</label>
+                    <select name="frecuencia_horas" id="frecuencia_horas"
+                            class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-800 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-teal-500 transition">
+                        <option value="4" {% if medicamento.frecuencia_horas == 4 %}selected{% endif %}>Cada 4 horas (6 tomas/día)</option>
+                        <option value="6" {% if medicamento.frecuencia_horas == 6 %}selected{% endif %}>Cada 6 horas (4 tomas/día)</option>
+                        <option value="8" {% if medicamento.frecuencia_horas == 8 or not medicamento %}selected{% endif %}>Cada 8 horas (3 tomas/día)</option>
+                        <option value="12" {% if medicamento.frecuencia_horas == 12 %}selected{% endif %}>Cada 12 horas (2 tomas/día)</option>
+                        <option value="24" {% if medicamento.frecuencia_horas == 24 %}selected{% endif %}>Cada 24 horas (1 toma/día)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                    <label for="stock_actual" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Stock Actual (Unidades)</label>
+                    <input type="number" name="stock_actual" id="stock_actual" value="{{ medicamento.stock_actual|default:30 }}" min="0"
+                           class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-800 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-teal-500 transition">
+                </div>
+                <div>
+                    <label for="dosis_por_toma" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Dosis por Toma</label>
+                    <input type="number" name="dosis_por_toma" id="dosis_por_toma" value="{{ medicamento.dosis_por_toma|default:1 }}" min="1"
+                           class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-800 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-teal-500 transition">
+                </div>
+                <div>
+                    <label for="stock_minimo_alerta" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Stock Mínimo Alerta</label>
+                    <input type="number" name="stock_minimo_alerta" id="stock_minimo_alerta" value="{{ medicamento.stock_minimo_alerta|default:5 }}" min="1"
+                           class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-800 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-teal-500 transition">
+                </div>
+            </div>
+
+            <div>
+                <label for="instrucciones" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Instrucciones de Ingesta</label>
+                <textarea name="instrucciones" id="instrucciones" rows="2" placeholder="Tomar después del desayuno, con abundante agua, etc."
+                          class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-800 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-teal-500 transition">{{ medicamento.instrucciones|default:'' }}</textarea>
+            </div>
+
+            {% if medicamento %}
+            <div class="flex items-center gap-2 pt-2">
+                <input type="checkbox" name="activo" id="activo" {% if medicamento.activo %}checked{% endif %}
+                       class="w-4 h-4 text-teal-600 rounded border-slate-300 focus:ring-teal-500">
+                <label for="activo" class="text-xs font-bold text-slate-700">Medicamento Activo en el Esquema Diario</label>
+            </div>
+            {% endif %}
+
+            <div class="pt-4 flex items-center justify-end gap-3">
+                <a href="{% url 'medications:lista' %}" class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition">
+                    Cancelar
+                </a>
+                <button type="submit" class="px-6 py-2.5 bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs rounded-xl shadow-xs transition">
+                    Guardar Medicamento
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

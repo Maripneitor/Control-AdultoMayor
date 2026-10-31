@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+
+{% block title %}Directorio de Pacientes - VitalSenior{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="bg-white rounded-3xl border border-slate-200/90 p-6 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-black text-slate-900 tracking-tight">Directorio de Adultos Mayores</h1>
+            <p class="text-xs text-slate-500 font-medium mt-0.5">Pacientes bajo tu supervisión y red de cuidado familiar</p>
+        </div>
+        <div class="flex items-center gap-3">
+            <a href="{% url 'patients:vincular' %}" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold rounded-xl transition">
+                Vincular con Código
+            </a>
+            <a href="{% url 'patients:crear' %}" class="px-4 py-2.5 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold rounded-xl transition shadow-xs">
+                + Nuevo Paciente
+            </a>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for paciente in pacientes %}
+        <div class="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs hover:border-teal-400 hover:shadow-md transition flex flex-col justify-between">
+            <div>
+                <div class="flex items-center gap-4 mb-4">
+                    <div class="w-14 h-14 rounded-2xl bg-teal-50 border border-teal-200 flex items-center justify-center text-teal-700 font-extrabold text-xl shadow-inner">
+                        {{ paciente.nombre|slice:":1" }}{{ paciente.apellidos|slice:":1" }}
+                    </div>
+                    <div>
+                        <h2 class="text-lg font-black text-slate-900">{{ paciente.nombre_completo }}</h2>
+                        <span class="px-2 py-0.5 bg-teal-50 text-teal-700 text-[10px] font-extrabold rounded-md border border-teal-200/60">
+                            Sangre: {{ paciente.tipo_sangre }}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="space-y-2 text-xs text-slate-600 py-3 border-y border-slate-100">
+                    <p><strong class="text-slate-400 font-semibold uppercase text-[10px] block">Alergias</strong> {{ paciente.alergias|default:"Ninguna reportada" }}</p>
+                    <p><strong class="text-slate-400 font-semibold uppercase text-[10px] block">Padecimientos Crónicos</strong> {{ paciente.enfermedades_cronicas|default:"Sin registro" }}</p>
+                    <p><strong class="text-slate-400 font-semibold uppercase text-[10px] block">Código de Vinculación</strong> <code class="px-2 py-0.5 bg-slate-100 font-bold rounded text-slate-800 tracking-wider">{{ paciente.codigo_vinculacion|default:"No activo" }}</code></p>
+                </div>
+            </div>
+
+            <div class="mt-6 flex items-center justify-between gap-2 pt-2">
+                <a href="{% url 'patients:expediente' uuid=paciente.uuid %}"
+                   class="flex-1 py-2.5 px-3 bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs rounded-xl text-center transition shadow-xs">
+                    Expediente Clínico
+                </a>
+                <a href="{% url 'patients:editar' uuid=paciente.uuid %}"
+                   class="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition" title="Editar">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                </a>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-span-full bg-white rounded-3xl border border-dashed border-slate-200 p-12 text-center">
+            <p class="text-slate-500 font-bold mb-4">Aún no hay adultos mayores registrados en tu cuenta.</p>
+            <a href="{% url 'patients:crear' %}" class="px-5 py-2.5 bg-teal-600 text-white font-bold text-xs rounded-xl shadow-xs">
+                Registrar Primer Paciente
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

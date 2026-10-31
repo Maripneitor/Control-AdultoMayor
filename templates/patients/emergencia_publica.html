@@ -2,72 +2,193 @@
 <html lang="es" class="h-full bg-slate-900">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Ficha Médica de Emergencia - {{ paciente.nombre_completo }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Seguridad Zero Trust: No indexable por Google ni otros motores de búsqueda -->
+    <meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
+    <meta name="googlebot" content="noindex, nofollow">
+    <title>{% if paciente %}Ficha Médica SOS — {{ paciente.nombre_completo }}{% else %}Consulta de Ficha SOS — VitalSenior{% endif %}</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800;900&display=swap" rel="stylesheet">
-    <style> body { font-family: 'Plus Jakarta Sans', sans-serif; } </style>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .touch-target { min-height: 48px; min-width: 48px; }
+    </style>
 </head>
-<body class="min-h-full flex flex-col items-center justify-center p-4 selection:bg-rose-500 selection:text-white">
+<body class="min-h-full flex flex-col items-center justify-center p-4 sm:p-6 selection:bg-rose-500 selection:text-white">
 
-    <div class="max-w-md w-full bg-white rounded-3xl shadow-2xl overflow-hidden border-4 border-rose-500">
-        <!-- Banner Superior de Emergencia -->
-        <div class="bg-rose-600 px-6 py-4 text-white flex items-center justify-between">
-            <div class="flex items-center gap-2">
-                <span class="w-3 h-3 rounded-full bg-white animate-ping"></span>
-                <span class="text-xs font-black uppercase tracking-widest">Ficha Médica SOS</span>
-            </div>
-            <span class="px-2 py-0.5 bg-rose-700/80 rounded-md text-[10px] font-bold uppercase tracking-wider">Primeros Respondientes</span>
-        </div>
+    <div class="max-w-md w-full space-y-4">
 
-        <div class="p-6 space-y-6">
-            <!-- Datos del Adulto Mayor -->
-            <div class="text-center">
-                <h1 class="text-2xl font-black text-slate-900">{{ paciente.nombre_completo }}</h1>
-                <p class="text-xs text-slate-500 mt-0.5">Fecha de Nacimiento: {{ paciente.fecha_nacimiento|date:"d M Y" }}</p>
-
-                <div class="inline-flex items-center gap-2 mt-3 px-3.5 py-1.5 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 font-extrabold text-sm">
-                    <span>Tipo de Sangre:</span>
-                    <span class="text-base font-black">{{ paciente.tipo_sangre }}</span>
+        {% if paciente %}
+        <!-- ================================================================== -->
+        <!-- FICHA MÉDICA DE SUPERVIVENCIA (TRIAGE PARA PRIMEROS RESPONDIENTES) -->
+        <!-- ================================================================== -->
+        <div class="bg-white rounded-3xl shadow-2xl overflow-hidden border-4 border-rose-500">
+            <!-- Banner Superior de Emergencia -->
+            <div class="bg-rose-600 px-6 py-4 text-white flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <span class="w-3 h-3 rounded-full bg-white animate-ping"></span>
+                    <span class="text-xs font-black uppercase tracking-widest">Ficha Médica SOS</span>
                 </div>
+                <span class="px-2.5 py-1 bg-rose-800/90 rounded-lg text-[11px] font-extrabold uppercase tracking-wider font-mono">
+                    ID: {{ codigo_sos_corto|upper }}
+                </span>
             </div>
 
-            <!-- Alergias y Padecimientos -->
-            <div class="space-y-3">
-                <div class="p-3.5 bg-slate-50 rounded-2xl border border-slate-200/80">
-                    <span class="text-[11px] font-extrabold text-rose-600 uppercase tracking-wider block mb-1">Alergias Críticas</span>
-                    <p class="text-xs font-bold text-slate-800">{{ paciente.alergias|default:"Ninguna reportada" }}</p>
+            <div class="p-6 space-y-6">
+                <!-- Identificación y Tipo de Sangre -->
+                <div class="text-center">
+                    <p class="text-[11px] font-extrabold uppercase tracking-widest text-slate-400 mb-1">
+                        Ficha Médica de
+                    </p>
+                    <h1 class="text-2xl sm:text-3xl font-black text-slate-900 leading-tight">
+                        {{ paciente.nombre_completo }}
+                    </h1>
+                    <p class="text-xs font-semibold text-slate-500 mt-1">
+                        Fecha de Nacimiento: <strong>{{ paciente.fecha_nacimiento|date:"d M Y" }}</strong>
+                    </p>
+
+                    <div class="inline-flex items-center gap-2.5 mt-4 px-5 py-2 bg-rose-50 border-2 border-rose-200 rounded-2xl text-rose-700 font-extrabold text-sm">
+                        <i data-lucide="droplets" class="w-5 h-5 text-rose-600"></i>
+                        <span>Tipo de Sangre:</span>
+                        <span class="text-xl font-black text-rose-800">{{ paciente.tipo_sangre }}</span>
+                    </div>
                 </div>
 
-                <div class="p-3.5 bg-slate-50 rounded-2xl border border-slate-200/80">
-                    <span class="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider block mb-1">Padecimientos Crónicos</span>
-                    <p class="text-xs font-bold text-slate-800">{{ paciente.enfermedades_cronicas|default:"Sin antecedentes registrados" }}</p>
-                </div>
-            </div>
-
-            <!-- Contactos Inmediatos -->
-            <div>
-                <h2 class="text-xs font-extrabold text-slate-400 uppercase tracking-wider mb-2">Llamadas Inmediatas</h2>
-                <div class="space-y-2">
-                    {% for c in contactos %}
-                    <a href="tel:{{ c.telefono }}" class="flex items-center justify-between p-3.5 bg-rose-50 hover:bg-rose-100/80 rounded-2xl border border-rose-200 transition">
-                        <div>
-                            <strong class="text-xs font-black text-slate-900 block">{{ c.nombre }}</strong>
-                            <span class="text-[10px] text-slate-500 font-bold uppercase">{{ c.parentesco }}</span>
+                <!-- Información Crítica de Supervivencia (Sin direcciones ni datos bancarios) -->
+                <div class="space-y-3">
+                    <div class="p-4 bg-rose-50/70 rounded-2xl border border-rose-200">
+                        <div class="flex items-center gap-2 mb-1">
+                            <i data-lucide="alert-triangle" class="w-4 h-4 text-rose-600"></i>
+                            <span class="text-xs font-extrabold text-rose-700 uppercase tracking-wider">Alergias Críticas</span>
                         </div>
-                        <span class="px-3 py-1.5 bg-rose-600 text-white font-bold text-xs rounded-xl shadow-xs">
-                            Llamar
-                        </span>
-                    </a>
-                    {% endfor %}
+                        <p class="text-sm font-extrabold text-slate-900 leading-snug">
+                            {{ paciente.alergias|default:"Ninguna alergia reportada" }}
+                        </p>
+                    </div>
+
+                    <div class="p-4 bg-slate-50 rounded-2xl border border-slate-200">
+                        <div class="flex items-center gap-2 mb-1">
+                            <i data-lucide="activity" class="w-4 h-4 text-blue-600"></i>
+                            <span class="text-xs font-extrabold text-slate-600 uppercase tracking-wider">Padecimientos Crónicos</span>
+                        </div>
+                        <p class="text-sm font-bold text-slate-800 leading-snug">
+                            {{ paciente.enfermedades_cronicas|default:"Sin antecedentes registrados" }}
+                        </p>
+                    </div>
+
+                    {% if paciente.notas_cognitivas %}
+                    <div class="p-4 bg-amber-50 rounded-2xl border border-amber-200">
+                        <div class="flex items-center gap-2 mb-1">
+                            <i data-lucide="brain" class="w-4 h-4 text-amber-700"></i>
+                            <span class="text-xs font-extrabold text-amber-800 uppercase tracking-wider">Condición Cognitiva / Trato</span>
+                        </div>
+                        <p class="text-xs font-bold text-amber-950 leading-relaxed">
+                            {{ paciente.notas_cognitivas }}
+                        </p>
+                    </div>
+                    {% endif %}
+
+                    {% if medicamentos %}
+                    <div class="p-4 bg-blue-50/60 rounded-2xl border border-blue-200">
+                        <div class="flex items-center gap-2 mb-2">
+                            <i data-lucide="pill" class="w-4 h-4 text-blue-600"></i>
+                            <span class="text-xs font-extrabold text-blue-900 uppercase tracking-wider">Medicación Activa (Evitar Interacciones)</span>
+                        </div>
+                        <div class="flex flex-wrap gap-1.5">
+                            {% for m in medicamentos %}
+                            <span class="px-2.5 py-1 rounded-lg bg-white border border-blue-200 text-xs font-extrabold text-slate-800">
+                                {{ m.nombre_comercial }} ({{ m.dosis }})
+                            </span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Contactos Inmediatos de Emergencia (Botones Táctiles >= 48px) -->
+                <div>
+                    <h2 class="text-xs font-extrabold text-slate-500 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+                        <i data-lucide="phone-call" class="w-4 h-4 text-rose-600"></i>
+                        <span>Contactos de Emergencia (Toque para llamar)</span>
+                    </h2>
+                    <div class="space-y-2.5">
+                        {% for c in contactos %}
+                        <a href="tel:{{ c.telefono }}"
+                           class="touch-target flex items-center justify-between p-4 bg-rose-50 hover:bg-rose-100 rounded-2xl border-2 border-rose-200 transition">
+                            <div>
+                                <strong class="text-sm font-black text-slate-900 block">{{ c.nombre }}</strong>
+                                <span class="text-xs text-rose-700 font-bold">{{ c.parentesco }} &bull; {{ c.telefono }}</span>
+                            </div>
+                            <span class="px-4 py-2 bg-rose-600 text-white font-extrabold text-xs rounded-xl inline-flex items-center gap-1.5 shadow-xs">
+                                <i data-lucide="phone" class="w-3.5 h-3.5"></i>
+                                <span>Llamar</span>
+                            </span>
+                        </a>
+                        {% empty %}
+                        <p class="text-xs font-semibold text-slate-500 italic p-3 bg-slate-50 rounded-xl text-center">
+                            No hay teléfonos de contacto registrados.
+                        </p>
+                        {% endfor %}
+                    </div>
                 </div>
             </div>
+
+            <div class="bg-slate-50 px-6 py-3.5 border-t border-slate-200 flex items-center justify-between text-[11px] text-slate-500 font-bold">
+                <span>VitalSenior &bull; Triage de Supervivencia</span>
+                <a href="{% url 'core:home' %}" class="text-blue-600 hover:underline font-extrabold">Inicio</a>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- ================================================================== -->
+        <!-- BUSCADOR MANUAL DE CÓDIGO SOS (FALLBACK SI LA CÁMARA FALLA)        -->
+        <!-- ================================================================== -->
+        <div class="bg-white rounded-3xl p-6 shadow-xl border-2 border-blue-500/40">
+            <div class="flex items-center gap-3 mb-3">
+                <div class="w-11 h-11 rounded-2xl bg-blue-600 text-white flex items-center justify-center shrink-0">
+                    <i data-lucide="qr-code" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h2 class="text-base font-black text-slate-900">
+                        {% if paciente %}Consultar otro Código SOS{% else %}Ingresar Código SOS Manual{% endif %}
+                    </h2>
+                    <p class="text-xs font-medium text-slate-500">
+                        Si la cámara no enfoca el QR, escribe el código impreso debajo (ej. <code class="font-mono font-bold text-blue-700">6dc93735</code>).
+                    </p>
+                </div>
+            </div>
+
+            {% if codigo_no_encontrado %}
+            <div class="mb-4 p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-xs font-extrabold text-rose-700 flex items-center gap-2">
+                <i data-lucide="alert-circle" class="w-4 h-4 shrink-0"></i>
+                <span>No encontramos una ficha médica activa con el código "{{ token_buscado }}". Verifica los caracteres.</span>
+            </div>
+            {% endif %}
+
+            <form method="GET" action="{% url 'core:sos_buscador' %}" class="flex flex-col sm:flex-row gap-2.5">
+                <input type="text"
+                       name="codigo"
+                       value="{{ token_buscado|default:'' }}"
+                       required
+                       maxlength="36"
+                       placeholder="Ej: 6dc93735"
+                       aria-label="Código SOS del paciente"
+                       class="touch-target flex-1 px-4 py-3 bg-slate-50 border-2 border-slate-300 rounded-2xl text-base font-black font-mono uppercase tracking-wider text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-blue-600">
+                <button type="submit"
+                        class="touch-target px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-sm rounded-2xl inline-flex items-center justify-center gap-2 cursor-pointer shrink-0">
+                    <i data-lucide="search" class="w-4 h-4"></i>
+                    <span>Abrir Ficha</span>
+                </button>
+            </form>
         </div>
 
-        <div class="bg-slate-50 px-6 py-3 border-t border-slate-100 text-center">
-            <p class="text-[10px] text-slate-400 font-bold">VitalSenior &bull; Identificación Rápida y Triage Médico</p>
-        </div>
     </div>
 
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            if (window.lucide) { lucide.createIcons(); }
+        });
+    </script>
 </body>
 </html>

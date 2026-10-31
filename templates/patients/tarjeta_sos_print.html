@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow, noarchive">
+    <title>Imprimir Credencial SOS — {{ paciente.nombre_completo }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: #F1F5F9;
+            color: #0F172A;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+
+        /* Tamaño exacto ISO/IEC 7810 ID-1 (Tarjeta de crédito / Credencial INE: 85.60mm x 53.98mm) */
+        .id-card-face {
+            width: 85.6mm;
+            height: 53.98mm;
+            box-sizing: border-box;
+            background: #FFFFFF;
+            border: 1.5px solid #CBD5E1;
+            border-radius: 3.18mm;
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        @page {
+            size: auto;
+            margin: 12mm;
+        }
+
+        @media print {
+            body {
+                background: #FFFFFF !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .print-sheet {
+                box-shadow: none !important;
+                border: none !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            .id-card-face {
+                border: 1px dashed #64748B !important;
+                break-inside: avoid;
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen py-8 px-4 flex flex-col items-center">
+
+    <!-- Barra de Controles (Se oculta automáticamente al imprimir) -->
+    <div class="no-print max-w-3xl w-full bg-white rounded-3xl p-6 mb-8 border border-blue-200 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
+        <div>
+            <h1 class="text-xl font-black text-slate-900">
+                Credencial de Emergencia SOS (Tamaño Oficial 85.6 × 54 mm)
+            </h1>
+            <p class="text-sm text-slate-600 mt-0.5">
+                Lista para imprimir, recortar por la línea punteada y plastificar o llevar en la cartera.
+            </p>
+        </div>
+        <div class="flex items-center gap-3 shrink-0">
+            <button type="button"
+                    onclick="window.print()"
+                    class="min-h-[48px] px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-sm rounded-2xl inline-flex items-center gap-2 cursor-pointer">
+                <span>Imprimir Ahora</span>
+            </button>
+            <a href="{% url 'patients:expediente' uuid=paciente.uuid %}"
+               class="min-h-[48px] px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm rounded-2xl inline-flex items-center">
+                Volver
+            </a>
+        </div>
+    </div>
+
+    <!-- Hoja de Impresión: Anverso y Reverso Plegables -->
+    <div class="print-sheet bg-white rounded-3xl p-8 border border-slate-200 shadow-sm flex flex-col items-center">
+        <p class="no-print text-xs font-extrabold uppercase tracking-wider text-slate-400 mb-4">
+            Vista Previa a Escala Real (Anverso y Reverso) &bull; Doblar al centro o recortar
+        </p>
+
+        <div class="flex flex-col md:flex-row items-center gap-4 print:flex-row print:gap-2">
+
+            <!-- ============================================================== -->
+            <!-- ANVERSO: LOGO VITALSENIOR + DATOS VITALES + CÓDIGO QR SOS      -->
+            <!-- ============================================================== -->
+            <div class="id-card-face">
+                <!-- Franja Superior Clínica -->
+                <div style="background-color: #0F172A; color: #FFFFFF; padding: 2.2mm 3.5mm; display: flex; align-items: center; justify-content: space-between;">
+                    <div style="display: flex; align-items: center; gap: 1.8mm;">
+                        <span style="display: inline-block; width: 4.5mm; height: 4.5mm; border-radius: 1.2mm; background-color: #0EA5E9; color: #FFFFFF; font-size: 8pt; font-weight: 900; text-align: center; line-height: 4.5mm;">&#10084;</span>
+                        <span style="font-size: 9.5pt; font-weight: 900; letter-spacing: -0.2px;">Vital<span style="color: #38BDF8;">Senior</span></span>
+                    </div>
+                    <span style="background-color: #E11D48; color: #FFFFFF; font-size: 6.5pt; font-weight: 900; padding: 0.6mm 1.8mm; border-radius: 1mm; text-transform: uppercase; letter-spacing: 0.4px;">
+                        TARJETA DE EMERGENCIA SOS
+                    </span>
+                </div>
+
+                <!-- Cuerpo Principal del Anverso -->
+                <div style="padding: 2.5mm 3.5mm; display: flex; align-items: center; justify-content: space-between; gap: 2.5mm; flex: 1;">
+                    <!-- Columna Izquierda: Paciente y Sangre -->
+                    <div style="flex: 1; min-width: 0;">
+                        <div style="font-size: 6pt; font-weight: 800; color: #64748B; text-transform: uppercase; letter-spacing: 0.4px;">
+                            Adulto Mayor / Paciente
+                        </div>
+                        <div style="font-size: 10.5pt; font-weight: 900; color: #0F172A; line-height: 1.15; margin-bottom: 1.5mm; word-break: break-word;">
+                            {{ paciente.nombre_completo }}
+                        </div>
+
+                        <div style="display: inline-block; background-color: #FFF1F2; border: 1px solid #FECDD3; border-radius: 1.5mm; padding: 0.8mm 2mm; margin-bottom: 1.5mm;">
+                            <span style="font-size: 6.5pt; font-weight: 800; color: #BE123C; text-transform: uppercase;">Tipo de Sangre: </span>
+                            <span style="font-size: 9pt; font-weight: 900; color: #9F1239;">{{ paciente.tipo_sangre }}</span>
+                        </div>
+
+                        <div style="font-size: 6.5pt; line-height: 1.25; color: #334155; font-weight: 700;">
+                            <strong style="color: #E11D48;">Alergias:</strong> {{ paciente.alergias|default:"Ninguna"|truncatechars:42 }}
+                        </div>
+                    </div>
+
+                    <!-- Columna Derecha: Código QR + Código Manual -->
+                    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 26mm; shrink: 0;">
+                        <img src="{% url 'patients:servir_qr_sos' uuid=paciente.uuid %}"
+                             alt="QR SOS"
+                             style="width: 23mm; height: 23mm; border: 1px solid #E2E8F0; border-radius: 1.5mm; padding: 0.5mm; background: #FFFFFF;">
+                        <span style="font-family: monospace; font-size: 6.5pt; font-weight: 900; color: #1E40AF; margin-top: 0.6mm; letter-spacing: 0.5px;">
+                            CÓDIGO: {{ codigo_sos_corto|upper }}
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Pie de Instrucción Obligatoria -->
+                <div style="background-color: #EFF6FF; border-top: 1px solid #BFDBFE; padding: 1.3mm 3mm; text-align: center;">
+                    <span style="font-size: 6.8pt; font-weight: 900; color: #1D4ED8; text-transform: uppercase; letter-spacing: 0.3px;">
+                        En caso de emergencia, escanee este código
+                    </span>
+                </div>
+            </div>
+
+            <!-- ============================================================== -->
+            <!-- REVERSO: PADECIMIENTOS, CONTACTOS SOS Y FALLBACK WEB           -->
+            <!-- ============================================================== -->
+            <div class="id-card-face">
+                <div style="background-color: #E11D48; color: #FFFFFF; padding: 1.8mm 3.5mm; display: flex; align-items: center; justify-content: space-between;">
+                    <span style="font-size: 7pt; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px;">
+                        Información de Supervivencia y Triage
+                    </span>
+                    <span style="font-size: 6.5pt; font-weight: 800; font-family: monospace;">
+                        ID: {{ codigo_sos_corto|upper }}
+                    </span>
+                </div>
+
+                <div style="padding: 2.5mm 3.5mm; flex: 1; display: flex; flex-direction: column; justify-content: space-between;">
+                    <div>
+                        <div style="font-size: 6pt; font-weight: 800; color: #64748B; text-transform: uppercase;">
+                            Padecimientos Crónicos
+                        </div>
+                        <div style="font-size: 7.2pt; font-weight: 800; color: #0F172A; line-height: 1.2; margin-bottom: 2mm;">
+                            {{ paciente.enfermedades_cronicas|default:"Sin padecimientos crónicos reportados"|truncatechars:85 }}
+                        </div>
+
+                        <div style="font-size: 6pt; font-weight: 800; color: #E11D48; text-transform: uppercase; margin-bottom: 0.8mm;">
+                            Llamar en Caso de Emergencia
+                        </div>
+                        {% for c in contactos %}
+                        <div style="font-size: 7.2pt; font-weight: 800; color: #0F172A; line-height: 1.3;">
+                            &bull; {{ c.nombre|truncatechars:22 }} ({{ c.parentesco }}): <span style="color: #1D4ED8;">{{ c.telefono }}</span>
+                        </div>
+                        {% empty %}
+                        <div style="font-size: 7pt; color: #64748B; font-style: italic;">
+                            Consulte los contactos escaneando el código QR.
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <div style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 1.5mm; padding: 1.2mm 2mm;">
+                        <div style="font-size: 5.8pt; font-weight: 700; color: #475569; line-height: 1.25;">
+                            Si su cámara no lee el QR, ingrese a <strong style="color: #0F172A;">{{ url_sos_publica }}</strong> o escriba el código <strong style="color: #1D4ED8; font-family: monospace;">{{ codigo_sos_corto|upper }}</strong>.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</body>
+</html>

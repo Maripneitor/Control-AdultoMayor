@@ -1,62 +1,242 @@
+{% load static %}
 <!DOCTYPE html>
-<html lang="es" class="h-full bg-slate-50">
+<html lang="es" class="h-full scroll-smooth bg-[#F8FAFC]">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>{% block title %}VitalSenior{% endblock %} - Ecosistema Clínico</title>
-    <!-- Tailwind CSS CDN con configuración corporativa -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}VitalSenior{% endblock %} - Cuidado Inteligente del Adulto Mayor</title>
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'system-ui', '-apple-system', 'sans-serif'],
+                    },
+                    colors: {
+                        ice: '#F0F7FF',
+                        vital: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            200: '#bfdbfe',
+                            300: '#93c5fd',
+                            400: '#60a5fa',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                            950: '#0a192f',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Lucide Icons (Minimalist Blue Iconography) -->
+    <script src="https://unpkg.com/lucide@latest"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="{% static 'js/accessibility.js' %}" defer></script>
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        :root {
+            --ease-out-strong: cubic-bezier(0.23, 1, 0.32, 1);
+            --ease-in-out-strong: cubic-bezier(0.77, 0, 0.175, 1);
+        }
+        body {
+            font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+            font-size: 16px;
+            line-height: 1.55;
+            color: #0f172a;
+        }
+        .tabular-nums {
+            font-variant-numeric: tabular-nums;
+        }
+        /* Zonas táctiles mínimas de 48x48px (Accesibilidad Senior) */
+        .touch-target {
+            min-height: 48px;
+            min-width: 48px;
+        }
+        /* Emil Kowalski Design Engineering: Feedback táctil inmediato y transiciones GPU */
+        .btn-press {
+            transition: transform 160ms var(--ease-out-strong), background-color 180ms ease, color 180ms ease, box-shadow 180ms ease;
+        }
+        .btn-press:active {
+            transform: scale(0.97);
+        }
+        @media (hover: hover) and (pointer: fine) {
+            .hover-lift {
+                transition: transform 260ms var(--ease-out-strong), box-shadow 260ms var(--ease-out-strong);
+            }
+            .hover-lift:hover {
+                transform: translateY(-4px);
+            }
+        }
+        /* Animación de entrada para el Hero (sin demora en primer frame) */
+        @keyframes heroArrive {
+            from {
+                opacity: 0.01;
+                transform: translateY(12px) scale(0.99);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        .hero-enter {
+            animation: heroArrive 420ms var(--ease-out-strong) both;
+        }
+        .hero-enter-delayed {
+            animation: heroArrive 480ms var(--ease-out-strong) 90ms both;
+        }
+        /* Revelación al hacer scroll acelerada por GPU */
+        .reveal-item {
+            opacity: 0;
+            transform: translateY(18px) scale(0.98);
+            transition: opacity 450ms var(--ease-out-strong), transform 450ms var(--ease-out-strong);
+            will-change: opacity, transform;
+        }
+        .reveal-item.is-visible {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+        /* Revelación Progresiva (Acordeón suave sin pop-ups) */
+        .disclosure-content {
+            display: grid;
+            grid-template-rows: 0fr;
+            opacity: 0;
+            transition: grid-template-rows 300ms var(--ease-out-strong), opacity 250ms ease;
+        }
+        .disclosure-content.is-open {
+            grid-template-rows: 1fr;
+            opacity: 1;
+        }
+        .disclosure-inner {
+            overflow: hidden;
+        }
+        @media (prefers-reduced-motion: reduce) {
+            *, ::before, ::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+                scroll-behavior: auto !important;
+            }
+            .reveal-item, .hero-enter, .hero-enter-delayed {
+                opacity: 1 !important;
+                transform: none !important;
+                animation: none !important;
+            }
+        }
     </style>
+    {% block extra_head %}{% endblock %}
 </head>
-<body class="flex flex-col min-h-full text-slate-800 antialiased selection:bg-teal-500 selection:text-white">
+<body class="flex flex-col min-h-full text-slate-900 antialiased selection:bg-blue-600 selection:text-white">
 
-    <!-- Header de Navegación Principal -->
-    <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-xs">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-teal-600 to-emerald-500 flex items-center justify-center text-white font-black text-xl shadow-md shadow-teal-500/20">
-                    V
-                </div>
-                <div>
-                    <span class="text-base font-extrabold tracking-tight text-slate-900">Vital<span class="text-teal-600">Senior</span></span>
-                    <span class="hidden sm:inline-block ml-2 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-teal-50 text-teal-700 rounded-md border border-teal-200/60">Django MVT</span>
-                </div>
+    <!-- Navbar Flotante (Sticky) Blanco estructurado en 3 bloques limpios -->
+    <header class="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-100">
+        <div class="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 h-20 flex justify-between items-center">
+
+            <!-- 1. IZQUIERDA: El Logo -->
+            <div class="flex items-center">
+                <a href="{% if request.user.is_authenticated %}{% url 'core:dashboard' %}{% else %}{% url 'core:home' %}{% endif %}"
+                   class="btn-press touch-target flex items-center gap-3 group focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 rounded-2xl pr-2">
+                    <div class="w-11 h-11 rounded-2xl bg-blue-600 group-hover:bg-blue-700 flex items-center justify-center text-white transition-colors">
+                        <i data-lucide="heart-pulse" class="w-6 h-6"></i>
+                    </div>
+                    <span class="text-xl sm:text-2xl font-black tracking-tight text-slate-900">Vital<span class="text-blue-600">Senior</span></span>
+                </a>
             </div>
 
-            <!-- Contexto del Paciente Activo (php-view-flow-guardian) -->
-            <div class="flex items-center gap-4">
-                {% if paciente_activo_nombre and paciente_activo_nombre != 'Sin Paciente' %}
-                <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-slate-100 rounded-xl border border-slate-200 text-xs">
-                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                    <span class="text-slate-500 font-medium">Paciente:</span>
-                    <strong class="text-slate-800 font-bold">{{ paciente_activo_nombre }}</strong>
-                </div>
-                {% endif %}
-
+            <!-- 2. CENTRO: Los enlaces ("Cómo Funciona", "Módulos") con gap-6 (24px) -->
+            <div class="hidden md:flex items-center gap-6">
                 {% if request.user.is_authenticated %}
-                <div class="flex items-center gap-2">
-                    <span class="text-xs font-semibold text-slate-600 hidden md:inline">{{ request.user.nombre }}</span>
-                    <span class="text-[11px] font-bold px-2 py-0.5 bg-slate-100 text-slate-600 rounded-lg uppercase">{{ request.user.get_rol_display }}</span>
-                </div>
+                <nav class="flex items-center gap-6 text-sm font-bold text-slate-700" aria-label="Navegación principal">
+                    <a href="{% url 'core:dashboard' %}" class="touch-target inline-flex items-center hover:text-blue-600 transition-colors">Panel</a>
+                    {% if request.user.rol != 'paciente' %}
+                    <a href="{% url 'patients:lista' %}" class="touch-target inline-flex items-center hover:text-blue-600 transition-colors">Pacientes</a>
+                    {% endif %}
+                    <a href="{% url 'medications:lista' %}" class="touch-target inline-flex items-center hover:text-blue-600 transition-colors">Medicinas</a>
+                    <a href="{% url 'health:lista' %}" class="touch-target inline-flex items-center hover:text-blue-600 transition-colors">Signos Vitales</a>
+                    <a href="{% url 'appointments:lista' %}" class="touch-target inline-flex items-center hover:text-blue-600 transition-colors">Citas</a>
+                    {% if request.user.rol in 'doctor medico administrador admin' %}
+                    <a href="{% url 'doctors:portal' %}" class="touch-target inline-flex items-center hover:text-blue-600 transition-colors">Médicos</a>
+                    {% endif %}
+                </nav>
+                {% else %}
+                <nav class="flex items-center gap-6 text-base font-bold text-slate-700" aria-label="Secciones principales">
+                    <a href="{% url 'core:home' %}#como-trabajamos"
+                       class="touch-target inline-flex items-center hover:text-blue-600 transition-colors">
+                        Cómo Funciona
+                    </a>
+                    <a href="{% url 'core:home' %}#funcionalidades"
+                       class="touch-target inline-flex items-center hover:text-blue-600 transition-colors">
+                        Módulos
+                    </a>
+                </nav>
                 {% endif %}
             </div>
+
+            <!-- 3. DERECHA: Los botones ("Ficha SOS", "Iniciar Sesión", "Crear Cuenta") con gap-6 (24px) -->
+            <div class="flex items-center gap-4 sm:gap-6">
+                {% if request.user.is_authenticated %}
+                    {% if paciente_activo_nombre and paciente_activo_nombre != 'Sin Paciente' %}
+                    <div class="hidden lg:flex items-center gap-2 px-4 min-h-[48px] bg-blue-50 rounded-xl text-sm">
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                        <strong class="text-slate-900 font-bold max-w-[140px] truncate">{{ paciente_activo_nombre }}</strong>
+                    </div>
+                    {% endif %}
+                    <a href="{% url 'accounts:perfil' %}" class="btn-press touch-target flex items-center gap-2 px-4 bg-slate-100 hover:bg-blue-50 rounded-xl text-sm font-bold text-slate-800">
+                        <span>{{ request.user.nombre|truncatewords:2 }}</span>
+                        <span class="text-xs font-extrabold px-2 py-0.5 bg-blue-100 text-blue-800 rounded-md">{{ request.user.get_rol_display }}</span>
+                    </a>
+                    <a href="{% url 'accounts:logout' %}" class="btn-press touch-target w-12 h-12 flex items-center justify-center text-slate-600 hover:text-rose-600 hover:bg-rose-50 rounded-xl" title="Cerrar Sesión" aria-label="Cerrar Sesión">
+                        <i data-lucide="log-out" class="w-5 h-5"></i>
+                    </a>
+                {% else %}
+                    <!-- Botón Ficha SOS con borde y texto rojo + margen claro de separación -->
+                    <a href="{% url 'core:sos_buscador' %}"
+                       class="btn-press touch-target px-3.5 sm:px-4 border-2 border-rose-500 bg-white hover:bg-rose-50 text-rose-600 font-extrabold text-sm rounded-xl inline-flex items-center justify-center gap-2 sm:mr-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-600">
+                        <span class="w-2 h-2 rounded-full bg-rose-600 animate-pulse"></span>
+                        <span>Ficha SOS</span>
+                    </a>
+
+                    <!-- Iniciar Sesión: Enlace de texto simple (sin fondo) -->
+                    <a href="{% url 'accounts:login' %}"
+                       class="touch-target px-1 text-slate-700 hover:text-blue-600 font-extrabold text-sm sm:text-base inline-flex items-center justify-center transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 rounded-lg">
+                        Iniciar Sesión
+                    </a>
+
+                    <!-- Crear Cuenta: Único botón con fondo azul sólido -->
+                    <a href="{% url 'accounts:registro' %}"
+                       class="btn-press touch-target hidden sm:inline-flex px-5 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-sm rounded-xl items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">
+                        Crear Cuenta
+                    </a>
+                {% endif %}
+            </div>
+
         </div>
+
+        {% if not request.user.is_authenticated %}
+        <!-- Barra ligera en móvil solo con los 2 enlaces centrales -->
+        <nav class="md:hidden bg-[#F8FAFC] border-t border-slate-100 px-4 py-2 flex items-center justify-center gap-6 text-xs font-extrabold text-slate-700" aria-label="Navegación rápida móvil">
+            <a href="{% url 'core:home' %}#como-trabajamos" class="py-1.5 hover:text-blue-600">Cómo Funciona</a>
+            <a href="{% url 'core:home' %}#funcionalidades" class="py-1.5 hover:text-blue-600">Módulos</a>
+            <a href="{% url 'accounts:registro' %}" class="sm:hidden py-1.5 text-blue-600">Crear Cuenta</a>
+        </nav>
+        {% endif %}
     </header>
 
     <!-- Notificaciones Flash -->
     {% if messages %}
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4 w-full">
+    <div class="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 mt-4 w-full">
         {% for message in messages %}
-        <div class="p-4 rounded-xl border mb-3 flex items-center justify-between text-sm font-semibold
-            {% if message.tags == 'success' %} bg-emerald-50 text-emerald-800 border-emerald-200
-            {% elif message.tags == 'warning' %} bg-amber-50 text-amber-800 border-amber-200
-            {% elif message.tags == 'error' %} bg-rose-50 text-rose-800 border-rose-200
-            {% else %} bg-blue-50 text-blue-800 border-blue-200 {% endif %}">
+        <div class="p-4 rounded-2xl mb-3 flex items-center justify-between text-base font-bold
+            {% if message.tags == 'success' %} bg-emerald-50 text-emerald-900
+            {% elif message.tags == 'warning' %} bg-amber-50 text-amber-900
+            {% elif message.tags == 'error' %} bg-rose-50 text-rose-900
+            {% else %} bg-blue-50 text-blue-900 {% endif %}">
             <span>{{ message }}</span>
         </div>
         {% endfor %}
@@ -64,14 +244,110 @@
     {% endif %}
 
     <!-- Contenido Central MVT -->
-    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <main id="accessible-content" class="{% block main_class %}flex-1 max-w-7xl w-full mx-auto px-5 sm:px-6 lg:px-8 py-6{% endblock %}">
         {% block content %}{% endblock %}
     </main>
 
-    <!-- Footer Clínico -->
-    <footer class="bg-white border-t border-slate-200/80 py-6 text-center text-xs text-slate-500">
-        <p>VitalSenior &copy; 2026 &bull; Plataforma Médica de Cuidado Geriátrico Multitenant.</p>
+    <!-- Footer Clínico Limpio -->
+    <footer class="bg-[#0a192f] text-slate-300 py-16">
+        <div class="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-10 pb-12">
+                <div class="md:col-span-5 space-y-4">
+                    <a href="{% url 'core:home' %}" class="inline-flex items-center gap-3 text-2xl font-black text-white tracking-tight">
+                        <div class="w-11 h-11 rounded-2xl bg-blue-600 flex items-center justify-center text-white">
+                            <i data-lucide="heart-pulse" class="w-6 h-6"></i>
+                        </div>
+                        <span>Vital<span class="text-blue-400">Senior</span></span>
+                    </a>
+                    <p class="text-base text-slate-300 max-w-sm leading-relaxed">
+                        Tu familia conectada. Medicación a tiempo, signos vitales bajo control y respuesta inmediata ante emergencias.
+                    </p>
+                </div>
+
+                <div class="md:col-span-3 space-y-3">
+                    <p class="text-sm font-extrabold text-white">Información y Ayuda</p>
+                    <ul class="space-y-2 text-sm text-slate-300 font-medium">
+                        <li><a href="{% url 'core:home' %}#nosotros" class="hover:text-blue-400 transition-colors inline-block py-1">Nosotros (Quiénes Somos)</a></li>
+                        <li><a href="{% url 'core:home' %}#faq" class="hover:text-blue-400 transition-colors inline-block py-1">Preguntas Frecuentes (FAQ)</a></li>
+                        <li><a href="{% url 'core:home' %}#como-trabajamos" class="hover:text-blue-400 transition-colors inline-block py-1">Cómo Funciona</a></li>
+                        <li><a href="{% url 'core:home' %}#funcionalidades" class="hover:text-blue-400 transition-colors inline-block py-1">Módulos Clínicos</a></li>
+                    </ul>
+                </div>
+
+                <div class="md:col-span-4 space-y-3">
+                    <p class="text-sm font-extrabold text-white">Accesos Directos</p>
+                    <div class="flex flex-col gap-2.5 pt-1">
+                        <a href="{% url 'accounts:login' %}" class="btn-press touch-target px-4 bg-[#0f2444] hover:bg-blue-900 text-white font-bold text-sm rounded-xl inline-flex items-center gap-2.5">
+                            <i data-lucide="log-in" class="w-4 h-4 text-blue-400"></i>
+                            <span>Iniciar Sesión Familiar</span>
+                        </a>
+                        <a href="{% url 'doctors:portal' %}" class="btn-press touch-target px-4 bg-[#0f2444] hover:bg-blue-900 text-white font-bold text-sm rounded-xl inline-flex items-center gap-2.5">
+                            <i data-lucide="key-round" class="w-4 h-4 text-blue-400"></i>
+                            <span>Portal Médico (PIN 6 dígitos)</span>
+                        </a>
+                        <a href="{% url 'patients:emergencia_publica' %}" class="btn-press touch-target px-4 bg-rose-600/20 hover:bg-rose-600/30 text-rose-300 font-bold text-sm rounded-xl inline-flex items-center gap-2.5">
+                            <i data-lucide="qr-code" class="w-4 h-4 text-rose-400"></i>
+                            <span>Ficha de Emergencia SOS QR</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-slate-400">
+                <p>VitalSenior &copy; 2026 &bull; Cuidado Geriátrico Inteligente.</p>
+                <p>Diseñado para adultos mayores, familias cuidadoras y médicos.</p>
+            </div>
+        </div>
     </footer>
 
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Inicializar iconos Lucide
+            if (window.lucide) {
+                lucide.createIcons();
+            }
+
+            // IntersectionObserver para animaciones sutiles al hacer scroll
+            const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            const revealItems = document.querySelectorAll('.reveal-item');
+            if (prefersReduced) {
+                revealItems.forEach(el => el.classList.add('is-visible'));
+            } else if ('IntersectionObserver' in window) {
+                const observer = new IntersectionObserver((entries, obs) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            entry.target.classList.add('is-visible');
+                            obs.unobserve(entry.target);
+                        }
+                    });
+                }, { threshold: 0.08, rootMargin: '0px 0px -20px 0px' });
+                revealItems.forEach(el => observer.observe(el));
+            } else {
+                revealItems.forEach(el => el.classList.add('is-visible'));
+            }
+
+            // Revelación Progresiva (Acordeones suaves sin pop-ups)
+            document.querySelectorAll('[data-disclosure-btn]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const targetId = btn.getAttribute('data-disclosure-btn');
+                    const panel = document.getElementById(targetId);
+                    if (!panel) return;
+                    const isOpen = panel.classList.toggle('is-open');
+                    btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+                    const labelEl = btn.querySelector('[data-disclosure-label]');
+                    if (labelEl) {
+                        labelEl.textContent = isOpen
+                            ? (btn.getAttribute('data-close-text') || 'Ocultar detalle')
+                            : (btn.getAttribute('data-open-text') || 'Ver detalle');
+                    }
+                    const iconEl = btn.querySelector('[data-disclosure-icon]');
+                    if (iconEl) {
+                        iconEl.style.transform = isOpen ? 'rotate(180deg)' : 'rotate(0deg)';
+                    }
+                });
+            });
+        });
+    </script>
+    {% block extra_js %}{% endblock %}
 </body>
 </html>

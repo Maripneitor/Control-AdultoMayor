@@ -13,12 +13,17 @@
 ENV_SECRETS_HANDOVER.md
 *secrets*
 *handover*
+secretos.md
 
 
 # 2. Gestor de Paquetes de Terceros y Entornos de Agente
 /vendor/
 /node_modules/
 .agents/
+.agent/
+.claude/
+.cursor/
+skills-lock.json
 composer.phar
 /scratch/
 venv/

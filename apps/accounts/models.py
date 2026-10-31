@@ -68,5 +68,62 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
     def is_active(self, value):
         self.activo = bool(value)
 
+    @property
+    def tiene_2fa_activo(self):
+        """Indica si el usuario tiene al menos un dispositivo TOTP confirmado en django-otp."""
+        return self.totpdevice_set.filter(confirmed=True).exists()
+
+    def check_password(self, raw_password):
+        """
+        Verifica contraseñas soportando tanto hashes nativos de Django
+        como hashes Bcrypt heredados de PHP ($2y$, $2b$, $2a$ sin prefijo).
+        """
+        if not raw_password or not self.password:
+            return False
+
+        stored = str(self.password).strip()
+        if stored.startswith(('$2y$', '$2b$', '$2a$')):
+            try:
+                import bcrypt
+                normalized_hash = stored.replace('$2y$', '$2b$', 1).encode('utf-8')
+                return bcrypt.checkpw(raw_password.encode('utf-8'), normalized_hash)
+            except Exception:
+                return False
+
+        return super().check_password(raw_password)
+
     def __str__(self):
         return f"{self.nombre} ({self.email}) [{self.get_rol_display()}]"
+
+
+class TokenRecuperacion(models.Model):
+    """
+    Mapeo a la tabla PostgreSQL existente `tokens_recuperacion`.
+    Se utiliza como respaldo persistente en BD junto con la caché del servidor
+    para almacenar códigos mágicos de 6 dígitos con expiración estricta (5-10 min).
+    """
+    id = models.AutoField(primary_key=True)
+    usuario = models.ForeignKey(
+        Usuario,
+        on_delete=models.CASCADE,
+        db_column='usuario_id',
+        related_name='tokens_acceso'
+    )
+    token = models.CharField(max_length=64)
+    expira_en = models.DateTimeField()
+    usado = models.BooleanField(default=False)
+    created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        db_table = 'tokens_recuperacion'
+        managed = False
+        verbose_name = 'Token de Acceso / Recuperación'
+        verbose_name_plural = 'Tokens de Acceso / Recuperación'
+        ordering = ['-created_at']
+
+    @property
+    def esta_vigente(self):
+        return (not self.usado) and (timezone.now() <= self.expira_en)
+
+    def __str__(self):
+        return f"Código para {self.usuario.email} (Expira: {self.expira_en})"

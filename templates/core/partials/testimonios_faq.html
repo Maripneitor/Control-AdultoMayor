@@ -1,0 +1,172 @@
+<!-- 6. EMERGENCIA SOS, TESTIMONIOS BREVES Y PREGUNTAS CON ACORDEÓN SUAVE -->
+<section id="emergencia" class="w-full bg-[#F0F7FF] py-20">
+    <div class="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 space-y-20">
+
+        <!-- Banner Directo SOS QR con Fallback Manual de Código Corto -->
+        <div class="bg-[#0a192f] text-white rounded-3xl p-8 sm:p-10 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-8 reveal-item">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center gap-5">
+                <div class="w-16 h-16 rounded-2xl bg-rose-600 text-white flex items-center justify-center shrink-0">
+                    <i data-lucide="qr-code" class="w-9 h-9"></i>
+                </div>
+                <div class="space-y-1">
+                    <h2 class="text-2xl sm:text-3xl font-black text-white">
+                        Consulta la Ficha SOS QR al instante.
+                    </h2>
+                    <p class="text-base sm:text-lg text-blue-200">
+                        Si la cámara del paramédico falla o el QR está borroso, escribe aquí el código corto impreso debajo.
+                    </p>
+                </div>
+            </div>
+            <form method="GET" action="{% url 'core:sos_buscador' %}" class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
+                <input type="text"
+                       name="codigo"
+                       required
+                       maxlength="36"
+                       placeholder="Código SOS (ej. 6dc93735)"
+                       aria-label="Ingresar Código SOS"
+                       class="min-h-[54px] px-4 py-3 rounded-2xl bg-[#132a4a] border border-blue-800 text-white font-mono font-black text-sm uppercase tracking-wider placeholder-blue-300/70 focus:outline-none focus:border-blue-400 sm:w-56">
+                <button type="submit"
+                        class="btn-press touch-target min-h-[54px] px-6 bg-rose-600 hover:bg-rose-500 text-white font-extrabold text-base rounded-2xl inline-flex items-center justify-center gap-2.5 shrink-0 cursor-pointer">
+                    <span>Ingresar Código SOS</span>
+                    <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                </button>
+            </form>
+        </div>
+
+        <!-- Testimonios Breves y Escaneables -->
+        <div id="testimonios" class="space-y-10 reveal-item">
+            <h2 class="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
+                Familias y médicos que ya viven más tranquilos.
+            </h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="hover-lift bg-white p-7 rounded-3xl flex flex-col justify-between">
+                    <p class="text-lg text-slate-700 leading-relaxed mb-6">
+                        "Mis hermanos y yo vemos al instante si mi mamá ya tomó su pastilla de la presión. Cero confusiones."
+                    </p>
+                    <div class="flex items-center gap-3">
+                        <div class="w-11 h-11 rounded-2xl bg-blue-600 text-white font-black text-sm flex items-center justify-center">MF</div>
+                        <div>
+                            <p class="text-base font-extrabold text-slate-900">María Fernanda C.</p>
+                            <p class="text-sm text-blue-700 font-semibold">Hija y Cuidadora</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="hover-lift bg-white p-7 rounded-3xl flex flex-col justify-between">
+                    <p class="text-lg text-slate-700 leading-relaxed mb-6">
+                        "Con el PIN de 6 dígitos reviso la presión y glucosa del paciente en segundos durante la consulta."
+                    </p>
+                    <div class="flex items-center gap-3">
+                        <div class="w-11 h-11 rounded-2xl bg-blue-600 text-white font-black text-sm flex items-center justify-center">CM</div>
+                        <div>
+                            <p class="text-base font-extrabold text-slate-900">Dr. Carlos Mendoza</p>
+                            <p class="text-sm text-blue-700 font-semibold">Médico Geriatra</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="hover-lift bg-white p-7 rounded-3xl flex flex-col justify-between">
+                    <p class="text-lg text-slate-700 leading-relaxed mb-6">
+                        "Los botones son grandes y claros. Solo toco confirmar cuando tomo mi medicina y mis hijos están tranquilos."
+                    </p>
+                    <div class="flex items-center gap-3">
+                        <div class="w-11 h-11 rounded-2xl bg-blue-600 text-white font-black text-sm flex items-center justify-center">RG</div>
+                        <div>
+                            <p class="text-base font-extrabold text-slate-900">Don Roberto G.</p>
+                            <p class="text-sm text-blue-700 font-semibold">Adulto Mayor (74 años)</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Preguntas Frecuentes con Revelación Progresiva (Acordeón Suave) -->
+        <div id="faq" class="max-w-3xl space-y-6 reveal-item">
+            <h2 class="text-3xl font-black text-slate-900 tracking-tight">
+                Preguntas frecuentes.
+            </h2>
+
+            <div class="space-y-3">
+                <div class="bg-white rounded-2xl p-2">
+                    <button type="button"
+                            data-disclosure-btn="faq-1"
+                            aria-expanded="true"
+                            aria-controls="faq-1"
+                            class="btn-press touch-target w-full px-5 py-3 text-left flex items-center justify-between gap-4 font-extrabold text-lg text-slate-900 hover:text-blue-700 cursor-pointer">
+                        <span>¿Es fácil de usar para un adulto mayor?</span>
+                        <i data-lucide="chevron-down" data-disclosure-icon class="w-5 h-5 text-blue-600 transition-transform duration-200" style="transform: rotate(180deg);"></i>
+                    </button>
+                    <div id="faq-1" class="disclosure-content is-open">
+                        <div class="disclosure-inner">
+                            <p class="px-5 pb-4 pt-1 text-base text-slate-600 leading-relaxed">
+                                Sí. Su pantalla solo muestra las medicinas del día con botones grandes de 1 toque, controles para agrandar la letra (A+) y cero ventanas emergentes.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl p-2">
+                    <button type="button"
+                            data-disclosure-btn="faq-2"
+                            aria-expanded="false"
+                            aria-controls="faq-2"
+                            class="btn-press touch-target w-full px-5 py-3 text-left flex items-center justify-between gap-4 font-extrabold text-lg text-slate-900 hover:text-blue-700 cursor-pointer">
+                        <span>¿Cómo se conectan varios hijos o cuidadores?</span>
+                        <i data-lucide="chevron-down" data-disclosure-icon class="w-5 h-5 text-blue-600 transition-transform duration-200"></i>
+                    </button>
+                    <div id="faq-2" class="disclosure-content">
+                        <div class="disclosure-inner">
+                            <p class="px-5 pb-4 pt-1 text-base text-slate-600 leading-relaxed">
+                                Con un código NIP familiar. Cada hijo o enfermero entra desde su propio celular y todos ven el mismo expediente actualizado al instante.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl p-2">
+                    <button type="button"
+                            data-disclosure-btn="faq-3"
+                            aria-expanded="false"
+                            aria-controls="faq-3"
+                            class="btn-press touch-target w-full px-5 py-3 text-left flex items-center justify-between gap-4 font-extrabold text-lg text-slate-900 hover:text-blue-700 cursor-pointer">
+                        <span>¿Qué pasa si olvidan una medicina?</span>
+                        <i data-lucide="chevron-down" data-disclosure-icon class="w-5 h-5 text-blue-600 transition-transform duration-200"></i>
+                    </button>
+                    <div id="faq-3" class="disclosure-content">
+                        <div class="disclosure-inner">
+                            <p class="px-5 pb-4 pt-1 text-base text-slate-600 leading-relaxed">
+                                El sistema espera una ventana de tolerancia de &plusmn;45 minutos, permite posponer 30 minutos o envía una alerta a la familia si la dosis se omite.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+<!-- 7. CTA FINAL SÓLIDO EN AZUL CLÍNICO -->
+<section class="w-full bg-blue-600 text-white py-20">
+    <div class="max-w-4xl mx-auto px-5 sm:px-6 lg:px-8 text-center space-y-6 reveal-item">
+        <h2 class="text-3xl sm:text-4xl font-black text-white tracking-tight">
+            Empieza hoy a cuidar a tu familia en equipo.
+        </h2>
+        <p class="text-lg sm:text-xl text-blue-100 max-w-xl mx-auto">
+            Crea el expediente de tu familiar en menos de 2 minutos.
+        </p>
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
+            <a href="{% url 'accounts:registro' %}"
+               class="btn-press touch-target min-h-[54px] w-full sm:w-auto px-8 bg-white hover:bg-blue-50 text-blue-700 font-black text-base rounded-2xl inline-flex items-center justify-center gap-2.5">
+                <span>Crear Cuenta Familiar Gratis</span>
+                <i data-lucide="arrow-right" class="w-5 h-5"></i>
+            </a>
+            <a href="{% url 'accounts:login' %}"
+               class="btn-press touch-target min-h-[54px] w-full sm:w-auto px-8 bg-blue-800 hover:bg-blue-900 text-white font-bold text-base rounded-2xl inline-flex items-center justify-center">
+                Iniciar Sesión
+            </a>
+        </div>
+    </div>
+</section>
+

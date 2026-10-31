@@ -1,6 +1,6 @@
 services:
   # ==============================================================================
-  # 1. Base de Datos PostgreSQL 15 (Con Inicialización Automática DDL)
+  # 1. Base de Datos PostgreSQL 15 (Con Inicialización Automática DDL + Datos)
   # ==============================================================================
   db:
     image: postgres:15-alpine
@@ -24,40 +24,12 @@ services:
       - vitalsenior_net
 
   # ==============================================================================
-  # 2. Servidor Web PHP 8.2 + Apache (VitalSenior PHP MVC - Reemplazo de XAMPP)
+  # 2. Aplicación Django 6.x MVT (VitalSenior Python Backend & Frontend MVT)
   # ==============================================================================
-  app_php:
+  web:
     build:
       context: .
-      dockerfile: docker/php/Dockerfile
-    container_name: vitalsenior_php_app
-    restart: unless-stopped
-    ports:
-      - "8080:80"
-    environment:
-      DB_HOST: db
-      DB_PORT: 5432
-      DB_NAME: ${DB_NAME:-vitalsenior}
-      DB_USER: ${DB_USER:-postgres}
-      DB_PASS: ${DB_PASS:-postgres}
-      APP_ENV: ${APP_ENV:-development}
-      APP_DEBUG: ${APP_DEBUG:-true}
-      APP_URL: ${APP_URL:-http://localhost:8080}
-    volumes:
-      - .:/var/www/html
-    depends_on:
-      db:
-        condition: service_healthy
-    networks:
-      - vitalsenior_net
-
-  # ==============================================================================
-  # 3. Aplicación Django 6.x MVT (VitalSenior Django Backend)
-  # ==============================================================================
-  app_django:
-    build:
-      context: .
-      dockerfile: docker/django/Dockerfile
+      dockerfile: Dockerfile
     container_name: vitalsenior_django_app
     restart: unless-stopped
     ports:
@@ -72,7 +44,6 @@ services:
       APP_KEY: ${APP_KEY:-django-insecure-vitalsenior-dev-key-change-in-prod-1234567890}
     volumes:
       - .:/app
-    command: sh -c "python manage.py check && python manage.py runserver 0.0.0.0:8000"
     depends_on:
       db:
         condition: service_healthy

@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+
+{% block title %}Plataforma Integral de Cuidado y Monitoreo Geriátrico{% endblock %}
+
+{% block main_class %}flex-1 w-full overflow-x-hidden{% endblock %}
+
+{% block content %}
+    <!-- 1. Hero con Frase Directa y Mockup Ilustrativo -->
+    {% include 'core/partials/hero.html' %}
+
+    <!-- 2. Qué Hacemos: Grid 2x2 de Tarjetas Blancas sobre Fondo Azul Hielo + Revelación Progresiva -->
+    {% include 'core/partials/que_hacemos.html' %}
+
+    <!-- 3. Cómo Trabajamos: Dashboards Ilustrativos (Semáforo Clínico 120/80 + Simulador de Toma en 1 Toque) -->
+    {% include 'core/partials/como_trabajamos.html' %}
+
+    <!-- 4. Quiénes Somos / Nosotros: Breve, Humano y Escaneable -->
+    {% include 'core/partials/nosotros.html' %}
+
+    <!-- 5. Funcionalidades por Rol: Carrusel de Vistas Ilustrativas -->
+    {% include 'core/partials/funcionalidades.html' %}
+
+    <!-- 6. Emergencia SOS, Testimonios Breves, Preguntas Frecuentes y CTA Final -->
+    {% include 'core/partials/testimonios_faq.html' %}
+
+    <!-- Controlador del Carrusel Accesible -->
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Carrusel Accesible con Soporte de Teclado y Swipe Táctil
+        const track = document.getElementById('carousel-track');
+        const container = document.getElementById('vital-carousel');
+        const btnPrev = document.getElementById('carousel-btn-prev');
+        const btnNext = document.getElementById('carousel-btn-next');
+        const dotsContainer = document.getElementById('carousel-dots');
+
+        if (track && container && btnPrev && btnNext && dotsContainer) {
+            const slides = track.children;
+            const totalSlides = slides.length;
+            const dots = dotsContainer.querySelectorAll('.carousel-dot');
+            let currentIndex = 0;
+            let autoplayTimer = null;
+            let isPaused = false;
+            const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+            function updateCarousel(index) {
+                currentIndex = (index + totalSlides) % totalSlides;
+                track.style.transform = `translateX(-${currentIndex * 100}%)`;
+                dots.forEach((dot, idx) => {
+                    const isActive = idx === currentIndex;
+                    dot.setAttribute('aria-selected', isActive ? 'true' : 'false');
+                    dot.className = isActive
+                        ? 'carousel-dot h-3.5 rounded-full transition-all duration-300 w-10 bg-blue-600 cursor-pointer'
+                        : 'carousel-dot h-3.5 rounded-full transition-all duration-300 w-3.5 bg-blue-200 hover:bg-blue-300 cursor-pointer';
+                });
+            }
+
+            function nextSlide() { updateCarousel(currentIndex + 1); }
+            function prevSlide() { updateCarousel(currentIndex - 1); }
+
+            function resetAutoplay() {
+                if (autoplayTimer) clearInterval(autoplayTimer);
+                if (!prefersReducedMotion) {
+                    autoplayTimer = setInterval(() => {
+                        if (!isPaused) nextSlide();
+                    }, 6000);
+                }
+            }
+
+            btnPrev.addEventListener('click', () => { prevSlide(); resetAutoplay(); });
+            btnNext.addEventListener('click', () => { nextSlide(); resetAutoplay(); });
+
+            dotsContainer.addEventListener('click', (e) => {
+                const dot = e.target.closest('.carousel-dot');
+                if (dot && dot.hasAttribute('data-slide-index')) {
+                    updateCarousel(parseInt(dot.getAttribute('data-slide-index'), 10));
+                    resetAutoplay();
+                }
+            });
+
+            container.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowLeft') { e.preventDefault(); prevSlide(); resetAutoplay(); }
+                if (e.key === 'ArrowRight') { e.preventDefault(); nextSlide(); resetAutoplay(); }
+            });
+
+            let touchStartX = 0;
+            container.addEventListener('touchstart', (e) => { touchStartX = e.changedTouches[0].screenX; }, { passive: true });
+            container.addEventListener('touchend', (e) => {
+                const diffX = touchStartX - e.changedTouches[0].screenX;
+                if (Math.abs(diffX) > 45) {
+                    diffX > 0 ? nextSlide() : prevSlide();
+                    resetAutoplay();
+                }
+            }, { passive: true });
+
+            container.addEventListener('mouseenter', () => { isPaused = true; });
+            container.addEventListener('mouseleave', () => { isPaused = false; });
+            container.addEventListener('focusin', () => { isPaused = true; });
+            container.addEventListener('focusout', () => { isPaused = false; });
+
+            updateCarousel(0);
+            resetAutoplay();
+        }
+    });
+    </script>
+{% endblock %}

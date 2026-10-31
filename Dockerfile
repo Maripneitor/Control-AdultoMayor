@@ -1,39 +1,28 @@
-FROM php:8.2-apache
+FROM python:3.12-slim
 
-# Instalar dependencias del sistema requeridas para PostgreSQL, GD y utilidades
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+WORKDIR /app
+
+# Instalar dependencias del sistema requeridas para PostgreSQL y compilación
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq-dev \
-    libpng-dev \
-    libjpeg-dev \
-    libfreetype6-dev \
-    libzip-dev \
-    zip \
-    unzip \
-    git \
+    gcc \
     curl \
-    && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install -j$(nproc) pdo pdo_pgsql pgsql gd zip bcmath opcache \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Habilitar módulos de Apache requeridos para VitalSenior (.htaccess, rewrite, cabeceras seguras)
-RUN a2enmod rewrite headers
+# Instalar dependencias de Python
+COPY requirements.txt /app/
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Configurar VirtualHost con DocumentRoot apuntando a public/
-COPY docker/php/vhost.conf /etc/apache2/sites-available/000-default.conf
+# Copiar el código fuente del proyecto
+COPY . /app/
 
-# Instalar Composer oficial desde imagen multietapa
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+# Asegurar permisos de ejecución en scripts
+RUN chmod +x /app/docker/entrypoint.sh
 
-# Directorio de trabajo
-WORKDIR /var/www/html
+EXPOSE 8000
 
-# Copiar el código fuente
-COPY . /var/www/html
-
-# Crear directorios para subida de archivos y logs con permisos adecuados
-RUN mkdir -p /var/www/html/storage/uploads /var/www/html/storage/temp /var/www/html/logs \
-    && chown -R www-data:www-data /var/www/html
-
-EXPOSE 80
-
-CMD ["apache2-foreground"]
+ENTRYPOINT ["/app/docker/entrypoint.sh"]
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]

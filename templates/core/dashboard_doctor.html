@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block title %}Portal Médico - VitalSenior{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="bg-white rounded-3xl border border-slate-200/90 p-6 shadow-sm flex items-center justify-between">
+        <div>
+            <span class="px-2.5 py-0.5 bg-teal-50 border border-teal-200 text-teal-700 text-[11px] font-extrabold rounded-md uppercase tracking-wider">
+                Portal Clínico Especializado
+            </span>
+            <h1 class="text-2xl font-black text-slate-900 mt-1">Dr(a). {{ doctor.nombre|default:request.user.nombre }}</h1>
+            <p class="text-xs text-slate-500 font-medium">Especialidad: {{ doctor.especialidad|default:"Medicina General" }} &bull; Cédula: {{ doctor.cedula_profesional|default:"En trámite" }}</p>
+        </div>
+        <a href="{% url 'doctors:generar_token' %}" class="px-4 py-2.5 bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs rounded-xl shadow-xs transition">
+            Generar Enlace Efímero PIN
+        </a>
+    </div>
+
+    <!-- Lista de Pacientes Asignados -->
+    <div class="bg-white rounded-3xl border border-slate-200/90 p-6 shadow-sm">
+        <h2 class="text-base font-black text-slate-900 mb-4 flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-teal-500"></span> Pacientes Asignados a Consulta
+        </h2>
+        {% if pacientes_asignados %}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {% for paciente in pacientes_asignados %}
+            <div class="p-5 rounded-2xl border border-slate-200/80 hover:border-teal-400 transition flex items-center justify-between">
+                <div>
+                    <h3 class="text-base font-extrabold text-slate-900">{{ paciente.nombre_completo }}</h3>
+                    <p class="text-xs text-slate-500">Sangre: {{ paciente.tipo_sangre }} &bull; Alergias: {{ paciente.alergias|default:"Ninguna" }}</p>
+                </div>
+                <a href="{% url 'patients:expediente' uuid=paciente.uuid %}" class="px-3.5 py-2 bg-slate-900 text-white font-bold text-xs rounded-xl hover:bg-slate-800 transition">
+                    Ver Expediente
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-xs text-slate-400">No hay pacientes asignados formalmente a tu consulta en este momento.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

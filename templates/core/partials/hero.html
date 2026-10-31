@@ -1,0 +1,83 @@
+{% load static %}
+<!-- 1. HERO SECTION: Copywriting Visual Directo + Mockup Ilustrativo -->
+<section id="inicio" class="relative w-full bg-[#0a192f] text-white py-20 lg:py-24 overflow-hidden">
+    <div class="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 relative z-10">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+
+            <!-- Izquierda: Frase Directa y Botones Sólidos (>= 48x48px) -->
+            <div class="lg:col-span-6 flex flex-col items-start hero-enter">
+                <div class="inline-flex items-center gap-2.5 bg-blue-900/70 text-blue-200 px-4 py-2 rounded-full text-sm font-bold mb-6">
+                    <span class="w-2.5 h-2.5 rounded-full bg-blue-400 animate-pulse"></span>
+                    <span>Plataforma de Salud para el Adulto Mayor</span>
+                </div>
+
+                <h1 class="text-3xl sm:text-5xl lg:text-[52px] font-black text-white tracking-tight leading-[1.1] mb-6">
+                    Cuidado inteligente para el Adulto Mayor.
+                </h1>
+
+                <p class="text-lg sm:text-xl text-blue-100 font-medium leading-relaxed mb-9 max-w-xl">
+                    Tu familia conectada. Medicación a tiempo, signos vitales bajo control y respuesta inmediata ante emergencias.
+                </p>
+
+                <!-- Botones Sólidos con Zonas Táctiles Amplias (>= 52px) -->
+                <div class="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3.5 w-full">
+                    <a href="{% url 'accounts:registro' %}"
+                       class="btn-press touch-target min-h-[54px] px-7 bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-base rounded-2xl inline-flex items-center justify-center gap-2.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400">
+                        <span>Comenzar Gratis</span>
+                        <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                    </a>
+
+                    <a href="{% url 'accounts:login' %}"
+                       class="btn-press touch-target min-h-[54px] px-6 bg-[#132a4a] hover:bg-blue-900 text-white font-bold text-base rounded-2xl inline-flex items-center justify-center gap-2.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400">
+                        <i data-lucide="log-in" class="w-5 h-5 text-blue-400"></i>
+                        <span>Iniciar Sesión</span>
+                    </a>
+
+                    <button type="button"
+                            onclick="const p = document.getElementById('hero-sos-panel'); p.classList.toggle('hidden'); if(!p.classList.contains('hidden')) document.getElementById('hero-sos-input').focus();"
+                            class="btn-press touch-target min-h-[54px] px-5 bg-rose-600/20 hover:bg-rose-600/30 border-2 border-rose-500/70 text-rose-200 font-extrabold text-sm rounded-2xl inline-flex items-center justify-center gap-2 cursor-pointer">
+                        <i data-lucide="qr-code" class="w-5 h-5 text-rose-400"></i>
+                        <span>Ingresar Código SOS</span>
+                    </button>
+                </div>
+
+                <!-- Panel Limpio de Fallback Manual para Primeros Respondientes -->
+                <div id="hero-sos-panel" class="hidden w-full mt-4 p-4 rounded-2xl bg-[#132a4a] border border-blue-800">
+                    <form method="GET" action="{% url 'core:sos_buscador' %}" class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                        <div class="flex-1">
+                            <label for="hero-sos-input" class="block text-xs font-extrabold uppercase tracking-wider text-blue-300 mb-1">
+                                Código SOS impreso debajo del QR (ej. a1b2c3d4)
+                            </label>
+                            <input type="text"
+                                   id="hero-sos-input"
+                                   name="codigo"
+                                   required
+                                   maxlength="36"
+                                   placeholder="Escribe el código corto (ej. 6dc93735)"
+                                   class="w-full min-h-[48px] px-4 py-2.5 rounded-xl bg-[#0a192f] border border-blue-700 text-white font-mono font-black text-base uppercase tracking-wider placeholder-slate-400 focus:outline-none focus:border-blue-400">
+                        </div>
+                        <button type="submit"
+                                class="btn-press touch-target min-h-[48px] px-6 py-2.5 sm:mt-5 bg-rose-600 hover:bg-rose-500 text-white font-extrabold text-sm rounded-xl inline-flex items-center justify-center gap-2 cursor-pointer shrink-0">
+                            <span>Ver Ficha SOS</span>
+                            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Derecha: Imagen Limpia del Mockup sin Pestañas Superpuestas -->
+            <div class="lg:col-span-6 relative flex items-center justify-center hero-enter-delayed">
+                <div class="relative w-full max-w-lg mx-auto">
+                    <div class="relative rounded-3xl overflow-hidden bg-[#0f2444]">
+                        <img src="{% static 'img/hero.png' %}"
+                             alt="Vista del celular y tarjeta médica en VitalSenior"
+                             loading="eager"
+                             class="w-full h-[360px] sm:h-[420px] object-cover object-center">
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+

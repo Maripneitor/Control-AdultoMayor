@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+
+{% block title %}Expediente Clínico Temporal - {{ paciente.nombre_completo }}{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="bg-white rounded-3xl border border-slate-200/90 p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div>
+            <div class="flex items-center gap-2 mb-1">
+                <span class="px-2.5 py-0.5 bg-emerald-50 text-emerald-800 text-[10px] font-extrabold uppercase rounded-md border border-emerald-200">
+                    Acceso Médico Temporal Autorizado
+                </span>
+                <span class="text-xs text-slate-400">&bull; Dr(a). {{ token_obj.medico_nombre }}</span>
+            </div>
+            <h1 class="text-2xl font-black text-slate-900">{{ paciente.nombre_completo }}</h1>
+            <p class="text-xs text-slate-500 mt-0.5">Nacimiento: {{ paciente.fecha_nacimiento|date:"d M Y" }} &bull; Sangre: <strong>{{ paciente.tipo_sangre }}</strong></p>
+        </div>
+        <div class="flex items-center gap-2">
+            <a href="{% url 'doctors:reporte_imprimible' paciente_id=paciente.id %}" target="_blank"
+               class="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl shadow-xs transition">
+                Imprimir / PDF Resumen
+            </a>
+        </div>
+    </div>
+
+    <!-- Antecedentes y Medicamentos -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="bg-white rounded-3xl border border-slate-200/90 p-6 shadow-sm space-y-4">
+            <h2 class="text-base font-black text-slate-900 flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-teal-500"></span> Diagnósticos Base y Alergias
+            </h2>
+            <div class="p-4 bg-slate-50 rounded-2xl border border-slate-200/70 text-xs space-y-2">
+                <p><strong class="text-slate-500 uppercase text-[10px] block">Alergias</strong> {{ paciente.alergias|default:"Sin alergias reportadas" }}</p>
+                <p><strong class="text-slate-500 uppercase text-[10px] block">Padecimientos Crónicos</strong> {{ paciente.enfermedades_cronicas|default:"Sin padecimientos crónicos registrados" }}</p>
+                <p><strong class="text-slate-500 uppercase text-[10px] block">Notas Cognitivas</strong> {{ paciente.notas_cognitivas|default:"Sin observaciones cognitivas" }}</p>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-3xl border border-slate-200/90 p-6 shadow-sm space-y-4">
+            <h2 class="text-base font-black text-slate-900 flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Medicamentos Activos Actuales
+            </h2>
+            <div class="space-y-2 text-xs">
+                {% for med in medicamentos %}
+                <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/70 flex items-center justify-between">
+                    <div>
+                        <strong class="text-slate-900 block font-extrabold">{{ med.nombre_comercial }} ({{ med.dosis }})</strong>
+                        <span class="text-slate-500">Cada {{ med.frecuencia_horas }} horas &bull; {{ med.instrucciones|default:"Tomar con alimentos" }}</span>
+                    </div>
+                    <span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-bold rounded-md">Activo</span>
+                </div>
+                {% empty %}
+                <p class="text-slate-400">Sin medicamentos activos.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Historial de Signos Vitales Recientes -->
+    <div class="bg-white rounded-3xl border border-slate-200/90 p-6 shadow-sm">
+        <h2 class="text-base font-black text-slate-900 mb-4 flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-indigo-500"></span> Monitoreo de Signos Vitales (Últimas 10 Mediciones)
+        </h2>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+                <thead>
+                    <tr class="border-b border-slate-200 text-slate-400 uppercase font-bold tracking-wider">
+                        <th class="py-2.5 px-2">Fecha y Hora</th>
+                        <th class="py-2.5 px-2">Presión Arterial</th>
+                        <th class="py-2.5 px-2">Pulso (ppm)</th>
+                        <th class="py-2.5 px-2">Glucosa (mg/dL)</th>
+                        <th class="py-2.5 px-2">IMC</th>
+                        <th class="py-2.5 px-2">Dolor</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    {% for s in ultimos_signos %}
+                    <tr class="hover:bg-slate-50/50">
+                        <td class="py-2.5 px-2 font-semibold text-slate-700">{{ s.created_at|date:"d M Y, H:i" }}</td>
+                        <td class="py-2.5 px-2 font-bold text-slate-900">{% if s.presion_sistolica %}{{ s.presion_sistolica }}/{{ s.presion_diastolica }} mmHg{% else %}-{% endif %}</td>
+                        <td class="py-2.5 px-2">{{ s.ritmo_cardiaco|default:"-" }}</td>
+                        <td class="py-2.5 px-2 font-semibold text-slate-800">{% if s.glucosa %}{{ s.glucosa }} ({{ s.momento_glucosa }}){% else %}-{% endif %}</td>
+                        <td class="py-2.5 px-2 font-mono">{{ s.imc|default:"-" }}</td>
+                        <td class="py-2.5 px-2">{{ s.nivel_dolor|default:"0" }}/10</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="6" class="py-4 text-center text-slate-400">Sin registros de signos vitales disponibles.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+
+{% block title %}Monitoreo de Signos Vitales - VitalSenior{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="bg-white rounded-3xl border border-slate-200/90 p-6 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-black text-slate-900 tracking-tight">Monitoreo de Signos Vitales</h1>
+            <p class="text-xs text-slate-500 font-medium mt-0.5">
+                Historial de presión arterial, glucosa, frecuencia cardíaca e IMC para <strong>{{ paciente.nombre_completo }}</strong>
+            </p>
+        </div>
+        <a href="{% url 'health:nuevo_registro' %}" class="px-5 py-2.5 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold rounded-xl shadow-xs transition">
+            + Capturar Nuevos Signos
+        </a>
+    </div>
+
+    <!-- Tabla Histórica de Signos Vitales -->
+    <div class="bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-8 shadow-sm">
+        {% if registros %}
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+                <thead>
+                    <tr class="border-b border-slate-200 text-slate-400 uppercase font-bold tracking-wider">
+                        <th class="py-3 px-3">Fecha y Hora</th>
+                        <th class="py-3 px-3">Presión (mmHg)</th>
+                        <th class="py-3 px-3">Ritmo (ppm)</th>
+                        <th class="py-3 px-3">Glucosa (mg/dL)</th>
+                        <th class="py-3 px-3">IMC</th>
+                        <th class="py-3 px-3">Dolor (0-10)</th>
+                        <th class="py-3 px-3">Estado</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    {% for reg in registros %}
+                    <tr class="hover:bg-slate-50/50">
+                        <td class="py-3.5 px-3 font-semibold text-slate-700">{{ reg.created_at|date:"d M Y, H:i" }}</td>
+                        <td class="py-3.5 px-3 font-bold text-slate-900">
+                            {% if reg.presion_sistolica %}{{ reg.presion_sistolica }}/{{ reg.presion_diastolica }}{% else %}-{% endif %}
+                        </td>
+                        <td class="py-3.5 px-3 font-bold text-slate-700">{{ reg.ritmo_cardiaco|default:"-" }}</td>
+                        <td class="py-3.5 px-3 font-bold text-slate-700">
+                            {% if reg.glucosa %}{{ reg.glucosa }} <span class="text-[10px] text-slate-400 font-normal">({{ reg.momento_glucosa }})</span>{% else %}-{% endif %}
+                        </td>
+                        <td class="py-3.5 px-3 font-mono text-slate-700">{{ reg.imc|default:"-" }}</td>
+                        <td class="py-3.5 px-3">{{ reg.nivel_dolor|default:"0" }}/10</td>
+                        <td class="py-3.5 px-3">
+                            {% if reg.alerta_emitida %}
+                            <span class="px-2 py-0.5 bg-rose-100 text-rose-800 text-[10px] font-extrabold rounded-md">Alerta Emitida</span>
+                            {% else %}
+                            <span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-bold rounded-md">Normal</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-12">
+            <p class="text-slate-400 font-bold mb-4">No hay mediciones registradas para este paciente.</p>
+            <a href="{% url 'health:nuevo_registro' %}" class="px-5 py-2.5 bg-teal-600 text-white font-bold text-xs rounded-xl shadow-xs">
+                Registrar Primera Medición
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

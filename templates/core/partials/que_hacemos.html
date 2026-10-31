@@ -1,0 +1,155 @@
+<!-- 2. SECCIÓN QUÉ HACEMOS: Grid 2x2 de 4 Tarjetas Blancas sobre Fondo Azul Hielo + Revelación Progresiva -->
+<section id="que-hacemos" class="w-full bg-[#F0F7FF] py-20">
+    <div class="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
+
+        <!-- Encabezado Directo y Escaneable -->
+        <div class="max-w-2xl mb-12 reveal-item">
+            <h2 class="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight leading-tight mb-3">
+                Qué hacemos por tu tranquilidad.
+            </h2>
+            <p class="text-lg text-slate-700">
+                Cuatro herramientas simples para cuidar a tus padres o abuelos sin olvidos ni confusiones.
+            </p>
+        </div>
+
+        <!-- Cuadrícula 2x2 de Tarjetas Blancas sobre Fondo Azul Hielo -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
+
+            <!-- Tarjeta 1: Control de Medicinas -->
+            <div class="hover-lift bg-white rounded-3xl p-7 sm:p-8 flex flex-col justify-between reveal-item">
+                <div>
+                    <div class="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mb-5">
+                        <i data-lucide="pill" class="w-8 h-8"></i>
+                    </div>
+                    <h3 class="text-2xl font-black text-slate-900 mb-2">Control de Medicinas</h3>
+                    <p class="text-lg text-slate-600">
+                        Alertas antes de que se terminen y registro de cada toma en un solo toque.
+                    </p>
+                </div>
+
+                <!-- Revelación Progresiva (Acordeón Suave sin Pop-ups) -->
+                <div class="mt-6 pt-4">
+                    <button type="button"
+                            data-disclosure-btn="detalle-medicinas"
+                            data-open-text="Ver detalle"
+                            data-close-text="Ocultar detalle"
+                            aria-expanded="false"
+                            aria-controls="detalle-medicinas"
+                            class="btn-press touch-target px-4 py-2.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-sm inline-flex items-center gap-2 cursor-pointer">
+                        <span data-disclosure-label>Ver detalle</span>
+                        <i data-lucide="chevron-down" data-disclosure-icon class="w-4 h-4 transition-transform duration-200"></i>
+                    </button>
+                    <div id="detalle-medicinas" class="disclosure-content">
+                        <div class="disclosure-inner">
+                            <p class="pt-4 text-base text-slate-600 leading-relaxed">
+                                Incluye ventana de tolerancia de &plusmn;45 minutos, botón para posponer 30 minutos sin descontar inventario y aviso automático cuando quedan menos de 4 días de dosis.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tarjeta 2: Signos Vitales -->
+            <div class="hover-lift bg-white rounded-3xl p-7 sm:p-8 flex flex-col justify-between reveal-item">
+                <div>
+                    <div class="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mb-5">
+                        <i data-lucide="activity" class="w-8 h-8"></i>
+                    </div>
+                    <h3 class="text-2xl font-black text-slate-900 mb-2">Semáforo de Signos Vitales</h3>
+                    <p class="text-lg text-slate-600">
+                        Presión arterial y glucosa con colores claros que avisan si todo está bien.
+                    </p>
+                </div>
+
+                <div class="mt-6 pt-4">
+                    <button type="button"
+                            data-disclosure-btn="detalle-signos"
+                            data-open-text="Ver detalle"
+                            data-close-text="Ocultar detalle"
+                            aria-expanded="false"
+                            aria-controls="detalle-signos"
+                            class="btn-press touch-target px-4 py-2.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-sm inline-flex items-center gap-2 cursor-pointer">
+                        <span data-disclosure-label>Ver detalle</span>
+                        <i data-lucide="chevron-down" data-disclosure-icon class="w-4 h-4 transition-transform duration-200"></i>
+                    </button>
+                    <div id="detalle-signos" class="disclosure-content">
+                        <div class="disclosure-inner">
+                            <p class="pt-4 text-base text-slate-600 leading-relaxed">
+                                Registra presión sistólica/diastólica, pulso, glucosa capilar, peso, cálculo automático de IMC y nivel de dolor del 1 al 10.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tarjeta 3: Ficha de Emergencia QR -->
+            <div class="hover-lift bg-white rounded-3xl p-7 sm:p-8 flex flex-col justify-between reveal-item">
+                <div>
+                    <div class="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mb-5">
+                        <i data-lucide="qr-code" class="w-8 h-8"></i>
+                    </div>
+                    <h3 class="text-2xl font-black text-slate-900 mb-2">Ficha de Emergencia QR</h3>
+                    <p class="text-lg text-slate-600">
+                        Alergias, tipo de sangre y teléfono familiar al escanear con cualquier celular.
+                    </p>
+                </div>
+
+                <div class="mt-6 pt-4">
+                    <button type="button"
+                            data-disclosure-btn="detalle-qr"
+                            data-open-text="Ver detalle"
+                            data-close-text="Ocultar detalle"
+                            aria-expanded="false"
+                            aria-controls="detalle-qr"
+                            class="btn-press touch-target px-4 py-2.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-sm inline-flex items-center gap-2 cursor-pointer">
+                        <span data-disclosure-label>Ver detalle</span>
+                        <i data-lucide="chevron-down" data-disclosure-icon class="w-4 h-4 transition-transform duration-200"></i>
+                    </button>
+                    <div id="detalle-qr" class="disclosure-content">
+                        <div class="disclosure-inner">
+                            <p class="pt-4 text-base text-slate-600 leading-relaxed">
+                                Pensada para paramédicos y primeros respondientes: muestra datos vitales sin pedir contraseña e incluye botón de llamada directa a los hijos o cuidadores.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tarjeta 4: Acceso Médico con PIN -->
+            <div class="hover-lift bg-white rounded-3xl p-7 sm:p-8 flex flex-col justify-between reveal-item">
+                <div>
+                    <div class="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mb-5">
+                        <i data-lucide="stethoscope" class="w-8 h-8"></i>
+                    </div>
+                    <h3 class="text-2xl font-black text-slate-900 mb-2">Consulta Médica con PIN</h3>
+                    <p class="text-lg text-slate-600">
+                        Comparte el historial con el doctor en segundos o descárgalo en PDF.
+                    </p>
+                </div>
+
+                <div class="mt-6 pt-4">
+                    <button type="button"
+                            data-disclosure-btn="detalle-pin"
+                            data-open-text="Ver detalle"
+                            data-close-text="Ocultar detalle"
+                            aria-expanded="false"
+                            aria-controls="detalle-pin"
+                            class="btn-press touch-target px-4 py-2.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-sm inline-flex items-center gap-2 cursor-pointer">
+                        <span data-disclosure-label>Ver detalle</span>
+                        <i data-lucide="chevron-down" data-disclosure-icon class="w-4 h-4 transition-transform duration-200"></i>
+                    </button>
+                    <div id="detalle-pin" class="disclosure-content">
+                        <div class="disclosure-inner">
+                            <p class="pt-4 text-base text-slate-600 leading-relaxed">
+                                Genera un código PIN temporal de 6 dígitos para que el especialista revise el expediente completo durante la consulta sin necesidad de registrarse.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+</section>
+

@@ -1,0 +1,162 @@
+<!-- 5. FUNCIONALIDADES Y ROLES: Carrusel Visual de Pantallas Limpias -->
+<section id="funcionalidades" class="w-full bg-white py-20">
+    <div class="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
+
+        <div class="max-w-2xl mb-12 reveal-item">
+            <h2 class="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight leading-tight mb-3">
+                Una vista clara para cada miembro de la familia.
+            </h2>
+            <p class="text-lg text-slate-600">
+                Desliza para ver cómo luce la plataforma según quién la utiliza.
+            </p>
+        </div>
+
+        <!-- Carrusel Interactivo con Dashboards Visuales -->
+        <div id="vital-carousel"
+             class="relative bg-[#F0F7FF] rounded-3xl overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 reveal-item"
+             tabindex="0"
+             role="region"
+             aria-roledescription="carrusel"
+             aria-label="Vistas del proyecto por rol"
+             aria-live="polite">
+
+            <div id="carousel-track"
+                 class="flex min-w-full will-change-transform"
+                 style="transform: translateX(0%); transition: transform 450ms cubic-bezier(0.23, 1, 0.32, 1);">
+
+                <!-- Slide 1: Vista Familiar Cuidador -->
+                <div class="min-w-full w-full flex-shrink-0 p-6 sm:p-10 lg:p-12 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center"
+                     role="group" aria-roledescription="diapositiva" aria-label="1 de 3: Panel Familiar Cuidador">
+                    <div class="lg:col-span-6 space-y-4">
+                        <span class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-100 text-blue-800 text-sm font-extrabold">
+                            <i data-lucide="shield" class="w-4 h-4"></i>
+                            <span>Para Hijos y Cuidadores</span>
+                        </span>
+                        <h3 class="text-2xl sm:text-3xl font-black text-slate-900">
+                            Supervisión completa desde el celular.
+                        </h3>
+                        <p class="text-lg text-slate-600">
+                            Revisa si tu familiar ya tomó sus medicinas, agenda estudios de laboratorio y recibe avisos de stock bajo.
+                        </p>
+                        <div class="pt-2">
+                            <a href="{% url 'accounts:registro' %}" class="btn-press touch-target px-6 py-3.5 bg-blue-600 hover:bg-blue-700 text-white text-base font-extrabold rounded-2xl inline-flex items-center gap-2">
+                                <span>Crear Cuenta de Cuidador</span>
+                                <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="lg:col-span-6">
+                        <div data-ui class="bg-white rounded-3xl p-6 space-y-3 shadow-xs">
+                            <div class="flex items-center justify-between pb-2">
+                                <span class="text-sm font-extrabold text-slate-800">Resumen de Hoy</span>
+                                <span class="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-extrabold">3 de 3 Tomas al Día</span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div class="bg-[#F8FAFC] rounded-2xl p-4">
+                                    <p class="text-xs text-slate-500 font-bold">Inventario</p>
+                                    <p class="text-lg font-black text-slate-900 mt-0.5">Stock Completo</p>
+                                </div>
+                                <div class="bg-[#F8FAFC] rounded-2xl p-4">
+                                    <p class="text-xs text-slate-500 font-bold">Próxima Cita</p>
+                                    <p class="text-lg font-black text-blue-700 mt-0.5">Cardiología &bull; Jueves</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 2: Vista Portal Médico con PIN -->
+                <div class="min-w-full w-full flex-shrink-0 p-6 sm:p-10 lg:p-12 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center"
+                     role="group" aria-roledescription="diapositiva" aria-label="2 de 3: Portal Médico con PIN">
+                    <div class="lg:col-span-6 space-y-4">
+                        <span class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-100 text-blue-800 text-sm font-extrabold">
+                            <i data-lucide="stethoscope" class="w-4 h-4"></i>
+                            <span>Para Médicos Tratantes</span>
+                        </span>
+                        <h3 class="text-2xl sm:text-3xl font-black text-slate-900">
+                            Acceso rápido con PIN de 6 dígitos.
+                        </h3>
+                        <p class="text-lg text-slate-600">
+                            El médico ingresa el PIN temporal que le dicta la familia y consulta bitácoras y reportes PDF sin crear cuenta.
+                        </p>
+                        <div class="pt-2">
+                            <a href="{% url 'doctors:portal' %}" class="btn-press touch-target px-6 py-3.5 bg-blue-600 hover:bg-blue-700 text-white text-base font-extrabold rounded-2xl inline-flex items-center gap-2">
+                                <span>Ir al Portal Médico</span>
+                                <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="lg:col-span-6">
+                        <div data-ui class="bg-white rounded-3xl p-6 text-center space-y-3 shadow-xs">
+                            <p class="text-sm font-bold text-slate-600">PIN Temporal de Consulta</p>
+                            <div class="bg-[#F0F7FF] py-4 px-6 rounded-2xl text-3xl font-black tracking-[0.25em] text-blue-700 tabular-nums">
+                                482 910
+                            </div>
+                            <p class="text-sm text-slate-600">Válido por 24 horas &bull; Incluye descarga de PDF clínico</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide 3: Vista Emergencia SOS QR -->
+                <div class="min-w-full w-full flex-shrink-0 p-6 sm:p-10 lg:p-12 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center"
+                     role="group" aria-roledescription="diapositiva" aria-label="3 de 3: Ficha de Emergencia SOS QR">
+                    <div class="lg:col-span-6 space-y-4">
+                        <span class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-rose-100 text-rose-800 text-sm font-extrabold">
+                            <i data-lucide="siren" class="w-4 h-4"></i>
+                            <span>Para Emergencias y Paramédicos</span>
+                        </span>
+                        <h3 class="text-2xl sm:text-3xl font-black text-slate-900">
+                            Credencial QR que salva minutos vitales.
+                        </h3>
+                        <p class="text-lg text-slate-600">
+                            Muestra tipo de sangre, alergias severas y botones de llamada directa a los hijos del paciente sin pedir contraseña.
+                        </p>
+                        <div class="pt-2">
+                            <a href="{% url 'patients:emergencia_publica' %}" class="btn-press touch-target px-6 py-3.5 bg-rose-600 hover:bg-rose-700 text-white text-base font-extrabold rounded-2xl inline-flex items-center gap-2">
+                                <span>Ver Ficha SOS Pública</span>
+                                <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="lg:col-span-6">
+                        <div data-ui class="bg-white rounded-3xl p-6 flex items-center justify-between gap-4 shadow-xs">
+                            <div class="space-y-2">
+                                <span class="px-3 py-1 rounded-lg bg-rose-600 text-white font-black text-xs">SANGRE O+</span>
+                                <p class="text-lg font-black text-slate-900">Ficha Médica SOS</p>
+                                <p class="text-sm text-rose-700 font-bold">Alergia: Penicilina</p>
+                                <p class="text-sm text-slate-600">Contacto: Hija Titular (1 toque)</p>
+                            </div>
+                            <div class="w-24 h-24 rounded-2xl bg-slate-900 text-white flex items-center justify-center shrink-0">
+                                <i data-lucide="qr-code" class="w-14 h-14"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Controles Táctiles Amplios (>= 48x48px) -->
+            <div class="px-6 py-4 bg-white/70 flex items-center justify-between gap-4">
+                <button type="button" id="carousel-btn-prev" aria-label="Vista anterior"
+                        class="btn-press touch-target px-5 py-2.5 rounded-xl bg-white hover:bg-blue-50 text-slate-800 hover:text-blue-700 inline-flex items-center gap-2 text-sm font-extrabold cursor-pointer">
+                    <i data-lucide="chevron-left" class="w-5 h-5"></i>
+                    <span>Anterior</span>
+                </button>
+
+                <div id="carousel-dots" class="flex items-center gap-3" role="tablist" aria-label="Selector de vista">
+                    <button type="button" data-slide-index="0" role="tab" aria-selected="true" aria-label="Vista 1" class="carousel-dot h-3.5 rounded-full transition-all duration-300 w-10 bg-blue-600 cursor-pointer"></button>
+                    <button type="button" data-slide-index="1" role="tab" aria-selected="false" aria-label="Vista 2" class="carousel-dot h-3.5 rounded-full transition-all duration-300 w-3.5 bg-blue-200 hover:bg-blue-300 cursor-pointer"></button>
+                    <button type="button" data-slide-index="2" role="tab" aria-selected="false" aria-label="Vista 3" class="carousel-dot h-3.5 rounded-full transition-all duration-300 w-3.5 bg-blue-200 hover:bg-blue-300 cursor-pointer"></button>
+                </div>
+
+                <button type="button" id="carousel-btn-next" aria-label="Siguiente vista"
+                        class="btn-press touch-target px-5 py-2.5 rounded-xl bg-white hover:bg-blue-50 text-slate-800 hover:text-blue-700 inline-flex items-center gap-2 text-sm font-extrabold cursor-pointer">
+                    <span>Siguiente</span>
+                    <i data-lucide="chevron-right" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </div>
+
+    </div>
+</section>
+

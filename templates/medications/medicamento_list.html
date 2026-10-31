@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+
+{% block title %}Catálogo de Medicamentos - VitalSenior{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="bg-white rounded-3xl border border-slate-200/90 p-6 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-black text-slate-900 tracking-tight">Catálogo de Medicamentos</h1>
+            <p class="text-xs text-slate-500 font-medium mt-0.5">
+                {% if paciente %}Paciente: <strong>{{ paciente.nombre_completo }}</strong>{% else %}Selecciona un paciente{% endif %}
+            </p>
+        </div>
+        <div class="flex items-center gap-3">
+            <a href="{% url 'medications:tomas_diarias' %}" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold rounded-xl transition">
+                Tomas de Hoy
+            </a>
+            <a href="{% url 'medications:crear' %}" class="px-4 py-2.5 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold rounded-xl shadow-xs transition">
+                + Agregar Medicamento
+            </a>
+        </div>
+    </div>
+
+    <!-- Lista de Medicamentos -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for med in medicamentos %}
+        <div class="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs hover:border-teal-400 transition flex flex-col justify-between
+            {% if not med.activo %}opacity-60 bg-slate-50/50{% endif %}">
+            <div>
+                <div class="flex items-start justify-between gap-2 mb-3">
+                    <h2 class="text-lg font-black text-slate-900">{{ med.nombre_comercial }}</h2>
+                    <span class="px-2 py-0.5 text-[10px] font-bold rounded-md
+                        {% if med.stock_actual <= med.stock_minimo_alerta %} bg-rose-100 text-rose-800
+                        {% else %} bg-emerald-100 text-emerald-800 {% endif %}">
+                        Stock: {{ med.stock_actual }}
+                    </span>
+                </div>
+
+                <p class="text-xs font-bold text-teal-700 mb-2">Dosis: {{ med.dosis }} &bull; Cada {{ med.frecuencia_horas }} horas</p>
+                <p class="text-xs text-slate-500 mb-4">{{ med.instrucciones|default:"Sin instrucciones especiales" }}</p>
+
+                <div class="p-3 bg-slate-50 rounded-xl text-xs space-y-1">
+                    <div class="flex justify-between text-slate-500">
+                        <span>Dosis por toma:</span>
+                        <strong class="text-slate-800">{{ med.dosis_por_toma }}</strong>
+                    </div>
+                    <div class="flex justify-between text-slate-500">
+                        <span>Alerta stock mínimo:</span>
+                        <strong class="text-slate-800">{{ med.stock_minimo_alerta }}</strong>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between">
+                <span class="text-xs font-semibold {% if med.activo %}text-emerald-600{% else %}text-slate-400{% endif %}">
+                    {% if med.activo %}Activo{% else %}Inactivo{% endif %}
+                </span>
+                <a href="{% url 'medications:editar' pk=med.id %}" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-lg transition">
+                    Editar Fármaco
+                </a>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-span-full bg-white rounded-3xl border border-dashed border-slate-200 p-12 text-center">
+            <p class="text-slate-500 font-bold mb-4">No hay medicamentos registrados para este paciente.</p>
+            <a href="{% url 'medications:crear' %}" class="px-5 py-2.5 bg-teal-600 text-white font-bold text-xs rounded-xl shadow-xs">
+                Registrar Medicamento
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

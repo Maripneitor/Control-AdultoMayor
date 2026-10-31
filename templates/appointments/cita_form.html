@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ titulo_form }} - VitalSenior{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto py-4">
+    <div class="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-6 sm:p-8">
+        <h1 class="text-2xl font-black text-slate-900 tracking-tight mb-1">{{ titulo_form }}</h1>
+        <p class="text-xs text-slate-500 font-medium mb-6">Paciente: <strong>{{ paciente.nombre_completo }}</strong></p>
+
+        <form method="POST" class="space-y-4">
+            {% csrf_token %}
+            <div>
+                <label for="titulo" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Título de la Cita o Estudio *</label>
+                <input type="text" name="titulo" id="titulo" value="{{ cita.titulo|default:'' }}" required placeholder="Ej. Consulta Cardiología, Análisis de Sangre"
+                       class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-800 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-teal-500 transition">
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label for="tipo_evento" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Tipo de Evento</label>
+                    <select name="tipo_evento" id="tipo_evento"
+                            class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-800 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-teal-500 transition">
+                        <option value="consulta" {% if cita.tipo_evento == 'consulta' %}selected{% endif %}>Consulta Médica</option>
+                        <option value="laboratorio" {% if cita.tipo_evento == 'laboratorio' %}selected{% endif %}>Estudio de Laboratorio</option>
+                        <option value="imagen" {% if cita.tipo_evento == 'imagen' %}selected{% endif %}>Rayos X / Ultrasonido</option>
+                        <option value="terapia" {% if cita.tipo_evento == 'terapia' %}selected{% endif %}>Fisioterapia / Rehabilitación</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="fecha_hora" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Fecha y Hora *</label>
+                    <input type="datetime-local" name="fecha_hora" id="fecha_hora" value="{{ cita.fecha_hora|date:'Y-m-d\TH:i'|default:'' }}" required
+                           class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-800 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-teal-500 transition">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label for="doctor_id" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Doctor Tratante</label>
+                    <select name="doctor_id" id="doctor_id"
+                            class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-800 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-teal-500 transition">
+                        <option value="">-- Sin doctor específico --</option>
+                        {% for doc in doctores %}
+                        <option value="{{ doc.id }}" {% if cita.doctor_id == doc.id %}selected{% endif %}>{{ doc.nombre }} ({{ doc.especialidad|default:"General" }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label for="lugar" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Lugar / Clínica</label>
+                    <input type="text" name="lugar" id="lugar" value="{{ cita.lugar|default:'' }}" placeholder="Hospital Ángeles, Consultorio 204"
+                           class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-800 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-teal-500 transition">
+                </div>
+            </div>
+
+            <div>
+                <label for="preparacion_previa" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Preparación Previa o Ayuno</label>
+                <input type="text" name="preparacion_previa" id="preparacion_previa" value="{{ cita.preparacion_previa|default:'' }}" placeholder="Ayuno de 8 horas, llevar cartilla, etc."
+                       class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-800 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-teal-500 transition">
+            </div>
+
+            {% if cita %}
+            <div>
+                <label for="estado" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Estado de la Cita</label>
+                <select name="estado" id="estado"
+                        class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-800 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-teal-500 transition">
+                    <option value="programada" {% if cita.estado == 'programada' %}selected{% endif %}>Programada</option>
+                    <option value="completada" {% if cita.estado == 'completada' %}selected{% endif %}>Completada</option>
+                    <option value="cancelada" {% if cita.estado == 'cancelada' %}selected{% endif %}>Cancelada</option>
+                </select>
+            </div>
+            {% endif %}
+
+            <div class="pt-4 flex items-center justify-end gap-3">
+                <a href="{% url 'appointments:lista' %}" class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition">
+                    Cancelar
+                </a>
+                <button type="submit" class="px-6 py-2.5 bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs rounded-xl shadow-xs transition">
+                    Guardar Cita
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
